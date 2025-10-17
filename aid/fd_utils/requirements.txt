@@ -1,0 +1,35 @@
+# Core dependencies
+numpy>=1.23
+opencv-python==4.11.0.0
+torch==2.1.2+cu121
+torchaudio==2.1.2+cu121
+torchvision==0.16.2+cu121
+
+# PyAV (ffmpeg binding)
+av
+
+# Ultralytics YOLOv8
+ultralytics
+
+# Google MediaPipe
+mediapipe
+
+# Web & socket communication
+websockets
+websocket-client
+
+# Windows specific utils
+pywin32
+
+# FFmpeg Python wrapper
+ffmpeg-python
+
+# ML tools
+scikit-learn
+pykalman
+
+# GPU Util
+GPUtil
+
+# Logging
+loguru
