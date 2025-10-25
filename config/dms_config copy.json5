@@ -1,0 +1,68 @@
+///////////////////////////////////////////////////////////////////////////////
+// dms_config.json5 (de-duplicated)
+// Date: 2025/10/24
+///////////////////////////////////////////////////////////////////////////////
+{
+  // HTTP control server (remote status/control)
+  http_host: "0.0.0.0",
+  http_port: 51050,
+
+  // Where to write logs
+  log_dir: "logs",
+
+  // Supervisor tick (seconds)
+  heartbeat_interval_sec: 5,
+
+  // Processes to manage under /daemon
+  executables: [
+    {
+      name: "MTd",
+      path: "daemon/MTd/MTd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    },
+    {
+      name: "EMd",
+      path: "daemon/EMd/EMd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    },
+    {
+      name: "PCd",
+      path: "daemon/PCd/PCd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    }
+    {
+      name: "CCd",
+      path: "daemon/CCd/CCd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    },
+    {
+      name: "SCd",
+      path: "daemon/SCd/SCd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    },
+    {
+      name: "GCd",
+      path: "daemon/GCd/GCd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    },
+        {
+      name: "PreSd",
+      path: "daemon/PreSd/PreSd.exe",
+      args: [],
+      auto_restart: true,
+      start_on_boot: true
+    }
+  ]
+}
