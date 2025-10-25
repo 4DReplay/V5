@@ -77,38 +77,45 @@ function Ensure-Pywin32 {
 
   Write-Info "Using Python: $Py"
 
+  # 1) pywin32 확보/갱신
   & $Py -m pip install --upgrade --no-warn-script-location pywin32 | Out-Host
 
-  try {
-    & $Py -m pywin32_postinstall -install | Out-Host
-  } catch {
-    Write-Warn "pywin32_postinstall failed: $($_.Exception.Message)"
-  }
-
+  # 2) site-packages 루트 계산 (여러 방법으로 보강)
   $siteRoot = ""
   try { $siteRoot = (& $Py -c "import site; print(site.getsitepackages()[0])").Trim() } catch {}
   if (-not $siteRoot) {
     try { $siteRoot = (& $Py -c "import sysconfig; print(sysconfig.get_paths()['platlib'])").Trim() } catch {}
   }
+  if (-not $siteRoot) {
+    try { $siteRoot = (& $Py -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())").Trim() } catch {}
+  }
   if (-not $siteRoot -or -not (Test-Path $siteRoot)) {
     throw "Failed to resolve site-packages path."
   }
 
-  $candidates = @(
+  # 3) 모듈 위치 기준으로 PythonService.exe 추적 (가장 신뢰도 높음)
+  $byModule1 = ""
+  $byModule2 = ""
+  try {
+    $byModule1 = (& $Py -c "import pathlib, win32serviceutil; print(pathlib.Path(win32serviceutil.__file__).with_name('PythonService.exe'))").Trim()
+  } catch {}
+  try {
+    $byModule2 = (& $Py -c "import pathlib, win32api; print(pathlib.Path(win32api.__file__).parent / 'PythonService.exe')").Trim()
+  } catch {}
+
+  # 4) 표준 후보 경로들
+  $candidates = @()
+  if ($byModule1) { $candidates += $byModule1 }
+  if ($byModule2) { $candidates += $byModule2 }
+  $candidates += @(
     (Join-Path $siteRoot 'win32\PythonService.exe'),
     (Join-Path $siteRoot 'win32\pythonservice.exe'),
     (Join-Path $siteRoot 'pywin32_system32\PythonService.exe'),
     (Join-Path $siteRoot 'pywin32_system32\pythonservice.exe')
   )
 
-  $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-
-  if (-not $found) {
-    & $Py -m pip install --force-reinstall pywin32 | Out-Host
-    try { & $Py -m pywin32_postinstall -install | Out-Host } catch {}
-    $found = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
-  }
-
+  # 5) 존재 확인
+  $found = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
   if (-not $found) {
     throw "PythonService.exe not found. Tried: $($candidates -join ', ')"
   }
