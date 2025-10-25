@@ -1,0 +1,167 @@
+///////////////////////////////////////////////////////////////////////////////
+// aid_config_public.json5
+// Date: 2025/10/22
+///////////////////////////////////////////////////////////////////////////////
+{
+  //────────────────────────────────────────────────────────
+  // AI Mode Select
+  //────────────────────────────────────────────────────────  
+  "AIDaemon": {
+    // AIS (AI Server), AIC(AI Client)
+    "Daemon Type": {
+      "_aid_server": true,
+      "_aid_client": false
+    },
+    // Debug Mode
+    "_test_mode": false
+  },
+  
+  //────────────────────────────────────────────────────────
+  // Operator Set Values
+  //────────────────────────────────────────────────────────    
+  "Operation" : {
+    // Set Type
+    "Type": {
+      "_aid_performance": "baseball",   // baseball, golf, ...
+      "_aid_league": "KBO",
+    },
+    // Set Game Information
+    "Game Info": {
+      "Team":{
+        "_home_team_name"         : "LG",
+        "_away_team_name"         : "DOOSAN",    
+      },
+    },
+    // Set Trackman Information (optional)
+    "Trackman": {
+      "_websocket_url": "wss://caster.spotistics.com",
+      "_websocket_port"         : "9093",
+      "_websocket_port_lg"      : "9093",
+      "_websocket_port_doosan"  : "9092",
+      "_websocket_port_kia"     : "9085",
+      "_websocket_port_hanhwa"  : "9082"
+    },
+    // Set Data Convert
+    "Convert": {
+      "Player Name Change": {
+        "detect_name": "",
+        "new_name": ""
+      }
+    },
+  },
+  
+  //────────────────────────────────────────────────────────
+  // Video Output
+  //────────────────────────────────────────────────────────    
+  "Output": {
+    // Set Video Output
+    "Video Output": {
+      "_output_codec"     : "h265",      
+      "_output_fps"       : 30,
+      "_output_width"     : 1920,
+      "_output_height"    : 1080,      
+      "_output_gop"       : 30,
+      "_output_bitrate"   : 800,
+      "_output_maxrate"   : 1200,
+      "_output_bufsize"   : 2000,
+    }
+  },
+
+  //────────────────────────────────────────────────────────
+  // User Interface
+  //────────────────────────────────────────────────────────    
+  "User Interface": {
+    // Set Live Player (on server mode)
+    "Live Player": {
+      "_live_player_enabled": false,
+      "_live_player_save_file": false,
+      "_live_player_save_folder": "C:/recordings/",
+      "_live_player_waiting_percentage": 20,
+      "_live_player_repeat_time": 0
+    },
+    // Set Live Detector (on server mode)
+    "Live Detector": {
+      "_rtsp_server": false,
+      "_rtsp_client": false,
+      "_rtsp_enabled_detector": false,
+      "_rtsp_server_ip_addr": "10.82.9.1",
+      "_rtsp_port": 8554,
+    }
+  },
+
+  // ─────────────────────────────────────────────
+  // External Device
+  // ─────────────────────────────────────────────
+  "External Device" : {
+    // Set Sensor Information
+    "Sensor": {
+      "Type": "TI",
+      "url": "wss://caster.spotistics.com",
+    },
+  },
+  
+  // ─────────────────────────────────────────────
+  // Detection
+  // ─────────────────────────────────────────────
+  "Detect": {
+    "_detection_viewer": true,
+    // Set Manual Detect Option
+    "Manual Detector": {
+      "detect_type": 1,
+      "detector_fps": 15
+    },
+    "Batter Detect Info": {
+      "_ring_buffer_duration_batter": 10,
+      "_batter_detect_prev_frame": -20,
+      "_batter_detect_post_frame": 45,
+      "_batter_ball_afterimage_frame": 50,
+      "_batter_ball_min_size": 9,
+      "_batter_ball_max_size": 25,
+      "_batter_target_left": 0.2,
+      "_batter_target_right": 1.0,
+      "_batter_target_top": 0.0,
+      "_batter_target_bottom": 0.85,
+      "_batter_hit_RH_area_left": 380,
+      "_batter_hit_RH_area_right": 940,
+      "_batter_hit_RH_area_top": 400,
+      "_batter_hit_RH_area_bottom": 780,
+      "_batter_hit_RH_area_left": 850,
+      "_batter_hit_RH_area_right": 1540,
+      "_batter_hit_RH_area_top": 350,
+      "_batter_hit_RH_area_bottom": 780
+    },
+    "Pitcher Detect Info": {
+      "_ring_buffer_duration_pitcher": 10,
+      "_pitcher_detect_prev_frame": -20,
+      "_pitcher_detect_post_frame": 45,
+      "_pitcher_ball_afterimage_frame": 50,
+      "_pitcher_ball_min_size": 9,
+      "_pitcher_ball_max_size": 25,
+      "_pitcher_target_left": 0.2,
+      "_pitcher_target_right": 1.0,
+      "_pitcher_target_top": 0.0,
+      "_pitcher_target_bottom": 0.85,
+      "_pitcher_detect_left": 380,
+      "_pitcher_detect_right": 940,
+      "_pitcher_detect_top": 400,
+      "_pitcher_detect_bottom": 780      
+    },
+    "Hit Detect Info": {
+      "_ring_buffer_duration_hit": 10,
+      "_hit_auto_detect_permit_sec": 0.5,
+      "_hit_detect_prev_frame": 0,
+      "_hit_detect_post_sec": 2,
+      "_hit_ball_afterimage_frame": 15,
+      "_hit_ball_min_size": 12,
+      "_hit_ball_max_size": 25,
+      "_hit_detect_init_x": 890,
+      "_hit_detect_init_y": 960,
+      "_hit_detect_init_left": 800,
+      "_hit_detect_init_right": 1000,
+      "_hit_detect_init_top": 830,
+      "_hit_detect_init_bottom": 925,
+      "_hit_minimum_distance": 20,
+      "_hit_tracking_window_scale": 1.0      
+    }
+  }
+}

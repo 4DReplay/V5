@@ -1,0 +1,19 @@
+{									
+	"version": "4.2.0.10",					
+	"packageVersion": "1.0.0.1",	
+	"programFileList": [			
+		"MMdClient.exe",			
+		"ESMVisualServo.dll",		
+		"ESMMovieMaker.dll",		
+		"FDGBCommLib.dll",			
+		"ESMPreprocessor.dll",		
+		"ESMFFDemuxer.dll",			
+		"ESMFFDecoder.dll",			
+		"FDGBControlLib.dll",		
+		"ESMThreadPoolManager.dll",	
+		"ESMNvconverter.dll",		
+		"ESMNvdec.dll",				
+		"ESMNvenc.dll",				
+		"mask_img.png"				
+	]								
+}									

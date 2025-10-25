@@ -1,0 +1,41 @@
+///////////////////////////////////////////////////////////////////////////////
+// dms_config.json5 (de-duplicated)
+// Date: 2025/10/24
+///////////////////////////////////////////////////////////////////////////////
+{
+  // 에이전트(이 PC의 DaemonManager) REST/WS
+  "listen_host": "0.0.0.0",
+  "listen_port": 5051,
+  "auth_token":  "CHANGE_ME_LONG_RANDOM",
+
+  // 중앙 Orchestrator(선택)
+  "orchestrator": {
+    "ws_url": "ws://OC_HOST:6060/agent",
+    "auth_token": "CHANGE_ME_LONG_RANDOM",
+    "agent_id": "pc-001"
+  },
+
+  // 이 PC에서 관리할 데몬들
+  "daemons": [
+    {
+      "id": "AId",
+      "run": "C:\\Program Files\\Python310\\python.exe C:\\4DReplay\\V5\\daemon\\AId\\aid_main.py",
+      "workdir": "C:\\4DReplay\\V5\\daemon\\AId",
+      "env": { "AID_LOG_DIR": "C:\\4DReplay\\V5\\logs\\daemons\\AId" },
+      "stdout_fixed": "C:\\4DReplay\\V5\\logs\\daemons\\AId\\daemon_fixed.out.log",
+      "stderr_fixed": "C:\\4DReplay\\V5\\logs\\daemons\\AId\\daemon_fixed.err.log",
+      "restart": { "auto": true, "backoff_ms": 5000, "max_retries": 0 }
+    },
+    // CCd Control
+    {
+      "id": "CCd",
+      "run": "C:\\4DReplay\\V5\\daemon\\CCd\\CCd.exe",
+      "workdir": "C:\\4DReplay\\V5\\daemon\\CCd",
+      "stdout_fixed": "C:\\4DReplay\\V5\\logs\\daemon_ccd_fixed.out.log",
+      "stderr_fixed": "C:\\4DReplay\\V5\\logs\\daemons_ccd_fixed.err.log"
+    }
+  ],
+
+  // 로그뷰: 폴링 주기(웹 UI가 /logs/fixed를 2s마다 읽는 용도)
+  "log_poll_ms": 1000
+}

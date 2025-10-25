@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "C:\\4DReplay\\AID\\src\\aid_main.py",
+            "console": "integratedTerminal",            
+        }
+    ]
+}

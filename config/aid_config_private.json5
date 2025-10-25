@@ -1,0 +1,694 @@
+///////////////////////////////////////////////////////////////////////////////
+// aid_config.json5 (de-duplicated)
+// Single source of truth without redundant copies.
+// Date: 2025/10/20
+///////////////////////////////////////////////////////////////////////////////
+{
+  //────────────────────────────────────────────────────────
+  // Release info (usually injected from md by loader)  
+  // 릴리즈 정보, release.md 파일로 부터 최신의 정보로 update
+  //────────────────────────────────────────────────────────
+  "Information": {
+    "_product": "AId",
+    "_version": "",
+    "_release_date": ""    
+  },
+
+  //────────────────────────────────────────────────────────
+  // Processing Type from MTd
+  // 프로세스 타입 정의
+  //────────────────────────────────────────────────────────
+  "Category": {
+    // Output Type Definitions
+    "Type Output": {
+      "_type_output"            : 0x00, // type default null
+      "_type_output_single"     : 0x01, // Single view output
+      "_type_output_multi_view" : 0x02, // Multi-view output (e.g., synchronized multiple cameras)
+      "_type_output_mosaic_view": 0x03  // Mosaic or tiled layout output (combined multiple views)
+    },
+    // Process Type Definitions
+    "Type Process": {   
+      "_type_process"                     : 0x00, // type default null
+      "_type_process_calibration_each"    : 0x01, // Muti Camera, return the calibrated each files
+      "_type_process_calibration_4d"      : 0x02, // 4DReplay File Creation
+      "_type_process_stabilization"       : 0x03  // Video stabilization process (motion compensation)
+    },
+    // Analysis Type Definitions  
+    "Type Analysis": {
+      "_type_analysis"                          : 0x00, // type default null
+      "_type_analysis_sw_person_tracking"       : 0x01, // Software-based person tracking (pure CPU/GPU software)
+      "_type_analysis_sw_object_tracking"       : 0x02, // Software-based object tracking
+      "_type_analysis_hw_person_tracking"       : 0x03, // Hardware-accelerated person tracking (e.g., FPGA, ASIC)
+      "_type_analysis_sw_person_tracking_multi" : 0x04, // Software-based multi-person tracking (may be reused or extended)
+      "_type_analysis_hybrid_person_tracking"   : 0x05, // Hybrid (HW + SW) person tracking
+      "_type_analysis_hybrid_object_tracking"   : 0x06, // Hybrid (HW + SW) object tracking
+      "_type_analysis_adjustment"               : 0x07  // Analysis result adjustment or fine-tuning
+    },
+    // Performance(Sports/Game) Type Definitions
+    "Type Performance": {
+      "_type_performance"                 : 0x00, // type default null
+      "_type_performance_baseball"        : 0x01, // General baseball performance analysis
+      "_type_performance_baseball_kbo"    : 0x02, // Baseball performance for KBO league (localized)
+      "_type_performance_baseball_llws"   : 0x03, // Baseball performance for low-speed or Little League scenarios
+      "_type_performance_baseball_mlb"    : 0x04, // Baseball performance for MLB-level athletes
+      "_type_performance_golf"            : 0x10, // Golf performance analysis
+      "_type_performance_soccer"          : 0x20, // Soccer performance analysis
+      "_type_performance_basketball"      : 0x30, // Basketball performance analysis
+      "_type_performance_etc"             : 0x40  // Placeholder for additional or future performance categories
+    },
+    // Target(Object) Type Definitions
+    "Type Target": {
+      "_type_target"              : 0x00, // type default null
+      "_type_target_ball"         : 0x01, // Tracking target: ball (e.g., baseball, golf ball)
+      "_type_target_batter"       : 0x02, // Tracking target: batter
+      "_type_target_pitcher"      : 0x03, // Tracking target: pitcher
+      "_type_target_golfer"       : 0x04, // Tracking target: golfer
+      "_type_target_offense"      : 0x05, // Tracking target: offense player
+      "_type_target_defense"      : 0x06, // Tracking target: defense player
+      "_type_target_combat_pair"  : 0x07 // Tracking target: combat or paired participants (e.g., duel or match)
+    },
+    // Additional Attributes  
+    // Indicates if the subject is right-handed (true = right-handed)
+    "_is_right_handed": true
+  },
+
+  //────────────────────────────────────────────────────────
+  // Calibration
+  //────────────────────────────────────────────────────────
+  "Calibration":{
+    // Thread for Calibration
+    "Calibration Option": {
+      "_thread_file_calibration"    : [[]],      
+    },    
+    // Type of calibration
+    "Calibration Type": { 
+      "_calibration_no_audio"   : 0x01, 
+      "_calibration_with_audio" : 0x02 
+    },
+    // Variable for Calibration
+    "Calibration Variable": {
+      "_time_video_length": 0,
+      "_calibrate_camera_count": 0,
+      "_time_cali_time_per_camera": 0.083,
+      "_shared_audio_filename": [],
+      "_flip_option_cam": []
+    },
+    // Variable for Calibration
+    "Calibration Timing": {
+      "_time_video_length": 0,
+      "_calibrate_camera_count": 0,
+      "_time_cali_time_per_camera": 0
+    },
+  },
+
+  //────────────────────────────────────────────────────────
+  // Network 
+  //────────────────────────────────────────────────────────
+  "Network": {
+    "_daemon_port": 19737,
+    // RTSP Streaming
+    "RTSP": {
+      "_rtsp_viewers": {}
+    },
+    "WebSocket": {                        // ← single source
+      "_websocket_url": "ws://localhost",
+      "_websocket_port": 8001
+    },
+    "WSSeeds": {                        // ← single source
+      "_recv_hit_msg": {
+        Kind: "Hit",
+        PlayId: "7047097f-7a77-4dff-acf1-5c0de0386c4a",
+        Time: "2025-02-24T13:01:07.265978+09:00",
+        data: {
+          LandingFlat: { Bearing: -31.565758, Distance: 95, HangTime: 10, X: 31.82, Y: -19.55 },
+          Launch: { Speed: 108.93237, VerticalAngle: 12.416922, HorizontalAngle: -25.26, SpinAxis: 105.02 }
+        }
+      },
+      "_recv_pitch_msg": {
+        Kind: "Pitch",
+        PlayId: "7047097f-7a77-4dff-acf1-5c0de0386c4a",
+        Time: "2025-02-24T13:01:07.265978+09:00",
+        data: { Release: { Speed: 123.5261, SpinRate: 1989.8381 }, pitchType: "Curveball" }
+      }
+    },
+  },
+
+  //────────────────────────────────────────────────────────
+  // Video 
+  //────────────────────────────────────────────────────────
+  "Video": {
+    // Input Video
+    "Input Video Type": {
+      "_input_fps"    : 30,
+      "_input_width"  : 1920,
+      "_input_height" : 1080 
+    },
+    // For codec string, map using Constants.Codec in code when needed.
+    "Output Video Type": {
+      "_output_preset"            : "p4",        
+      "_output_bframes"           : 1,      
+      "_output_bitrate_k"         : 1000,
+      "_output_datetime"          : "",
+      "_output_shared_audio_type" : "m4a",
+      "_output_individual"        : true
+    },
+    "Codec Variable": { 
+      "_codec_h264_cpu" : "h264", 
+      "_codec_h264"     : "h264", 
+      "_codec_h265"     : "h265", 
+      "_codec_av1"      : "av1" 
+    },
+    "Codec Text": { 
+      "_txt_codec_h264": "H.264", 
+      "_txt_codec_hevc": "H.265", 
+      "_txt_codec_av1": "AV1" 
+    },
+    "Video Format": { 
+      "_txt_format_MP4": "MP4", 
+      "_txt_format_MOV": "MOV", 
+      "_txt_format_MKV": "MKV" 
+    },
+    "Video Output": { 
+      "_txt_individual" : "individual", 
+      "_txt_combined"   : "combined" 
+    },
+    "Resolution Text": {
+      "_txt_resolution_HD"  : "HD", 
+      "_txt_resolution_FHD" : "FHD", 
+      "_txt_resolution_2K"  : "2K",
+      "_txt_resolution_QHD" : "QHD", 
+      "_txt_resolution_UHD" : "UHD", 
+      "_txt_resolution_4K"  : "4K", 
+      "_txt_resolution_8K"  : "8K"
+    },
+    "Resolution Dimensions": {
+      "_resolution_sd_width": 640, 
+      "_resolution_sd_height": 480,
+      "_resolution_svga_width": 800, 
+      "_resolution_svga_height": 600,
+      "_resolution_hd_width": 1280, 
+      "_resolution_hd_height": 720,
+      "_resolution_fhd_width": 1920, 
+      "_resolution_fhd_height": 1080,
+      "_resolution_2k_width": 2048, 
+      "_resolution_2k_height": 1080,
+      "_resolution_qhd_width": 2560, 
+      "_resolution_qhd_height": 1440,
+      "_resolution_uhd_width": 3840, 
+      "_resolution_uhd_height": 2160,
+      "_resolution_4k_width": 3840, 
+      "_resolution_4k_height": 2160,
+      "_resolution_8k_width": 7680, 
+      "_resolution_8k_height": 4320
+    }
+  },
+
+  // ─────────────────────────────────────────────
+  // Live Player
+  // ─────────────────────────────────────────────
+  "Live Player": {
+    // If code needs UI window name, read Constants.UI.live_player_window_name.
+    "Live Player": {
+      "_live_player_window_name": "Live Player",  // ← single source      
+      "_live_player_drawing_wait": 30,
+      "_live_player_loop_count": -1,
+      "_live_player_save_file": true,
+      "_live_player_playing_progress": 0,
+      "_live_player_playing_unlock": 50,
+      "_live_player_fullscreen": false,
+      "_live_player_is_paused": true
+    },
+    // Live Detection Variable
+    "Live Detection": {
+      "_player_status"          : {},
+      "_player_number"          : {},
+      "_player_handedness"      : {},
+      "_object_status_queue"    : {},
+      "_object_number_queue"    : {},
+      "_object_handedness_queue": {} // right -> true / left = False      
+    },
+    // Live Buffer
+    "Live Buffer": {
+      "_live_buffer_th": {},
+      "_live_mem_buffer": {},
+      "_live_mem_buffer_addr": {},
+      "_live_mem_buffer_status": {},
+      "_live_mem_buffer_receiver": {}
+    },   
+  },
+      
+  // ─────────────────────────────────────────────
+  // Runtime Memory Frames
+  // ─────────────────────────────────────────────
+  "Frames": {  
+    // Memory Frames
+    "Memory Frames" : {
+      "_frames_prev": [],
+      "_frames_curr": [],
+      "_frames_post": [],
+      "_frames_last": [],
+      "_frames_front": [],
+      "_frames_side": [],
+      "_frames_back": [],                      
+      "_clean_file_list": [],      
+      "_file_combine_list": [],
+      "_mem_temp_file": {}
+    },
+    // Live Frames
+    "Live Frames" : {
+      "_frames_live_prev": [],
+      "_frames_live_curr": [],
+      "_frames_live_post": [],
+      "_frames_live_last": []
+    },
+    // Ring Buffer Frames
+    "Ring Buffer": {
+      "_ring_buffer_duration_batter"  : 5,
+      "_ring_buffer_duration_pitcher" : 5,
+      "_ring_buffer_duration_hit"     : 10,
+      "_ring_buffer_duration_golfer"  : 5,
+      "_ring_buffer_duration_cricket" : 5,
+      "_ring_buffer_duration_nascar"  : 20
+    },
+  },
+
+  // ─────────────────────────────────────────────
+  // Detection
+  // ─────────────────────────────────────────────
+  "Detection": {
+    // Pose Detect Key Points
+    "Key Points": {
+      "_keypoint_pose_front": [],
+      "_keypoint_pose_side": [],
+      "_keypoint_pose_back": []
+    },
+    // Detection for Batter
+    "Batter Detect": {
+      "_batter_prev_frame"            : -8, 
+      "_batter_post_frame"            : 8, 
+      "_batter_ball_afterimage"       : 1,
+      "_batter_yolo_detect_size"      : 960, 
+      "_batter_yolo_confidence"       : 0.25, 
+      "_batter_yolo_batch"            : 10,
+      "_batter_yolo_detect_hit_conf"  : 0.01, 
+      "_batter_yolo_detect_hit_size"  : 960,
+      "_batter_ball_max_size"         : 25, 
+      "_batter_ball_min_size"         : 13,
+      "_batter_target_left"           : -1, 
+      "_batter_target_right"          : -1, 
+      "_batter_target_top"            : -1, 
+      "_batter_target_bottom"         : -1,
+      "_batter_detect_RH_area"        : [[0,0],[0,0]], 
+      "_batter_detect_LH_area"        : [[0,0],[0,0]],
+      "_batter_detect_RH_left"        : -1, 
+      "_batter_detect_RH_right"       : -1, 
+      "_batter_detect_RH_top"         : -1, 
+      "_batter_detect_RH_bottom"      : -1,
+      "_batter_detect_LH_left"        : -1, 
+      "_batter_detect_LH_right"       : -1, 
+      "_batter_detect_LH_top"         : -1, 
+      "_batter_detect_LH_bottom"      : -1,
+      "_batter_intersect_pos"         : []
+    },
+    // Detection for Pitcher
+    "Pitcher Detect": {
+      "_pitcher_prev_frame"           : 0, 
+      "_pitcher_post_frame"           : 65, 
+      "_pitcher_ball_afterimage"      : 50,
+      "_pitcher_yolo_size"            : 1280, 
+      "_pitcher_yolo_confidence"      : 0.15, 
+      "_pitcher_yolo_batch"           : 20,
+      "_pitcher_ball_max_size"        : 32, 
+      "_pitcher_ball_min_size"        : 28,
+      "_pitcher_target_left"          : -1, 
+      "_pitcher_target_right"         : -1, 
+      "_pitcher_target_top"           : -1, 
+      "_pitcher_target_bottom"        : -1,
+      "_pitcher_detect_area"          : [[0,0],[0,0]],
+      "_pitcher_detect_left"          : -1, 
+      "_pitcher_detect_right"         : -1, 
+      "_pitcher_detect_top"           : -1, 
+      "_pitcher_detect_bottom"        : -1
+    },
+    // Detection for Hit ball
+    "Hit Tracking": {
+      "_hit_detect_init_y"            : 1930,
+      "_hit_detect_init_right"        : 2000,
+      "_hit_detect_init_bottom"       : 1800,
+      "_hit_detect_zoom_ratio_height" : 7,
+      "_hit_auto_detect_permit_sec"   : 3.2,
+      "_hit_ellipse_angle"            : 0,
+      "_hit_prev_frame"               : 0,
+      "_hit_post_sec"                 : 2,
+      "_hit_ball_afterimage"          : 1500,
+      "_hit_ball_max_size"            : 25,
+      "_hit_ball_min_size"            : 15,
+      "_hit_minimum_distance"         : 20,
+      "_hit_detect_init_x"            : 1780, 
+      "_hit_detect_init_left"         : 1600, 
+      "_hit_detect_init_top"          : 1660, 
+      "_hit_tracking_window_scale"    : 1.5,
+      "_hit_detect_area"              : [[0,0],[0,0]],
+      "_hit_detect_zoom_ratio_width"  : 7, 
+      "_hit_detect_area_zoom"         : 5,
+      "_hit_yolo_detect_size_hit"     : 1280
+    },
+    // Params for Ball
+    "Ball Detect Params": {
+      "_ball_noise_reduce"      : 2, 
+      "_ball_max_contour"       : 12, 
+      "_ball_min_contour"       : 1,
+      "_ball_max_radius"        : 4, 
+      "_ball_min_radius"        : 1, 
+      "_ball_prev_window"       : 5, 
+      "_ball_reduce_distance"   : 1,
+      "_ball_bezier_num"        : 100000, 
+      "_ball_swing_bezier_num"  : 200, 
+      "_ball_linear_num"        : 1000000,
+      "_ball_split_num"         : 5000, 
+      "_ball_sigma_value"       : 100, 
+      "_ball_hit_gap_margin"    : 60, 
+      "_ball_add_until_catcher" : 2
+    },
+  },
+
+  // ─────────────────────────────────────────────
+  // Drawing
+  // ─────────────────────────────────────────────
+  "Drawing": {
+    // Color Definition
+    "Colors": {
+      "_color_kbo_blue": [200,50,0],
+      "_color_kbo_blue_2": [100,25,0],
+      "_color_kbo_lightblue": [239,174,0],
+      "_color_kbo_red": [36,28,237], 
+      "_color_kbo_silver": [192,190,188], 
+      "_color_kbo_gold": [119,161,179],
+      "_color_kbo_mint": [189,165,0], 
+      "_color_kbo_orange": [0,78,252], 
+      "_color_kbo_white": [255,255,255],
+      "_color_joint": [0,255,255], 
+      "_color_line": [0,255,0], 
+      "_color_swing": [255,255,0],
+      "_color_main_line": [0,0,255], 
+      "_color_ext_line": [0,0,255], 
+      "_color_graph": [0,200,0], 
+      "_color_digit": [0,0,255],
+      "_color_light_blue": [255,255,0],
+      "_color_dark_blue": [139,0,0],
+      "_color_title": [230,230,230], 
+      "_color_title_box": [50,50,50], 
+      "_color_baseline": [255,255,255],
+      "_color_base_indicator": [113,184,251], 
+      "_color_line_shoulder": [176,101,253], 
+      "_color_line_hip": [202,93,145],
+      "_color_swing_angle": [113,184,251], 
+      "_color_swing_angle_x": [34,147,255],
+      "_color_swing_angle_y": [80,80,252],
+      "_color_swing_angle_z": [255,125,188], 
+      "_color_waist_angle": [61,186,136],
+      "_color_elbow_l_angle": [176,101,253], 
+      "_color_elbow_r_angle": [202,93,145],
+      "_color_body_angle": [0,255,0], 
+      "_color_swing_speed": [219,147,76],
+      "_color_hand_tracking": [0,255,255], 
+      "_color_waist_vertical": [0,0,255],
+      "_color_max_value": [255,0,0], 
+      "_color_min_value": [0,0,255],
+      "_color_max_value_text": [255,0,0], 
+      "_color_min_value_text": [0,0,255]
+    },
+    // Drawing Params
+    "Drawing Params": {
+      "_line_width"       : 3,
+      "_points_size"      : 5,
+      "_dotted_line_gap"  : 10,
+      "_frame_margin"     : 50, 
+      "_pause_frame_cnt"  : 15,
+      "_text_size_title"  : 0.5,
+      "_text_size_value"  : 0.7
+    },
+    // UI Variable
+    "UI Constants": {
+      "_text_align_left"  : 0,
+      "_text_align_center": 1,
+      "_text_align_right" : 2
+    },
+    // Images path
+    "Images": {
+      "pitcher_box_png": "./images/pitch.png",
+      "bat_box1_png": "./images/bat1.png",
+      "bat_box2_png": "./images/bat2.png",
+      "hit_box1_png": "./images/hit1.png",
+      "hit_box2_png": "./images/hit2.png",
+      "hit_box3_png": "./images/hit3.png",
+      "kbo_logo_path": "./images/kbo_logo.png",
+      "kbo_logo_path2": "./images/kbo_logo2.png",
+      "team_logo1_dir": "./images/baseball_team_logo1",
+      "team_logo2_dir": "./images/baseball_team_logo2"
+    },
+    // Cache for drawing
+    "Cache" : {
+      "_cached_trajectory_finish_layer"       : null,
+      "_cached_trajectory_multi_finish_layer" : null, 
+      "_cached_baseball_info_layer"           : null,
+    },
+  },
+
+  // ─────────────────────────────────────────────
+  // Internal Events
+  // ─────────────────────────────────────────────
+  "Events": {
+    // Mouse Event Definition
+    "Mouse Click Event": {
+      "_mouse_click_left"   : 0x01,
+      "_mouse_click_right"  : 0x02,
+      "_mouse_click_middle" : 0x03
+    },    
+  },
+
+  // ─────────────────────────────────────────────
+  // Internal Device
+  // ─────────────────────────────────────────────
+  "Internal Library": {
+    // GPU Setting
+    "GPU Config": {
+      "_gpu_session_init_cnt": 6,
+      "_gpu_session_max_cnt": 12 
+    },
+    // YOLO Definition
+    "Yolo Model" : {
+      "_yolo_model_s" : [],
+      "_yolo_model_m" : [],
+      "_yolo_model_l" : [],
+      "_yolo_model_x" : [],
+      // YOLO Pose
+      "_yolo_model_pose_n" : [],
+      "_yolo_model_pose_s" : [],
+      "_yolo_model_pose_m" : [],
+      "_yolo_model_pose_l" : [],
+      "_yolo_model_pose_x" : [],
+    },
+    "Yolo Variable" : {
+        "_yolo_detect_size"       : 416, //                               # 416 × 416 → 속도와 정확도의 균형 / 512 X 512 /  608 × 608 → 높은 정확도 (속도 느림)
+        "_yolo_detect_high_size"  : 608, //                               # 416 × 416 → 속도와 정확도의 균형 / 512 X 512 /  608 × 608 → 높은 정확도 (속도 느림)
+        "_yolo_detect_highist"    : 832, //                               # 416 → 640 or 832 로 증가
+        "_yolo_class_id_person"   : 0,
+        "_yolo_class_id_car"      : 2,
+        "_yolo_class_id_baseball" : 32,
+        "_yolo_class_id_basebat"  : 39,
+    },
+    "Yolo Path": {      
+      // YOLO V8
+      "_yolo_pt_8_s"       : "./library/yolo/yolov8s.pt"  ,          // YOLO small
+      "_yolo_pt_8_m"       : "./library/yolo/yolov8m.pt"  ,          // YOLO medium
+      "_yolo_pt_8_l"       : "./library/yolo/yolov8l.pt"  ,          // YOLO large
+      "_yolo_pt_8_x"       : "./library/yolo/yolov8x.pt"  ,          // YOLO ex large
+      // YOLO V8 pose
+      "_yolo_pt_8_pose_n"   : "./library/yolo/yolov8n-pose.pt",      // YOLO pose
+      "_yolo_pt_8_pose_s"   : "./library/yolo/yolov8s-pose.pt",      // YOLO pose
+      "_yolo_pt_8_pose_m"   : "./library/yolo/yolov8m-pose.pt",      // YOLO pose
+      "_yolo_pt_8_pose_l"   : "./library/yolo/yolov8l-pose.pt",      // YOLO pose
+      "_yolo_pt_8_pose_x"   : "./library/yolo/yolov8x-pose.pt",      // YOLO pose
+      // YOLO V9
+      "_yolo_pt_9_t "      : "./library/yolo/yolov9t.pt"  ,          // YOLO 
+      "_yolo_pt_9_s "      : "./library/yolo/yolov9s.pt"  ,          // YOLO 
+      "_yolo_pt_9_m "      : "./library/yolo/yolov9m.pt"  ,          // YOLO 
+      "_yolo_pt_9_c "      : "./library/yolo/yolov9c.pt"  ,           // YOLO 
+      "_yolo_pt_9_e "      : "./library/yolo/yolov9e.pt"  ,          // YOLO 
+      // YOLO V10
+      "_yolo_pt_10_n"       : "./library/yolo/yolov10n.pt" ,          // YOLO 
+      "_yolo_pt_10_s"       : "./library/yolo/yolov10s.pt" ,          // YOLO 
+      "_yolo_pt_10_m"       : "./library/yolo/yolov10m.pt" ,          // YOLO 
+      "_yolo_pt_10_b"       : "./library/yolo/yolov10b.pt" ,          // YOLO 
+      "_yolo_pt_10_l"       : "./library/yolo/yolov10l.pt" ,          // YOLO 
+      "_yolo_pt_10_x"       : "./library/yolo/yolov10x.pt" ,          // YOLO 
+      // YOLO V11
+      "_yolo_pt_11_n"       : "./library/yolo/yolo11n.pt",          // YOLO 
+      "_yolo_pt_11_s"       : "./library/yolo/yolo11s.pt",          // YOLO 
+      "_yolo_pt_11_m"       : "./library/yolo/yolo11m.pt",          // YOLO 
+      "_yolo_pt_11_l"       : "./library/yolo/yolo11l.pt",          // YOLO 
+      "_yolo_pt_11_x"       : "./library/yolo/yolo11x.pt",          // YOLO 
+      // YOLO V12
+      "_yolo_pt_12_n"       : "./library/yolo/yolo12n.pt",          // YOLO 
+      "_yolo_pt_12_s"       : "./library/yolo/yolo12s.pt",          // YOLO 
+      "_yolo_pt_12_m"       : "./library/yolo/yolo12m.pt",          // YOLO 
+      "_yolo_pt_12_l"       : "./library/yolo/yolo12l.pt",          // YOLO 
+      "_yolo_pt_12_x"       : "./library/yolo/yolo12x.pt",          // YOLO 
+    },
+  },
+
+  // ─────────────────────────────────────────────
+  // External Device
+  // ─────────────────────────────────────────────
+  "External Device": {
+    "Trackman State": {
+      "_api_key"      : "springs:V4ykwrLKZaouflczdmVqIuLwxsR5pc0Xi8ib2B7Hg0MEGL7dFfXBmsIVqo+xMJW6",
+      "_api_client"   : null,
+      "_trackman_mode": false,
+      "_landingflat_distance": 120,
+      "_landingflat_bearing": -31.565758,
+      "_landingflat_hangtime": 6,
+      "_landingflat_x": 31.82449247757562,
+      "_landingflat_y": -19.552350176598537,
+      "_launch_speed": 108.5,
+      "_launch_v_angle": 12.416922,
+      "_launch_h_angle": 12.416922,
+      "_launch_spinaxis": 105.01997,
+      "_release_speed": 123.2,
+      "_release_spinrate": 1989,
+      "_pitch_type": "Curveball",
+      "_playId_hit": "",
+      "_playId_pitch": ""
+    },
+  },
+
+  //────────────────────────────────────────────────────────
+  // Database
+  //────────────────────────────────────────────────────────
+  "Database": {
+    "Baseball DB":{
+      "_db_file"          : "src/fd_db/baseball.db",
+      "_db_data_path"     : "src/fd_db/data",
+      "_baseball_db"      : null,
+      "_team_code"        : 3,
+      "_player_no"        : 45,
+      "_pitcher_team"     : 6,
+      "_pitcher_no"       : 99,
+      "_batter_team"      : 3,
+      "_batter_no"        : 5,
+      "_option"           : "Fastball:1,Slider:1,Curveball:1",
+      "_interval_delay"   : 0,
+      "_multi_line_cnt"   : 1,
+      "_tracking_data_path"   : "" ,
+      "_tracking_video_path"  : ""  ,  
+      "_processing"       : false,
+      "_magnifier_pos"    : [0, 0],
+    },
+  },
+
+  //────────────────────────────────────────────────────────
+  // Paths
+  //────────────────────────────────────────────────────────
+  "Paths": {
+    "_path_base"          : "",
+    "_path_logo_image"    : "./images/Panasonic.png",
+    "_path_ffmpeg"        : "C:/4DReplay/AId/library/ffmpeg/ffmpeg.exe",
+    "_path_font_main"     : "./font/Paperlogy-8ExtraBold.ttf",
+    "_path_font_sub"      : "./font/Paperlogy-7Bold.ttf",
+    "_path_local_temp"    : "./temp",  
+  },
+
+  //────────────────────────────────────────────────────────
+  // Baseball - KBO
+  //────────────────────────────────────────────────────────
+  "Baseball": {
+    "Player" : {      
+      "_teams_info"             : null,
+      "_pitcher_player"         : null,
+      "_batter_player"          : null,
+      "_pitcher_player_unknown" : "Unknown",
+      "_batter_player_unknown"  : "Unknown"
+    },
+    "KBO": {
+      "Pitch Type Korean": {
+        "Fastball": "패스트볼",
+        "Four-seam Fastball": "포심 패스트볼",
+        "Two-seam Fastball": "투심 패스트볼",
+        "Cutter": "커터",
+        "Slider": "슬라이더",
+        "Curveball": "커브",
+        "Knuckle Curve": "너클 커브",
+        "ChangeUp": "체인지업",
+        "Splitter": "스플리터",
+        "Sinker": "싱커",
+        "Knuckleball": "너클볼",
+        "Sweeper": "스위퍼",
+        "Forkball": "포크볼",
+        "Eephus": "이퍼스"
+      },
+      "Team Information" :{
+        "_team_code_1" :  7 , // LG
+        "_team_code_2"  : 1 , // DOOSAN
+        "_team_code_3"  : 5 , // KIA
+        "_team_code_4"  : 2 , // LOTTE
+        "_team_code_5"  : 3 , // SAMSUNG
+        "_team_code_6"  : 4 , // HANWHA
+        "_team_code_7"  : 16 , // KT
+        "_team_code_8"  : 15 , // NC
+        "_team_code_9"  : 6 , // KIWOOM
+        "_team_code_10" : 82 , // SSG
+        // all star
+        "_team_code_11" : 11 , // BUKBU
+        "_team_code_12" : 12 , // NAMBU
+        "_team_code_13" : 13 , // DREAM
+        "_team_code_14" : 14 , // NANUM
+        //team name
+        "_team_name_1" : "LG" ,
+        "_team_name_2" : "DOOSAN",
+        "_team_name_3" : "KIA",
+        "_team_name_4" : "LOTTE",
+        "_team_name_5" : "SAMSUNG",
+        "_team_name_6" : "HANWHA",
+        "_team_name_7" : "KT",
+        "_team_name_8" : "NC",
+        "_team_name_9" : "KIWOOM",
+        "_team_name_10" : "SSG",
+        // all start
+        "_team_name_11" : "BUKBU",
+        "_team_name_12" : "NAMBU",
+        "_team_name_13" : "DREAM",
+        "_team_name_14" : "NANUM",
+      },
+      "Team Logo": {
+        "1":  { box1: "baseball_team_logo1/1.png",  box2: "baseball_team_logo2/1.png"  },
+        "2":  { box1: "baseball_team_logo1/2.png",  box2: "baseball_team_logo2/2.png"  },
+        "3":  { box1: "baseball_team_logo1/3.png",  box2: "baseball_team_logo2/3.png"  },
+        "4":  { box1: "baseball_team_logo1/4.png",  box2: "baseball_team_logo2/4.png"  },
+        "5":  { box1: "baseball_team_logo1/5.png",  box2: "baseball_team_logo2/5.png"  },
+        "6":  { box1: "baseball_team_logo1/6.png",  box2: "baseball_team_logo2/6.png"  },
+        "7":  { box1: "baseball_team_logo1/7.png",  box2: "baseball_team_logo2/7.png"  },
+        "8":  { box1: "baseball_team_logo1/8.png",  box2: "baseball_team_logo2/8.png"  },
+        "9":  { box1: "baseball_team_logo1/9.png",  box2: "baseball_team_logo2/9.png"  },
+        "10": { box1: "baseball_team_logo1/10.png", box2: "baseball_team_logo2/10.png" }
+      },
+      // 구종 변환 딕셔너리
+      "PITCH_TYPE_MAP" : {
+          "Fastball": "패스트볼",
+          "Four-seam Fastball": "포심 패스트볼",
+          "Two-seam Fastball": "투심 패스트볼",
+          "Cutter": "커터",
+          "Slider": "슬라이더",
+          "Curveball": "커브",
+          "Knuckle Curve": "너클 커브",
+          "ChangeUp": "체인지업",
+          "Splitter": "스플리터",
+          "Sinker": "싱커",
+          "Knuckleball": "너클볼",
+          "Sweeper": "스위퍼",
+          "Forkball": "포크볼",
+          "Eephus": "이퍼스"
+      },
+    }
+  }  
+}

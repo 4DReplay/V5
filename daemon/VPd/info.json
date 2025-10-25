@@ -1,0 +1,12 @@
+{									
+	"version": "4.2.lpx.5.del",					
+	"packageVersion": "1.0.0.2",	
+	"programFileList": [			
+		"VPd.exe",					
+		"ESMNvdec.dll",				
+		"ESMNvenc.dll",				
+		"ESMNvresizer.dll",			
+		"ESMNvrotator.dll",			
+		"ESMNvblenderV4.dll"					
+	]								
+}									
