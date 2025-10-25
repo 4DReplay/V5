@@ -29,6 +29,9 @@ dist/
 video/
 
 # JetBrains IDE
+.txt
+
+# JetBrains IDE
 .idea/
 
 # Unit test reports
