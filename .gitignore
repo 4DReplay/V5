@@ -42,8 +42,8 @@ Thumbs.db
 
 # Applications
 *.app
-# *.exe
 *.war
+# *.exe # include exe files
 
 # Large media files
 *.mp4
@@ -56,10 +56,10 @@ Thumbs.db
 *.wmv
 *.pt
 *.pkl
-# *.jpg
-# *.db
-# *.dll
-# *.lib
+*.db      # include database files
+# *.jpg     # include image files
+# *.dll     # include dll files -> too big
+# *.lib     # include library files
 
 
 # Weights files
