@@ -42,7 +42,7 @@ Thumbs.db
 
 # Applications
 *.app
-*.exe
+# *.exe
 *.war
 
 # Large media files
@@ -54,12 +54,13 @@ Thumbs.db
 *.flv
 *.mov
 *.wmv
-*.jpg
-*.db
 *.pt
-*.dll
-*.lib
 *.pkl
+# *.jpg
+# *.db
+# *.dll
+# *.lib
+
 
 # Weights files
 *.weights
