@@ -9,7 +9,7 @@
     { "name":"CCd", "path":"daemon/CCd/CCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
     { "name":"MTd", "path":"daemon/MTd/MTd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
     { "name":"PCd", "path":"daemon/PCd/PCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"SCd", "path":"daemon/MTd/MTd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"GCd", "path":"daemon/PCd/PCd.exe", "args":[], "auto_restart":true, "start_on_boot":true }
+    { "name":"SCd", "path":"daemon/MTd/SCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
+    { "name":"GCd", "path":"daemon/PCd/GCd.exe", "args":[], "auto_restart":true, "start_on_boot":true }
   ]
 }
