@@ -1,16 +1,28 @@
 # -----------------------------------------------------------------------------
-# install_dms.ps1 (final, PowerShell-only, ASCII-safe)
-# date: 2025-10-26
+# install_dms.ps1  (portable, PowerShell-only, ASCII-safe)
+# date : 2025-10-27
 # owner: 4DReplay
-# Usage:
+#
+# 목적:
+#   - 어떤 PC에서든 동일 절차로 DMs 윈도우 서비스를 설치/재설치/삭제
+#   - 기존 서비스가 있으면: STOP -> DELETE -> (재)설치
+#   - pywin32 설치/검증, 레지스트리(Parameters) 보강, 방화벽 오픈, 지연자동시작
+#   - sc(alias) 충돌 방지: 항상 sc.exe 사용
+#
+# 사용법(관리자 PowerShell):
+#   cd C:\4DReplay\V5
 #   powershell -ExecutionPolicy Bypass -File service\DMs\install_dms.ps1 -OpenFirewall
 #   powershell -ExecutionPolicy Bypass -File service\DMs\install_dms.ps1 -Uninstall
-# Options:
+#
+# 옵션:
 #   -PythonPath "C:\Program Files\Python310\python.exe"
-#   -StartType auto|delayed-auto|demand|disabled  (default: delayed-auto)
-#   -OpenFirewall  (allow TCP 51050)
-#   -Uninstall     (remove the service)
-# Requires: Administrator
+#   -StartType auto|delayed-auto|demand|disabled   (default: delayed-auto)
+#   -OpenFirewall                                   (TCP 51050 허용)
+#   -Uninstall                                      (서비스 제거만)
+#
+# 요구:
+#   - Windows 관리자 권한
+#   - Python 3.10(x64) 권장
 # -----------------------------------------------------------------------------
 
 param(
@@ -23,37 +35,52 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# --- Helpers -----------------------------------------------------------------
 function Write-Info($m){ Write-Host $m -ForegroundColor Cyan }
 function Write-Warn($m){ Write-Host $m -ForegroundColor Yellow }
-function Write-Err ($m){ Write-Host $m -ForegroundColor Red   }
+function Write-Err ($m){ Write-Host $m -ForegroundColor Red }
 
 function Assert-Admin {
   $id = [Security.Principal.WindowsIdentity]::GetCurrent()
   $pr = New-Object Security.Principal.WindowsPrincipal($id)
   if (-not $pr.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-    throw "This script must be run as Administrator."
+    throw "Run this script as Administrator."
   }
 }
 
-# Always call real sc.exe (avoid 'sc' alias = Set-Content)
+# Always real sc.exe (avoid 'sc' alias = Set-Content)
 $SC = Join-Path $env:SystemRoot "System32\sc.exe"
 if (-not (Test-Path $SC)) { throw "sc.exe not found: $SC" }
-function Invoke-Sc { param([string[]]$Args) & $SC @Args }
 
-# --- Paths -------------------------------------------------------------------
-$RepoRoot  = (Resolve-Path "$PSScriptRoot\..\..").Path
-$ServicePy = Join-Path $PSScriptRoot 'dms_service.py'
-$SvcName   = 'DMs'
-$Display   = '4DReplay DMs Agent'
-$LogDir    = Join-Path $RepoRoot 'logs\DMS'
+function Sc-Line {
+  param([string]$ArgsLine)
+  $p = Start-Process -FilePath $SC -ArgumentList $ArgsLine -NoNewWindow -Wait -PassThru
+  if ($p.ExitCode -ne 0) { throw "sc.exe $ArgsLine failed (ExitCode=$($p.ExitCode))" }
+}
+
+# 64-bit registry writers (강제 64비트 view)
+$RegHKLM64 = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
+  [Microsoft.Win32.RegistryHive]::LocalMachine,
+  [Microsoft.Win32.RegistryView]::Registry64
+)
+
+# --- Paths / Constants --------------------------------------------------------
+$RepoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
+$SvcName  = 'DMs'
+$Display  = '4DReplay DMs Agent'
+$LogDir   = Join-Path $RepoRoot 'logs\DMS'
+$ServicePy= Join-Path $PSScriptRoot 'dms_service.py'
+
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
+# ensure packages
 New-Item -ItemType File -Force "$RepoRoot\service\__init__.py"     | Out-Null
 New-Item -ItemType File -Force "$RepoRoot\service\DMs\__init__.py" | Out-Null
 
-# --- Resolve Python ----------------------------------------------------------
+# --- Python ------------------------------------------------------------------
 function Resolve-Python {
   param([string]$Prefer)
   if ($Prefer -and (Test-Path $Prefer)) { return (Resolve-Path $Prefer).Path }
+
   try {
     $out = & py -0p 2>$null
     if ($LASTEXITCODE -eq 0 -and $out) {
@@ -63,146 +90,92 @@ function Resolve-Python {
       if (Test-Path $guess) { return (Resolve-Path $guess).Path }
     }
   } catch {}
+
   foreach($p in @('C:\Program Files\Python310\python.exe','C:\Python310\python.exe')){
     if(Test-Path $p){ return (Resolve-Path $p).Path }
   }
   throw "Python 3.10 not found. Use -PythonPath to specify."
 }
 
-# --- Ensure pywin32 and locate/copy required files ---------------------------
 function Ensure-Pywin32 {
   param([string]$Py)
-
   Write-Info "Using Python: $Py"
   & $Py -m pip install --upgrade --no-warn-script-location pywin32 | Out-Host
-
-  # Resolve site-packages root
-  $siteRoot = ""
-  try { $siteRoot = (& $Py -c "import site; print(site.getsitepackages()[0])").Trim() } catch {}
-  if (-not $siteRoot) { try { $siteRoot = (& $Py -c "import sysconfig; print(sysconfig.get_paths()['platlib'])").Trim() } catch {} }
-  if (-not $siteRoot) { try { $siteRoot = (& $Py -c "from distutils.sysconfig import get_python_lib; print(get_python_lib())").Trim() } catch {} }
-  if (-not $siteRoot -or -not (Test-Path $siteRoot)) {
-    throw "Failed to resolve site-packages path."
-  }
-
-  # Fix case: siteRoot returns Python home (e.g., C:\Program Files\Python310)
-  $pyHome = Split-Path $Py
-  if ((Split-Path $siteRoot -Leaf) -ieq (Split-Path $pyHome -Leaf)) {
-    $alt = Join-Path $pyHome 'Lib\site-packages'
-    if (Test-Path $alt) { $siteRoot = $alt }
-  }
-
-  # Try user site-packages as fallback for DLLs
-  $userSite = ""
-  try { $userSite = (& $Py -c "import site; print(site.getusersitepackages())").Trim() } catch {}
-
-  # Locate PythonService.exe (several strategies)
-  $byModule1 = ""; $byModule2 = ""
-  try { $byModule1 = (& $Py -c "import pathlib, win32serviceutil; print(pathlib.Path(win32serviceutil.__file__).with_name('PythonService.exe'))").Trim() } catch {}
-  try { $byModule2 = (& $Py -c "import pathlib, win32api; print(pathlib.Path(win32api.__file__).parent / 'PythonService.exe')").Trim() } catch {}
-
-  $candidates = @()
-  if ($byModule1) { $candidates += $byModule1 }
-  if ($byModule2) { $candidates += $byModule2 }
-  $candidates += @(
-    (Join-Path $siteRoot 'win32\PythonService.exe'),
-    (Join-Path $siteRoot 'win32\pythonservice.exe'),
-    (Join-Path $siteRoot 'pywin32_system32\PythonService.exe'),
-    (Join-Path $siteRoot 'pywin32_system32\pythonservice.exe')
-  )
-
-  $found = $candidates | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
-  if (-not $found) {
-    throw "PythonService.exe not found. Tried: $($candidates -join ', ')"
-  }
-  Write-Info "PythonService resolved: $found"
-
-  # Ensure required DLLs (copy to Python home if missing)
-  $srcDLLDir = Join-Path $siteRoot 'pywin32_system32'
-  if (-not (Test-Path $srcDLLDir) -and $userSite) {
-    $cand = Join-Path $userSite 'pywin32_system32'
-    if (Test-Path $cand) { $srcDLLDir = $cand }
-  }
-
-  $pyw = Join-Path $pyHome 'pywintypes310.dll'
-  $pcom = Join-Path $pyHome 'pythoncom310.dll'
-  if (-not (Test-Path $pyw) -or -not (Test-Path $pcom)) {
-    if (-not (Test-Path $srcDLLDir)) {
-      throw "pywin32_system32 not found under site-packages. Looked in: $srcDLLDir"
-    }
-    $srcPwy = Join-Path $srcDLLDir 'pywintypes310.dll'
-    $srcPcm = Join-Path $srcDLLDir 'pythoncom310.dll'
-    if (-not (Test-Path $srcPwy) -or -not (Test-Path $srcPcm)) {
-      throw "Required DLLs not found in $srcDLLDir"
-    }
-    Copy-Item $srcPwy $pyw -Force
-    Copy-Item $srcPcm $pcom -Force
-    Write-Info "Copied DLLs to Python home: $pyHome"
-  }
-
-  return (Resolve-Path $found).Path
 }
 
-# --- Install Service (SCM + Parameters) --------------------------------------
-function Install-Service {
-  param([string]$Py,[string]$SvcExe)
+# --- Service ops -------------------------------------------------------------
+function Service-Exists {
+  $p = Start-Process -FilePath $SC -ArgumentList "query $SvcName" -NoNewWindow -Wait -PassThru
+  return ($p.ExitCode -eq 0)
+}
+function Service-Stop-Delete {
+  if (Service-Exists) {
+    Write-Info "Stopping old service..."
+    Start-Process -FilePath $SC -ArgumentList "stop $SvcName" -NoNewWindow -Wait | Out-Null
+    Start-Sleep -Milliseconds 500
+    Write-Info "Deleting old service..."
+    Start-Process -FilePath $SC -ArgumentList "delete $SvcName" -NoNewWindow -Wait | Out-Null
+    Start-Sleep -Milliseconds 500
+  }
+}
 
-  Write-Info "Installing service via SCM..."
+function Write-Parameters {
+  param(
+    [string]$PyExe
+  )
+  $svcKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName")
+  $parKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName\Parameters")
 
-  Invoke-Sc @("stop",   $SvcName) 2>$null | Out-Null
-  Invoke-Sc @("delete", $SvcName) 2>$null | Out-Null
-  Start-Sleep -Seconds 1
-  $svcKey = "HKLM:\SYSTEM\CurrentControlSet\Services\$SvcName"
-  if (Test-Path $svcKey) { try { Remove-Item $svcKey -Recurse -Force -ErrorAction SilentlyContinue } catch {} }
+  $parKey.SetValue("PythonClass",     "service.DMs.dms_service.DMsService", [Microsoft.Win32.RegistryValueKind]::String)
+  $parKey.SetValue("PythonClassName", "service.DMs.dms_service.DMsService", [Microsoft.Win32.RegistryValueKind]::String)
+  $parKey.SetValue("AppDirectory",    $RepoRoot,                             [Microsoft.Win32.RegistryValueKind]::String)
+  $parKey.SetValue("PythonPath",      "$RepoRoot;$RepoRoot\service;$RepoRoot\service\DMs", [Microsoft.Win32.RegistryValueKind]::String)
+  $parKey.SetValue("CommandLine",     "DMs",                                 [Microsoft.Win32.RegistryValueKind]::String)
+  $parKey.SetValue("PythonExe",       $PyExe,                                [Microsoft.Win32.RegistryValueKind]::String)
+  # (보수용) 루트에도 PythonClass 복제
+  $svcKey.SetValue("PythonClass",     "service.DMs.dms_service.DMsService", [Microsoft.Win32.RegistryValueKind]::String)
+}
 
-  $startFlag = switch ($StartType) {
+function Install-ViaWin32ServiceUtil {
+  param([string]$Py)
+
+  # pywin32 보장
+  Ensure-Pywin32 -Py $Py
+
+  # 기존 서비스 정리
+  Service-Stop-Delete
+
+  # 설치 (startup: auto/demand/disabled)
+  $startup = switch ($StartType) {
     "auto"         { "auto" }
-    "delayed-auto" { "auto" }  # set DelayedAutoStart=1 below
-    "demand"       { "demand" }
+    "delayed-auto" { "auto" }  # install은 auto, 레지스트리로 delayed 처리
+    "demand"       { "manual" }
     "disabled"     { "disabled" }
   }
 
-  $quotedBin = "`"$SvcExe`""
-  # sc.exe requires 'type= own' and 'binPath= "<exe>"' with spaces kept together.
-  $createCmd = "create `"$SvcName`" type= own binPath= $quotedBin start= $startFlag DisplayName= `"$Display`""
-  $createOut = & "$env:SystemRoot\System32\cmd.exe" /c "`"$SC`" $createCmd"
-  if ($LASTEXITCODE -ne 0 -or ($createOut -match 'FAILED|USAGE|DESCRIPTION')) {
-    throw "sc create failed: $createOut"
-  }
+  Write-Info "Installing service via win32serviceutil (--startup $startup)..."
+  & $Py $ServicePy --startup $startup install | Out-Host
 
-  Invoke-Sc @("description", $SvcName, "Process supervisor + HTTP control for 4DReplay") | Out-Null
-
-  # Keep ImagePath quoted
-  Set-ItemProperty "HKLM:\SYSTEM\CurrentControlSet\Services\$SvcName" -Name ImagePath -Type ExpandString -Value $quotedBin
-
-  # Parameters for pywin32 host
-  $base = Join-Path $svcKey 'Parameters'
-  New-Item -Path $base -Force | Out-Null
-  $PyPath = "$RepoRoot;$RepoRoot\service;$RepoRoot\service\DMs"
-  New-ItemProperty -Path $base -Name PythonClass     -Value 'service.DMs.dms_service.DMsService' -PropertyType String -Force | Out-Null
-  New-ItemProperty -Path $base -Name PythonClassName -Value 'service.DMs.dms_service.DMsService' -PropertyType String -Force | Out-Null
-  New-ItemProperty -Path $base -Name AppDirectory    -Value $RepoRoot -PropertyType String -Force | Out-Null
-  New-ItemProperty -Path $base -Name PythonPath      -Value $PyPath   -PropertyType String -Force | Out-Null
-  New-ItemProperty -Path $base -Name CommandLine     -Value 'DMs'     -PropertyType String -Force | Out-Null
-  New-ItemProperty -Path $base -Name PythonExe       -Value $Py       -PropertyType String -Force | Out-Null
-
+  # 지연자동시작 처리
   if ($StartType -eq "delayed-auto") {
-    $cur = Get-ItemProperty -Path $svcKey -Name DelayedAutoStart -ErrorAction SilentlyContinue
-    if ($null -eq $cur) {
-      New-ItemProperty -Path $svcKey -Name DelayedAutoStart -PropertyType DWord -Value 1 -Force | Out-Null
-    } else {
-      Set-ItemProperty -Path $svcKey -Name DelayedAutoStart -Value 1
-    }
+    Write-Info "Enable DelayedAutoStart..."
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\$SvcName" /v DelayedAutoStart /t REG_DWORD /d 1 /f | Out-Null
   } else {
-    try { Set-ItemProperty -Path $svcKey -Name DelayedAutoStart -Value 0 -ErrorAction SilentlyContinue } catch {}
+    reg add "HKLM\SYSTEM\CurrentControlSet\Services\$SvcName" /v DelayedAutoStart /t REG_DWORD /d 0 /f | Out-Null
   }
 
-  # Give SCM more time for pywin32 bootstrap (optional)
-  New-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control' -Name 'ServicesPipeTimeout' -PropertyType DWord -Value 120000 -Force | Out-Null
+  # Parameters 보강 (환경 의존성 제거)
+  Write-Parameters -PyExe $Py
+
+  # 실패시 자동 재시작 (3회, 5초 간격)
+  Write-Info "Configure failure actions..."
+  Sc-Line "failure $SvcName reset= 60 actions= restart/5000/restart/5000/restart/5000"
+  Sc-Line "failureflag $SvcName 1"
 
   # Log dir ACL for SYSTEM
   icacls $LogDir /grant "NT AUTHORITY\SYSTEM:(OI)(CI)(M)" /T | Out-Null
 
+  # 방화벽(선택)
   if ($OpenFirewall) {
     $rule = "DMs-51050"
     if (-not (Get-NetFirewallRule -DisplayName $rule -ErrorAction SilentlyContinue)) {
@@ -212,36 +185,42 @@ function Install-Service {
       Write-Info "Firewall rule '$rule' already exists."
     }
   }
-
-  try { Invoke-Sc @("start", $SvcName) | Out-Null } catch { Write-Warn "sc start failed: $($_.Exception.Message)" }
 }
 
-# --- Uninstall ---------------------------------------------------------------
+function Start-And-Show {
+  Write-Info "Starting service..."
+  Start-Process -FilePath $SC -ArgumentList "start $SvcName" -NoNewWindow -Wait | Out-Null
+  Start-Sleep -Milliseconds 300
+  & $SC query $SvcName
+}
+
 function Uninstall-Service {
-  Write-Info "Removing service '$SvcName'..."
-  Invoke-Sc @("stop",   $SvcName) 2>$null | Out-Null
-  Invoke-Sc @("delete", $SvcName) 2>$null | Out-Null
-  $svcKey = "HKLM:\SYSTEM\CurrentControlSet\Services\$SvcName"
-  if (Test-Path $svcKey) { try { Remove-Item $svcKey -Recurse -Force -ErrorAction SilentlyContinue } catch {} }
+  Write-Info "Uninstalling service..."
+  Service-Stop-Delete
+  # 레지스트리 흔적 제거(선택)
+  reg delete "HKLM\SYSTEM\CurrentControlSet\Services\$SvcName" /f 2>$null | Out-Null
   Write-Info "Service '$SvcName' removed (if it existed)."
 }
 
 # --- Main --------------------------------------------------------------------
 Assert-Admin
 
-if ($Uninstall) { Uninstall-Service; return }
+if ($Uninstall) {
+  Uninstall-Service
+  return
+}
 
-$Py     = Resolve-Python -Prefer $PythonPath
-$SvcExe = Ensure-Pywin32 -Py $Py
+$Py = Resolve-Python -Prefer $PythonPath
 
 Write-Host "RepoRoot   : $RepoRoot"
 Write-Host "ServicePy  : $ServicePy"
 Write-Host "PythonPath : $Py"
 Write-Host "LogDir     : $LogDir"
-Write-Host "SvcBinary  : $SvcExe"
 
-Install-Service -Py $Py -SvcExe $SvcExe
+Install-ViaWin32ServiceUtil -Py $Py
+Start-And-Show
 
 Write-Host "`nOK: DMs Service installed and started."
-Write-Host "Check:  & `"$env:SystemRoot\System32\sc.exe`" qc DMs"
-Write-Host "Open :  http://localhost:51050/status"
+Write-Host "Check :  sc.exe qc $SvcName"
+Write-Host "Query :  sc.exe query $SvcName"
+Write-Host "Debug :  `"$Py`" `"$ServicePy`" debug   (Ctrl+C to stop)"
