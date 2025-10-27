@@ -1,19 +1,24 @@
-# Node / builds
-node_modules/
-dist/
-build/
-# Maven/Gradle
-target/
-# Project specific
-daemon/CMd/log/
-video/
+@'
+# binaries / libs
+*.exe
+*.dll
+*.lib
+*.pdb
 
-# Logs
-*.log
-*.bak
-
-# Large media & archives
+# databases / artifacts
+*.db
+*.pkl
+*.pt
+*.pth
+*.weights
 *.zip
+*.7z
+*.rar
+*.tar
+*.gz
+*.xz
+
+# media
 *.mp4
 *.mp4_drop
 *.mp4_tmp
@@ -23,22 +28,15 @@ video/
 *.mov
 *.wmv
 
-# Binaries / libs (실행/라이브러리 산출물 금지)
-*.exe
-*.dll
-*.lib
+# project specific
+daemon/CMd/log/
+daemon/**/    # (필요시 유지 폴더가 있으면 이 라인은 빼고 확장자 기반만 사용)
 
-# Python / ML artifacts
-*.py[cod]
-*.pt
-*.pth
-*.pkl
-*.weights
-*.db
-
-# IDE
+# build / deps / IDE
+build/
+dist/
+target/
+node_modules/
 .idea/
-
-# OS
 .DS_Store
-daemon/CCd/*.exe
+'@ | Set-Content .gitignore
