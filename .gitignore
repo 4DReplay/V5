@@ -41,3 +41,4 @@ video/
 
 # OS
 .DS_Store
+daemon/CCd/*.exe
