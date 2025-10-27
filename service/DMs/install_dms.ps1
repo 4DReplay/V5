@@ -85,20 +85,27 @@ function Ensure-SystemPathIncludes {
     $newPath = ($parts + $add) -join ';'
     [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
 
-    # 환경변수 변경 브로드캐스트
-    Add-Type -Namespace Win32 -Name NativeMethods -MemberDefinition @"
+    # 환경변수 변경 브로드캐스트 (중복 정의/컴파일 에러시 스킵)
+    if (-not ([System.Management.Automation.PSTypeName]'__EnvBroadcaster').Type) {
+      Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
-public static class NativeMethods {
+public static class __EnvBroadcaster {
   [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
   public static extern IntPtr SendMessageTimeout(IntPtr hWnd, int Msg, IntPtr wParam, string lParam, int flags, int timeout, out IntPtr lpdwResult);
 }
-"@ -ErrorAction SilentlyContinue
-    $HWND_BROADCAST = [IntPtr]0xffff
-    $WM_SETTINGCHANGE = 0x1A
-    $null = [Win32.NativeMethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, "Environment", 2, 5000, [ref]([IntPtr]::Zero))
+'@ -ErrorAction SilentlyContinue
+    }
+    try {
+      $HWND_BROADCAST = [IntPtr]0xffff
+      $WM_SETTINGCHANGE = 0x1A
+      [void][__EnvBroadcaster]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, "Environment", 2, 5000, [ref]([IntPtr]::Zero))
+    } catch {
+      # 브로드캐스트 실패는 무시 (새 프로세스부터 PATH 적용)
+    }
   }
 }
+
 
 function Set-ServiceEnvironmentPath {
   param(
