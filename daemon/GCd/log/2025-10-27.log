@@ -1,0 +1,21 @@
+2025-10-27 10:02:23.474 I GCd.exe[32404] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 10:02:23.474 I GCd.exe[32404] main.cpp:44 main | v : Version check
+2025-10-27 10:02:23.476 E GCd.exe[32404] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 10:07:47.559 I GCd.exe[3100] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 10:07:47.559 I GCd.exe[3100] main.cpp:44 main | v : Version check
+2025-10-27 10:07:47.561 E GCd.exe[3100] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 11:54:26.500 I GCd.exe[30804] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 11:54:26.500 I GCd.exe[30804] main.cpp:44 main | v : Version check
+2025-10-27 11:54:26.502 E GCd.exe[30804] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 11:54:27.429 I GCd.exe[2704] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 11:54:27.429 I GCd.exe[2704] main.cpp:44 main | v : Version check
+2025-10-27 11:54:27.431 E GCd.exe[2704] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 11:54:50.072 I GCd.exe[32056] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 11:54:50.072 I GCd.exe[32056] main.cpp:44 main | v : Version check
+2025-10-27 11:54:50.074 E GCd.exe[32056] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 11:56:59.190 I GCd.exe[29556] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 11:56:59.190 I GCd.exe[29556] main.cpp:44 main | v : Version check
+2025-10-27 11:56:59.193 E GCd.exe[29556] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-27 11:59:18.523 I GCd.exe[28692] main.cpp:43 main | Version : 4.2.0.3
+2025-10-27 11:59:18.523 I GCd.exe[28692] main.cpp:44 main | v : Version check
+2025-10-27 11:59:18.525 E GCd.exe[28692] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56

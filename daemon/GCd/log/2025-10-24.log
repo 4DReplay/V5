@@ -1,0 +1,244 @@
+2025-10-24 19:37:13.951 I GCd.exe[28016] main.cpp:43 main | Version : 4.2.0.3
+2025-10-24 19:37:13.951 I GCd.exe[28016] main.cpp:44 main | v : Version check
+2025-10-24 19:37:13.954 E GCd.exe[28016] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-24 19:51:19.800 I GCd.exe[30852] main.cpp:43 main | Version : 4.2.0.3
+2025-10-24 19:51:19.800 I GCd.exe[30852] main.cpp:44 main | v : Version check
+2025-10-24 19:51:19.803 E GCd.exe[30852] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-24 20:15:47.638 I GCd.exe[34344] main.cpp:43 main | Version : 4.2.0.3
+2025-10-24 20:15:47.638 I GCd.exe[34344] main.cpp:44 main | v : Version check
+2025-10-24 20:15:47.640 E GCd.exe[34344] main.cpp:50 main | 4.2.0.3 - Aug 12 2024 : 13:47:56
+2025-10-24 20:16:00.394 I GCd.exe[34344] DMServer.cpp:150 RunSocket | Connected IP : 10.82.104.100
+2025-10-24 20:16:00.399 I GCd.exe[34344] DMServer.cpp:153 RunSocket | Local IP Address : 10.82.104.100
+2025-10-24 20:16:00.399 I GCd.exe[34344] DMServer.cpp:156 RunSocket | accept socket 320
+2025-10-24 20:42:00.114 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_20420011309_zqo",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.114 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_20420011309_zqo",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:39.509 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_20423950663_opo",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.509 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_20423950663_opo",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:57.602 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_20425759963_f29",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:57.602 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_20425759963_f29",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:07.709 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_21010770781_xtr",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.709 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_21010770781_xtr",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:25.186 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_21012518579_mtl",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.186 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_21012518579_mtl",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:43.336 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_21014333385_mu2",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:43.336 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_21014333385_mu2",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:02:20.172 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_21022016943_a0m",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:02:20.172 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_21022016943_a0m",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:02:55.182 D GCd.exe[34344] GCd.cpp:648 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "GCd",
+    "Token": "1024_21025517942_pt2",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:02:55.182 I GCd.exe[34344] GCd.cpp:779 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "GCd",
+    "Action": "set",
+    "Token": "1024_21025517942_pt2",
+    "SendState": "response",
+    "Version": {
+        "GCd": {
+            "version": "4.2.0.3",
+            "date": "Aug 12 2024 - 13:47:54"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}

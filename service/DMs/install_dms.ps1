@@ -71,6 +71,12 @@ $Display  = '4DReplay DMs Agent'
 $LogDir   = Join-Path $RepoRoot 'logs\DMS'
 $ServicePy= Join-Path $PSScriptRoot 'dms_service.py'
 
+# 서비스 실행에 필요한 PATH 엔트리
+$ExtraPathEntries = @(
+  (Join-Path $RepoRoot 'library\daemon'),
+  (Join-Path $RepoRoot 'library\ffmpeg')
+)
+
 New-Item -ItemType Directory -Force -Path $LogDir | Out-Null
 # ensure packages
 New-Item -ItemType File -Force "$RepoRoot\service\__init__.py"     | Out-Null
@@ -103,6 +109,49 @@ function Ensure-Pywin32 {
   & $Py -m pip install --upgrade --no-warn-script-location pywin32 | Out-Host
 }
 
+# --- PATH 보강 (머신) --------------------------------------------------------
+function Ensure-MachinePath {
+  param([string[]]$Entries)
+
+  $envKey = "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
+  $envReg = $RegHKLM64.OpenSubKey($envKey, $true)
+  $path   = $envReg.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
+
+  $parts = @()
+  if ($path) { $parts = $path -split ';' | Where-Object { $_ -ne '' } }
+
+  foreach ($e in $Entries) {
+    if (-not (Test-Path $e)) { continue }
+    if (-not ($parts | ForEach-Object { $_.Trim() } | Where-Object { $_.ToLower() -eq $e.ToLower() })) {
+      $parts += $e
+      Write-Info "PATH added: $e"
+    } else {
+      Write-Info "PATH already contains: $e"
+    }
+  }
+
+  $newPath = ($parts -join ';')
+  $envReg.SetValue("Path", $newPath, [Microsoft.Win32.RegistryValueKind]::ExpandString)
+  [Environment]::SetEnvironmentVariable("Path", $newPath, [System.EnvironmentVariableTarget]::Machine)
+
+  # WM_SETTINGCHANGE 브로드캐스트
+  Add-Type -Namespace Win32 -Name NativeMethods -MemberDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class NativeMethods {
+  [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
+  public static extern IntPtr SendMessageTimeout(
+    IntPtr hWnd, int Msg, IntPtr wParam, string lParam,
+    int fuFlags, int uTimeout, out IntPtr lpdwResult);
+}
+"@
+  $HWND_BROADCAST = [intptr]0xffff
+  $WM_SETTINGCHANGE = 0x1A
+  $SMTO_ABORTIFHUNG = 0x2
+  [intptr]$result = [intptr]::Zero
+  [Win32.NativeMethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [intptr]::Zero, "Environment", $SMTO_ABORTIFHUNG, 5000, [ref]$result) | Out-Null
+}
+
 # --- Service ops -------------------------------------------------------------
 function Service-Exists {
   $p = Start-Process -FilePath $SC -ArgumentList "query $SvcName" -NoNewWindow -Wait -PassThru
@@ -120,9 +169,7 @@ function Service-Stop-Delete {
 }
 
 function Write-Parameters {
-  param(
-    [string]$PyExe
-  )
+  param([string]$PyExe)
   $svcKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName")
   $parKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName\Parameters")
 
@@ -218,6 +265,7 @@ Write-Host "PythonPath : $Py"
 Write-Host "LogDir     : $LogDir"
 
 Install-ViaWin32ServiceUtil -Py $Py
+Ensure-MachinePath -Entries $ExtraPathEntries   # 서비스 시작 전 PATH 보강
 Start-And-Show
 
 Write-Host "`nOK: DMs Service installed and started."

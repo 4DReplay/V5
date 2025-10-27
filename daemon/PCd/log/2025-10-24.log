@@ -1,0 +1,2216 @@
+2025-10-24 19:37:31.321 I PCd.exe[31288] main.cpp:46 main | Version : 4.2.0.2
+2025-10-24 19:37:31.321 I PCd.exe[31288] main.cpp:47 main | v : Version check
+2025-10-24 19:37:31.321 E PCd.exe[31288] main.cpp:55 main | 4.2.0.2 - Aug 12 2024 : 13:48:12
+2025-10-24 19:52:02.869 I PCd.exe[7008] main.cpp:46 main | Version : 4.2.0.2
+2025-10-24 19:52:02.869 I PCd.exe[7008] main.cpp:47 main | v : Version check
+2025-10-24 19:52:02.869 E PCd.exe[7008] main.cpp:55 main | 4.2.0.2 - Aug 12 2024 : 13:48:12
+2025-10-24 20:15:50.232 I PCd.exe[35328] main.cpp:46 main | Version : 4.2.0.2
+2025-10-24 20:15:50.232 I PCd.exe[35328] main.cpp:47 main | v : Version check
+2025-10-24 20:15:50.232 E PCd.exe[35328] main.cpp:55 main | 4.2.0.2 - Aug 12 2024 : 13:48:12
+2025-10-24 20:16:00.394 I PCd.exe[35328] DMServer.cpp:158 RunSocket | Connected IP : 10.82.104.100
+2025-10-24 20:16:00.399 I PCd.exe[35328] DMServer.cpp:161 RunSocket | Local IP Address : 10.82.104.100
+2025-10-24 20:16:00.399 I PCd.exe[35328] DMServer.cpp:164 RunSocket | accept socket 284
+2025-10-24 20:40:29.149 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[]},{"IP":"10.82.104.101","Mode":"replay","Cameras":[]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20402914347_4yn","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:40:29.149 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:40:29.149 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:40:29.149 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:40:29.149 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:40:31.158 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:40:31.158 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.101], daemon[MTd] Connection failure
+2025-10-24 20:40:31.158 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:40:31.158 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:40:31.158 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:40:31.158 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [],
+            "ResultCode": 20002
+        },
+        {
+            "IP": "10.82.104.101",
+            "Mode": "replay",
+            "Cameras": [],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20402914347_4yn",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:40:31.164 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:40:31.164 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.101]
+2025-10-24 20:40:39.431 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20403942936_cz8","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:40:39.431 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:40:39.431 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:40:39.431 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:40:39.431 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:40:41.445 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:40:41.445 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:40:41.445 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:40:41.445 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20403942936_cz8",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:40:41.448 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:41:44.183 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20414418101_xj8","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:41:44.183 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:41:44.183 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:41:44.183 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:41:44.183 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:41:46.196 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:41:46.196 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:41:46.196 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:41:46.196 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20414418101_xj8",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:41:46.221 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:41:54.677 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:41:54.706 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:41:54.706 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20415470574_83w","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:41:54.706 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20415470574_83w",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:41:54.709 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20415470662_2p8","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:41:54.729 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20415472874_afr","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:41:54.729 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:41:54.729 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:41:54.729 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:41:54.729 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:41:56.739 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:41:56.739 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:41:56.739 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:41:56.739 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20415472874_afr",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:41:56.746 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:00.113 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20420011292_y4y","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.113 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20420011292_y4y",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:00.114 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_20420011342_7vh","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.114 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_20420011359_4qq","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.114 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:00.133 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20420011375_pyo","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.252 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:00.254 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20420025272_3j1","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.254 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20420025272_3j1",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:42:00.254 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20420025294_327","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:00.255 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:00.405 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:04.662 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:04.662 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20420466036_vlz","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:04.662 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20420466036_vlz",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:42:04.662 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20420466063_hso","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:04.662 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:09.679 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:10.264 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:14.236 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20421423521_e30","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:14.236 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:42:14.236 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:42:14.236 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:42:14.236 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:42:16.239 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:42:16.239 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:42:16.240 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:42:16.240 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20421423521_e30",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:16.248 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:16.515 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:19.685 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:23.288 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:24.677 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:25.287 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20422528678_zpy","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:25.287 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:42:25.287 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:42:25.287 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:42:25.287 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:42:27.293 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:42:27.293 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:42:27.293 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:42:27.293 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20422528678_zpy",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:27.297 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:29.684 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:34.445 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:34.450 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:34.450 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20423444757_zgx","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:34.450 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20423444757_zgx",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:42:34.450 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20423444780_qgi","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:34.473 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20423445834_ocj","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:34.473 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:42:34.473 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:42:34.473 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:42:34.473 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:42:36.481 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:42:36.481 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:42:36.482 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:42:36.482 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20423445834_ocj",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:36.483 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:36.489 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:39.509 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20423950643_ic5","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:39.509 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20423950643_ic5",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:39.509 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_20423950700_08d","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:39.509 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_20423950716_it2","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:39.509 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:39.509 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20423950733_0so","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:39.550 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20423954826_7nc","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:39.550 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:42:39.550 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:42:39.550 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:42:39.550 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:42:41.559 E PCd.exe[35328] DMConnector.cpp:108 connect_with_timeout | connection timeout
+2025-10-24 20:42:41.559 E PCd.exe[35328] DMConnector.cpp:152 Connect | [10.82.104.100], daemon[MTd] Connection failure
+2025-10-24 20:42:41.559 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:42:41.559 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 20002
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20423954826_7nc",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:41.561 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:41.609 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:44.687 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:49.320 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:49.701 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:54.699 D PCd.exe[35328] PCdMgr.cpp:1430 SendPreSd | PCd Send PreSd Fail(nullptr) [10.82.104.100]
+2025-10-24 20:42:57.595 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20425759356_k4q","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.595 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:42:57.595 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:42:57.595 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:42:57.595 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:42:57.596 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:42:57.596 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20425759356_k4q",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:57.597 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_20425759356_k4q","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 20:42:57.599 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:42:57.599 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20425759752_oux","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.599 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20425759752_oux",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:42:57.599 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20425759787_zrr","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.602 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20425759934_x07","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.602 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20425759934_x07",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:57.602 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_20425760064_en3","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.602 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_20425760098_x0v","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:57.602 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:42:57.602 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_20425760098_x0v","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 20:42:57.602 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20425760130_x01","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:42:59.700 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:02.336 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:04.672 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:04.673 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20430467062_e49","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:43:04.673 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20430467062_e49",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:43:04.674 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20430467164_drj","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:43:04.701 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:09.704 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:12.362 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:14.706 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:19.695 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:22.379 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:24.717 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:29.737 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:32.395 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:34.724 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:39.742 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:42.419 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:44.744 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:49.207 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20434920515_7sr","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:43:49.207 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:43:49.207 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:43:49.207 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:43:49.207 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:43:49.207 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:43:49.207 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20434920515_7sr",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:43:49.207 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_20434920515_7sr","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 20:43:49.209 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:49.765 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:52.441 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:54.781 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:43:59.786 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:02.461 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:04.666 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:04.668 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20440466468_ezb","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:44:04.668 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20440466468_ezb",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:44:04.668 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20440466610_6cq","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:44:04.777 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:09.781 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:12.482 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:14.784 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:19.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:22.501 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:24.779 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:29.784 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:32.525 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:34.773 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:39.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:42.550 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:44.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:49.773 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:52.570 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:54.772 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:44:59.780 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:02.591 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:04.674 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:04.675 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20450467415_h0r","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:45:04.675 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20450467415_h0r",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:45:04.675 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20450467440_wvd","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:45:04.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:09.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:12.616 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:14.775 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:19.782 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:22.638 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:24.780 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:29.782 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:32.665 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:34.777 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:39.776 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:42.687 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:44.776 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:49.779 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:52.710 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:54.776 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:45:59.783 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:02.734 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:04.676 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:04.676 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20460467299_2u0","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:46:04.676 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20460467299_2u0",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:46:04.676 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20460467377_wfa","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:46:04.786 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:09.777 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:12.751 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:14.786 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:19.786 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:22.768 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:24.777 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:29.775 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:32.786 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:34.781 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:39.780 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:42.812 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:44.784 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:49.785 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:52.833 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:54.797 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:46:59.806 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:02.856 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:04.672 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:04.672 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20470467126_ju5","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:47:04.672 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20470467126_ju5",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:47:04.672 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20470467151_l5m","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:47:04.829 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:09.830 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:12.881 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:14.820 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:19.827 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:22.904 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:24.826 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:29.823 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:32.924 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:34.830 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:39.828 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:42.950 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:44.819 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:49.828 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:52.967 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:54.818 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:47:59.830 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:02.984 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:04.671 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:04.671 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20480466942_aem","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:48:04.671 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20480466942_aem",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:48:04.671 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20480466968_r4v","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:48:04.825 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:09.829 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:13.004 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:14.822 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:19.820 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:23.026 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:24.831 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:29.818 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:33.046 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:34.826 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:39.837 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:43.069 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:44.833 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:49.833 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:53.094 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:54.849 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:48:59.855 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:03.111 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:04.676 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:04.676 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20490467446_2ny","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:49:04.676 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20490467446_2ny",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:49:04.677 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20490467536_cqa","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:49:04.863 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:09.857 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:13.132 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:14.858 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:19.852 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:23.150 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:24.861 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:29.878 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:33.176 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:34.874 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:39.874 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:43.198 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:44.871 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:49.872 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:53.220 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:54.868 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:49:59.872 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:03.238 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:04.668 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:04.668 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20500466530_2nx","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:50:04.668 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20500466530_2nx",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:50:04.668 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20500466602_omw","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:50:04.867 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:09.877 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:13.260 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:14.870 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:19.874 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:23.283 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:24.882 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:29.896 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:33.310 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:34.900 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:39.900 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:43.327 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:44.896 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:49.911 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:53.355 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:54.902 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:50:59.906 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:03.373 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:04.677 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:04.677 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20510467526_pr4","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:51:04.677 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20510467526_pr4",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:51:04.677 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20510467568_uju","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:51:04.908 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:09.896 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:13.402 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:14.909 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:19.921 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:23.420 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:24.923 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:29.935 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:33.442 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:34.944 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:39.953 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:43.465 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:44.942 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:49.950 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:53.490 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:54.956 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:51:59.946 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:03.511 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:04.684 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:04.685 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20520468431_s0b","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:52:04.685 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20520468431_s0b",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:52:04.687 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20520468469_tgc","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:52:04.952 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:09.968 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:13.539 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:14.968 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:19.966 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:23.565 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:24.962 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:29.975 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:33.588 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:34.992 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:40.004 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:43.607 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:45.014 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:50.008 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:53.623 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:52:55.005 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:00.010 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:03.647 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:04.684 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:04.686 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20530468379_1uq","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:53:04.686 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20530468379_1uq",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:53:04.686 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20530468426_dzq","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:53:05.013 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:10.011 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:13.662 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:15.007 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:20.015 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:23.686 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:25.032 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:30.025 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:33.714 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:35.026 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:40.022 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:43.736 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:45.024 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:50.022 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:53.764 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:53:55.028 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:00.021 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:03.782 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:04.677 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:04.677 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20540467624_zbg","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:54:04.677 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20540467624_zbg",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:54:04.677 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20540467650_nlm","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:54:05.033 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:10.020 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:13.806 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:15.024 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:20.027 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:23.831 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:25.021 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:30.035 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:33.079 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20543307782_b87","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:54:33.079 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:54:33.079 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:54:33.079 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:54:33.079 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:54:33.080 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:54:33.080 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20543307782_b87",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:54:33.080 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_20543307782_b87","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 20:54:33.084 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:33.854 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:35.046 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:37.967 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20543796516_rs7","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 20:54:37.967 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 20:54:37.967 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 20:54:37.967 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 20:54:37.967 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 20:54:37.967 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 20:54:37.967 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20543796516_rs7",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:54:37.967 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_20543796516_rs7","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 20:54:37.970 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:40.053 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:43.870 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:45.044 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:50.039 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:53.897 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:54:55.036 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:00.064 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:03.912 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:04.693 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:04.695 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20550469243_ksl","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:55:04.695 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20550469243_ksl",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:55:04.695 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20550469355_7f5","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:55:05.066 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:10.071 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:13.938 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:15.079 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:20.097 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:23.959 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:25.102 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:30.128 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:33.980 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:35.115 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:40.131 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:43.996 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:45.150 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:50.147 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:54.015 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:55:55.148 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:00.159 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:04.045 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:04.723 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:04.724 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20560472153_r0x","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:56:04.724 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20560472153_r0x",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:56:04.724 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20560472268_qvo","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:56:05.171 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:10.167 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:14.071 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:15.182 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:20.200 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:24.097 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:25.218 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:30.218 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:34.122 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:35.223 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:40.235 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:44.145 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:45.250 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:50.251 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:54.165 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:56:55.269 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:00.275 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:04.187 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:04.711 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:04.711 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20570470947_7ds","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:57:04.711 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20570470947_7ds",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:57:04.711 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20570470972_ew1","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:57:05.281 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:10.292 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:14.204 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:15.305 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:20.311 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:24.228 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:25.322 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:30.350 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:34.252 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:35.340 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:40.352 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:44.274 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:45.342 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:50.352 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:54.295 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:57:55.365 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:00.378 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:04.324 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:04.717 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:04.719 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20580471558_r6j","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:58:04.719 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20580471558_r6j",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:58:04.719 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20580471669_fl8","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:58:05.371 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:10.388 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:14.343 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:15.402 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:20.411 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:24.361 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:25.408 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:30.404 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:34.383 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:35.411 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:40.411 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:44.406 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:45.421 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:50.414 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:54.426 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:58:55.439 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:00.444 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:04.448 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:04.736 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:04.739 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_20590473629_5zq","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:59:04.739 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_20590473629_5zq",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 20:59:04.739 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_20590473671_dx3","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 20:59:05.451 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:10.454 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:14.467 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:15.461 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:20.460 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:24.487 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:25.457 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:30.471 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:34.515 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:35.465 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:40.475 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:44.546 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:45.479 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:50.501 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:54.566 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 20:59:55.499 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:00.496 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:04.590 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:04.735 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:04.735 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21000473425_p4e","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:00:04.735 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21000473425_p4e",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 21:00:04.735 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21000473450_q3u","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:00:05.494 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:10.501 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:14.609 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:15.495 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:20.501 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:24.627 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:25.494 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:30.497 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:34.643 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:35.504 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:40.495 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:44.669 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:45.499 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:50.496 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:54.692 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:00:55.494 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:00.505 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:04.709 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:04.870 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010486973_37l","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:04.870 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:04.870 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:04.870 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:04.870 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:04.870 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:04.870 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010486973_37l",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:04.870 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21010486973_37l","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:04.873 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:04.885 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:04.885 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010488397_hcz","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:04.885 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010488397_hcz",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 21:01:04.885 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21010488421_y7r","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:05.534 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:07.655 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:07.661 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:07.661 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010765793_jvt","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.661 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010765793_jvt",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 21:01:07.661 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21010765819_dns","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.679 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010767767_zc4","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.679 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:07.679 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:07.679 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:07.679 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:07.679 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:07.679 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010767767_zc4",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:07.679 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21010767767_zc4","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:07.686 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:07.709 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010770762_u88","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.709 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010770762_u88",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:07.709 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_21010770819_nz6","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.709 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_21010770835_bwp","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.709 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:07.709 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21010770852_r0y","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.709 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_21010770835_bwp","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:07.756 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010775390_du5","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:07.756 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:07.756 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:07.756 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:07.756 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:07.756 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:07.756 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010775390_du5",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:07.756 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21010775390_du5","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:07.759 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:09.636 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21010963509_yry","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:09.636 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:09.636 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:09.636 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:09.636 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:09.636 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:09.636 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21010963509_yry",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:09.636 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21010963509_yry","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:09.639 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:10.531 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:14.732 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:15.532 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:20.539 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:24.757 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.129 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.132 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.132 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21012513193_948","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.132 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21012513193_948",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 21:01:25.134 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21012513214_ppj","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.154 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21012515339_jd3","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.154 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:25.154 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:25.154 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:25.154 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:25.154 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:25.154 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21012515339_jd3",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:25.154 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21012515339_jd3","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:25.164 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.186 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21012518564_t2l","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.186 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21012518564_t2l",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:25.188 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_21012518609_im8","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.188 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_21012518624_uve","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.188 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.189 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21012518640_9lf","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.189 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_21012518624_uve","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:25.233 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21012523203_kih","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:25.233 I PCd.exe[35328] PCdMgr.cpp:540 PCdProc | Connect All Daemon Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:541 PCdProc | DaemonInfo SetDaemon
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:53 ParseDaemons | ParseDaemon Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:39 DeletePreArray | DaemonInfo Delete PreArray Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:49 DeletePreArray | DaemonInfo Delete PreArray  End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:55 ParseDaemons | ParseDaemon PreSd Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:100 ParseDaemons | ParseDaemon PreSd End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:101 ParseDaemons | ParseDaemon PostSd Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:128 ParseDaemons | ParseDaemon PostSd End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:129 ParseDaemons | ParseDaemon VPd Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:147 ParseDaemons | ParseDaemon VPd End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:148 ParseDaemons | ParseDaemon End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:155 CheckDaemonInfo | CheckDaemonInfo
+2025-10-24 21:01:25.233 I PCd.exe[35328] DaemonsInfo.cpp:164 CheckDaemonInfo | Mapping PreSd to VPd Connect Size 0
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:183 SetDaemons | SetDaemon Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:16 Clear | DaemonInfo Clear Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:26 Clear | DaemonInfo Clear End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:31 ClearPreArray | DaemonInfo PreArray Clear Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:35 ClearPreArray | DaemonInfo PreArray Clear End
+2025-10-24 21:01:25.233 D PCd.exe[35328] DaemonsInfo.cpp:189 SetDaemons | SetDaemon End
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1475 CheckPreSdArray | CheckPreSdArray Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1569 CheckPreSdArray | CheckPreSdArray End
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1574 CheckPostSdArray | CheckPostSdArray Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1668 CheckPostSdArray | CheckPostSdArray End
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1673 CheckVPdArray | CheckVPdArray Start
+2025-10-24 21:01:25.233 D PCd.exe[35328] PCdMgr.cpp:1717 CheckVPdArray | CheckVPdArray End
+2025-10-24 21:01:25.233 I PCd.exe[35328] PCdMgr.cpp:561 PCdProc | Connect All Daemon End
+2025-10-24 21:01:25.233 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "PreSd": [
+        {
+            "IP": "10.82.104.100",
+            "Mode": "replay",
+            "Cameras": [
+                {
+                    "Index": 1,
+                    "IP": "10.82.104.11",
+                    "CameraModel": "BGH1"
+                },
+                {
+                    "Index": 2,
+                    "IP": "10.82.104.12",
+                    "CameraModel": "BGH1"
+                }
+            ],
+            "ResultCode": 1000
+        }
+    ],
+    "PostSd": [],
+    "VPd": [],
+    "Section1": "pcd",
+    "Section2": "daemonlist",
+    "Section3": "connect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21012523203_kih",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:25.233 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1024_21012523203_kih","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:25.236 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:25.523 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:30.533 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:34.780 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:35.538 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:40.551 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:43.335 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21014333369_6ic","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:43.335 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21014333369_6ic",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:43.336 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_21014333415_tgj","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:43.336 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_21014333431_845","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:43.336 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:43.336 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_21014333431_845","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:01:43.336 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21014333448_z9j","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:01:44.799 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:45.542 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:46.233 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:50.559 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:54.829 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:01:55.555 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:00.558 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:04.741 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:04.741 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21020473980_arr","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:04.741 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "GetAdjustID",
+    "Section3": "",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21020473980_arr",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100",
+    "AdjustID": "",
+    "ResultCode": 20001,
+    "ErrorMsg": "Not Found: AdjustID"
+}
+2025-10-24 21:02:04.741 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"VPd","Section2":"GetAdjustID","Section3":"","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21020474030_k1x","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:04.850 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:05.566 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:06.724 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:10.560 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:10.660 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"MinBandwidth":200,"Section1":"VPd","Section2":"SetMinBandwidth","Section3":"","SendState":"Request","From":"4DDM","To":"VPd","Token":"1024_21021065857_g93","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:14.879 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:15.561 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:20.166 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"pcd","Section2":"VPdList","Section3":"ReConnect","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21022016266_zr4","Action":"run","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:20.166 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "pcd",
+    "Section2": "VPdList",
+    "Section3": "ReConnect",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21022016266_zr4",
+    "Action": "run",
+    "DMPDIP": "10.82.104.100",
+    "ResultCode": 20005,
+    "ErrorMsg": "Invalid VPd Info"
+}
+2025-10-24 21:02:20.172 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21022016912_dnu","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:20.172 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21022016912_dnu",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:02:20.172 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_21022017019_pwz","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:20.172 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_21022017048_l6g","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:20.172 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:20.172 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21022017078_1uu","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:20.172 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_21022017048_l6g","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:02:20.559 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:22.147 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:24.896 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:25.560 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:30.566 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:34.918 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:35.558 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:40.571 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:44.900 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:44.947 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:45.556 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:46.556 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"MinBandwidth":200,"Section1":"VPd","Section2":"SetMinBandwidth","Section3":"","SendState":"Request","From":"4DDM","To":"VPd","Token":"1024_21024655415_hf0","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:50.561 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:55.182 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PCd","Token":"1024_21025517926_ms1","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:55.182 I PCd.exe[35328] PCdMgr.cpp:722 PCdProc | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "response",
+    "From": "PCd",
+    "To": "4DDM",
+    "Token": "1024_21025517926_ms1",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100",
+    "Version": {
+        "PCd": {
+            "version": "4.2.0.2",
+            "date": "Aug 12 2024 - 13:48:12"
+        }
+    },
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:02:55.182 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PostSd","Token":"1024_21025517987_gkg","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:55.182 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1024_21025518003_oqg","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:55.182 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:55.182 I PCd.exe[35328] PreSdConnector.cpp:143 RecJson | [PreSd to PCd] {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1024_21025518003_oqg","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-24 21:02:55.182 I PCd.exe[35328] PCdMgr.cpp:160 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"VPd","Token":"1024_21025518018_2yy","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-24 21:02:55.182 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:02:55.557 D PCd.exe[35328] PCdMgr.cpp:1421 SendPreSd | PCd Send to PreSd Success [10.82.104.100]
+2025-10-24 21:03:05.977 I PCd.exe[35328] DMConnector.cpp:218 ReceiveFunc | Close Socket daemon[PreSd]

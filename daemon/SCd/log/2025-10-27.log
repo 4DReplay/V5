@@ -1,0 +1,21 @@
+2025-10-27 10:02:21.709 I SCd.exe[12192] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 10:02:21.709 I SCd.exe[12192] main.cpp:42 main | v : Version check
+2025-10-27 10:02:21.709 E SCd.exe[12192] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 10:07:45.447 I SCd.exe[20836] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 10:07:45.447 I SCd.exe[20836] main.cpp:42 main | v : Version check
+2025-10-27 10:07:45.447 E SCd.exe[20836] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 11:54:24.726 I SCd.exe[12620] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 11:54:24.726 I SCd.exe[12620] main.cpp:42 main | v : Version check
+2025-10-27 11:54:24.726 E SCd.exe[12620] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 11:54:26.378 I SCd.exe[33828] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 11:54:26.378 I SCd.exe[33828] main.cpp:42 main | v : Version check
+2025-10-27 11:54:26.378 E SCd.exe[33828] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 11:54:47.934 I SCd.exe[7076] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 11:54:47.934 I SCd.exe[7076] main.cpp:42 main | v : Version check
+2025-10-27 11:54:47.934 E SCd.exe[7076] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 11:56:47.306 I SCd.exe[31640] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 11:56:47.306 I SCd.exe[31640] main.cpp:42 main | v : Version check
+2025-10-27 11:56:47.306 E SCd.exe[31640] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-27 11:59:16.782 I SCd.exe[16128] main.cpp:41 main | Version : 4.2.0.1
+2025-10-27 11:59:16.782 I SCd.exe[16128] main.cpp:42 main | v : Version check
+2025-10-27 11:59:16.782 E SCd.exe[16128] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56

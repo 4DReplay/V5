@@ -1,0 +1,64 @@
+2025-10-25 13:26:01.141 T PreSd.exe[41520] main.cpp:143 main | 4DReplay PreSd
+2025-10-25 13:26:01.141 T PreSd.exe[41520] main.cpp:144 main | Version : 4.3.0.5
+2025-10-25 13:26:01.141 T PreSd.exe[41520] main.cpp:145 main | Date : Aug 12 2024 - 13:48:40
+2025-10-25 13:26:01.153 D PreSd.exe[41520] BandwidthCheck.cpp:690 serverStart | Bandwidth checker start.  SERVER_MODE
+2025-10-25 13:26:01.153 I PreSd.exe[41520] main.cpp:166 main | 
+  ver       : Version
+  showvp    : Show VP list
+  showstrm  : Show stream list
+
+2025-10-25 13:26:17.360 I PreSd.exe[41520] DMServer.cpp:191 RunSocket | Connected IP : 10.82.104.100
+2025-10-25 13:26:17.360 I PreSd.exe[41520] DMServer.cpp:194 RunSocket | Local IP Address : 10.82.104.100
+2025-10-25 13:26:17.360 I PreSd.exe[41520] DMServer.cpp:197 RunSocket | accept socket 1608
+2025-10-25 13:26:17.360 I PreSd.exe[41520] PreSdMgr.cpp:737 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"PCd","To":"PreSd","Token":"1025_13261735590_mux","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:26:17.360 I PreSd.exe[41520] PreSdMgr.cpp:788 PreSdProc | PreSd Connect Daemon
+2025-10-25 13:26:17.360 D PreSd.exe[41520] PreSdMgr.cpp:1928 AddStreamer | AddStream Start
+2025-10-25 13:26:17.360 I PreSd.exe[41520] StreamMgr.cpp:63 AddStreamer | Add Streamer [10.82.104.11] model: BGH1, PostSd: 4294967295 (0)
+2025-10-25 13:26:17.360 I PreSd.exe[41520] StreamMgr.cpp:63 AddStreamer | Add Streamer [10.82.104.12] model: BGH1, PostSd: 4294967295 (0)
+2025-10-25 13:26:17.360 I PreSd.exe[41520] PreSdMgr.cpp:1049 PreSdProc | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1025_13261735590_mux","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:26:17.717 I PreSd.exe[41520] PreSdMgr.cpp:737 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1025_13261771503_o4e","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:26:17.717 I PreSd.exe[41520] PreSdMgr.cpp:1049 PreSdProc | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1025_13261771503_o4e","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:30:10.571 I PreSd.exe[41520] PreSdMgr.cpp:737 RecJson | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"request","From":"PCd","To":"PreSd","Token":"1025_13301056566_i8o","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:30:10.571 I PreSd.exe[41520] PreSdMgr.cpp:788 PreSdProc | PreSd Connect Daemon
+2025-10-25 13:30:10.571 D PreSd.exe[41520] PreSdMgr.cpp:1928 AddStreamer | AddStream Start
+2025-10-25 13:30:10.571 I PreSd.exe[41520] PreSdMgr.cpp:1049 PreSdProc | {"PreSd":[{"IP":"10.82.104.100","Mode":"replay","Cameras":[{"Index":1,"IP":"10.82.104.11","CameraModel":"BGH1"},{"Index":2,"IP":"10.82.104.12","CameraModel":"BGH1"}]}],"PostSd":[],"VPd":[],"Section1":"pcd","Section2":"daemonlist","Section3":"connect","SendState":"response","From":"PreSd","To":"PCd","Token":"1025_13301056566_i8o","Action":"set","DMPDIP":"10.82.104.100","SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:30:10.611 I PreSd.exe[41520] PreSdMgr.cpp:737 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"PreSd","Token":"1025_13301060879_vx3","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:30:10.611 I PreSd.exe[41520] PreSdMgr.cpp:1049 PreSdProc | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"PreSd","To":"4DDM","Token":"1025_13301060879_vx3","Action":"set","DMPDIP":"10.82.104.100","Version":{"PreSd":{"version":"4.3.0.5","date":"Aug 12 2024 - 13:48:39"}},"SenderIP":"10.82.104.100","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:31:24.194 D PreSd.exe[41520] RtspSession.cpp:60 RtspSession | 2340567233024(10.82.104.100:4075) 
+2025-10-25 13:31:24.194 D PreSd.exe[41520] TcpServer.h:269 onAcceptConnection | session map : 1
+2025-10-25 13:31:24.194 D PreSd.exe[41520] Streamer.cpp:256 OpenRtspSession | [10.82.104.11] (gop:12, live gop:1, denom:0) : MTU = 12
+2025-10-25 13:31:24.542 D PreSd.exe[41520] RTSPClient.cpp:1365 parseDateHeader | [10.82.104.11] Date: 01 Jan 2020 07:58:32 GMT, time:1577833112
+2025-10-25 13:31:24.542 D PreSd.exe[41520] RTSPClient.cpp:1329 parseRTPInfoHeader | [10.82.104.11] RTP-Info: rtsp://10.82.104.11:554/stream/, timestamp: 113561250
+2025-10-25 13:31:24.542 D PreSd.exe[41520] RTSPClient.cpp:1329 parseRTPInfoHeader | [10.82.104.11] RTP-Info: rtsp://10.82.104.11:554/stream/, timestamp: 113561250
+2025-10-25 13:31:24.543 I PreSd.exe[41520] PreSdMgr.cpp:340 LiveViewOpenSession | [LiveView] OpenSession : 10.82.104.11
+2025-10-25 13:31:24.543 T PreSd.exe[41520] RtspSession.cpp:389 onAuthSuccess | 2340567233024(10.82.104.100:4075) 
+2025-10-25 13:31:24.712 D PreSd.exe[41520] Streamer.cpp:1344 FrameCheck | [10.82.104.11]  First Frame => num:0, ts:1261791, type:video
+2025-10-25 13:31:24.713 D PreSd.exe[41520] MediaSink.cpp:125 emitAllTrackReady | all track ready use 0ms
+2025-10-25 13:31:24.713 D PreSd.exe[41520] MediaSource.cpp:354 operator () | Receive media registration event, reply to player:rtsp/PreSd/4DReplayLive/104011
+2025-10-25 13:31:24.713 D PreSd.exe[41520] Streamer.cpp:1008 PrepareMuxer | Muxer Prepare [10.82.104.11]  file_frames:60 (fps:60, gop:12), first I-frame:0
+2025-10-25 13:31:24.713 D PreSd.exe[41520] FrameMuxer.cpp:340 inputVideo | Ch{1} First input FrameNo{0}
+2025-10-25 13:31:24.715 I PreSd.exe[41520] RtspSession.cpp:781 handleReq_Play | 2340567233024(10.82.104.100:4075) rtsp seekTo(ms):0
+2025-10-25 13:31:28.756 W PreSd.exe[41520] RtspSession.cpp:72 onError | 2340567233024(10.82.104.100:4075) RTSP player(PreSd/4DReplayLive/104011)disconnect:rtsp player send teardown request,duration(s):4
+2025-10-25 13:31:28.756 T PreSd.exe[41520] Streamer.cpp:289 CloseRtspSession | CloseRtspSession begin: 10.82.104.11
+2025-10-25 13:31:28.762 D PreSd.exe[41520] RtspSession.cpp:60 RtspSession | 2340568362032(10.82.104.100:4086) 
+2025-10-25 13:31:28.762 D PreSd.exe[41520] TcpServer.h:269 onAcceptConnection | session map : 1
+2025-10-25 13:31:28.762 D PreSd.exe[41520] Streamer.cpp:256 OpenRtspSession | [10.82.104.12] (gop:12, live gop:1, denom:0) : MTU = 12
+2025-10-25 13:31:28.778 T PreSd.exe[41520] Streamer.cpp:301 CloseRtspSession | CloseRtspSession End: 10.82.104.11
+2025-10-25 13:31:28.778 I PreSd.exe[41520] PreSdMgr.cpp:363 LiveViewCloseSession | [LiveView] CloseSession : 10.82.104.11
+2025-10-25 13:31:28.778 D PreSd.exe[41520] RtspSession.cpp:66 ~RtspSession | 2340567233024(10.82.104.100:4075) 
+2025-10-25 13:31:29.139 D PreSd.exe[41520] RTSPClient.cpp:1365 parseDateHeader | [10.82.104.12] Date: 01 Jan 2020 07:56:11 GMT, time:1577832971
+2025-10-25 13:31:29.139 D PreSd.exe[41520] RTSPClient.cpp:1329 parseRTPInfoHeader | [10.82.104.12] RTP-Info: rtsp://10.82.104.12:554/stream/, timestamp: 1120908292
+2025-10-25 13:31:29.139 D PreSd.exe[41520] RTSPClient.cpp:1329 parseRTPInfoHeader | [10.82.104.12] RTP-Info: rtsp://10.82.104.12:554/stream/, timestamp: 1120908292
+2025-10-25 13:31:29.139 I PreSd.exe[41520] PreSdMgr.cpp:340 LiveViewOpenSession | [LiveView] OpenSession : 10.82.104.12
+2025-10-25 13:31:29.139 T PreSd.exe[41520] RtspSession.cpp:389 onAuthSuccess | 2340568362032(10.82.104.100:4086) 
+2025-10-25 13:31:29.249 D PreSd.exe[41520] Streamer.cpp:1344 FrameCheck | [10.82.104.12]  First Frame => num:0, ts:12454536, type:video
+2025-10-25 13:31:29.249 D PreSd.exe[41520] MediaSink.cpp:125 emitAllTrackReady | all track ready use 0ms
+2025-10-25 13:31:29.249 D PreSd.exe[41520] MediaSource.cpp:354 operator () | Receive media registration event, reply to player:rtsp/PreSd/4DReplayLive/104012
+2025-10-25 13:31:29.249 D PreSd.exe[41520] Streamer.cpp:1008 PrepareMuxer | Muxer Prepare [10.82.104.12]  file_frames:60 (fps:60, gop:12), first I-frame:0
+2025-10-25 13:31:29.249 D PreSd.exe[41520] FrameMuxer.cpp:340 inputVideo | Ch{2} First input FrameNo{0}
+2025-10-25 13:31:29.250 I PreSd.exe[41520] RtspSession.cpp:781 handleReq_Play | 2340568362032(10.82.104.100:4086) rtsp seekTo(ms):0
+2025-10-25 13:31:35.505 W PreSd.exe[41520] RtspSession.cpp:72 onError | 2340568362032(10.82.104.100:4086) RTSP player(PreSd/4DReplayLive/104012)disconnect:rtsp player send teardown request,duration(s):6
+2025-10-25 13:31:35.505 T PreSd.exe[41520] Streamer.cpp:289 CloseRtspSession | CloseRtspSession begin: 10.82.104.12
+2025-10-25 13:31:35.532 T PreSd.exe[41520] Streamer.cpp:301 CloseRtspSession | CloseRtspSession End: 10.82.104.12
+2025-10-25 13:31:35.532 I PreSd.exe[41520] PreSdMgr.cpp:363 LiveViewCloseSession | [LiveView] CloseSession : 10.82.104.12
+2025-10-25 13:31:35.532 D PreSd.exe[41520] RtspSession.cpp:66 ~RtspSession | 2340568362032(10.82.104.100:4086) 

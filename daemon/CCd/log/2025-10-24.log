@@ -1,0 +1,3406 @@
+2025-10-24 19:35:59.718 T CCd.exe[23488] main.cpp:68 main | 4DReplay CCd
+2025-10-24 19:35:59.718 T CCd.exe[23488] main.cpp:69 main | Version : 4.3.0.8
+2025-10-24 19:35:59.718 T CCd.exe[23488] main.cpp:70 main | Date : Dec 17 2024 - 17:59:29
+2025-10-24 19:35:59.718 I CCd.exe[23488] main.cpp:43 PrintUse | 
+ * [] : Optional
+- use       : Usage
+- ver       : Version
+- list      : Camera List
+- stat [I]  : Camera Status (I:Index)
+- vfmt [I]  : Camera Video Format (I:Index)
+- prop I    : Camera Properties (I:Index)
+- con       : Connect
+- dcon      : Disconnect
+- sync      : Sync
+- run T     : Record(Including Sync, T:WaitTime)
+- stop      : Stop
+- live      : Live
+- reboot    : Reboot
+- exit      : Exit
+
+2025-10-24 19:45:26.212 T CCd.exe[16808] main.cpp:68 main | 4DReplay CCd
+2025-10-24 19:45:26.212 T CCd.exe[16808] main.cpp:69 main | Version : 4.3.0.8
+2025-10-24 19:45:26.212 T CCd.exe[16808] main.cpp:70 main | Date : Dec 17 2024 - 17:59:29
+2025-10-24 19:45:26.212 I CCd.exe[16808] main.cpp:43 PrintUse | 
+ * [] : Optional
+- use       : Usage
+- ver       : Version
+- list      : Camera List
+- stat [I]  : Camera Status (I:Index)
+- vfmt [I]  : Camera Video Format (I:Index)
+- prop I    : Camera Properties (I:Index)
+- con       : Connect
+- dcon      : Disconnect
+- sync      : Sync
+- run T     : Record(Including Sync, T:WaitTime)
+- stop      : Stop
+- live      : Live
+- reboot    : Reboot
+- exit      : Exit
+
+2025-10-24 20:15:44.531 T CCd.exe[34652] main.cpp:68 main | 4DReplay CCd
+2025-10-24 20:15:44.531 T CCd.exe[34652] main.cpp:69 main | Version : 4.3.0.8
+2025-10-24 20:15:44.531 T CCd.exe[34652] main.cpp:70 main | Date : Dec 17 2024 - 17:59:29
+2025-10-24 20:15:44.531 I CCd.exe[34652] main.cpp:43 PrintUse | 
+ * [] : Optional
+- use       : Usage
+- ver       : Version
+- list      : Camera List
+- stat [I]  : Camera Status (I:Index)
+- vfmt [I]  : Camera Video Format (I:Index)
+- prop I    : Camera Properties (I:Index)
+- con       : Connect
+- dcon      : Disconnect
+- sync      : Sync
+- run T     : Record(Including Sync, T:WaitTime)
+- stop      : Stop
+- live      : Live
+- reboot    : Reboot
+- exit      : Exit
+
+2025-10-24 20:16:00.394 I CCd.exe[34652] DMServer.cpp:152 RunSocket | Connected IP : 10.82.104.100
+2025-10-24 20:16:00.394 I CCd.exe[34652] DMServer.cpp:155 RunSocket | Local IP Address : 10.82.104.100
+2025-10-24 20:16:00.394 I CCd.exe[34652] DMServer.cpp:158 RunSocket | accept socket 556
+2025-10-24 20:41:54.722 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20415472082_riz",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:41:54.722 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20415472082_riz",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": []
+}
+2025-10-24 20:41:54.724 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20415472422_5uz",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:41:54.724 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20415472422_5uz",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": []
+}
+2025-10-24 20:41:54.725 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20415472194_lij",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:41:54.725 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20415472194_lij",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": []
+}
+2025-10-24 20:41:59.755 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Model": "BGH1"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Model": "BGH1"
+        }
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20415975324_sej",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:41:59.755 T CCd.exe[34652] CameraMgr.cpp:668 CreateCamera | Create Camera Instance : 10.82.104.11, BGH1
+2025-10-24 20:41:59.755 T CCd.exe[34652] CameraMgr.cpp:668 CreateCamera | Create Camera Instance : 10.82.104.12, BGH1
+2025-10-24 20:41:59.755 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_20415975324_sej",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:41:59.760 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20415975763_d54",
+    "Action": "run",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.057 I CCd.exe[34652] BGH1c.cpp:721 GetRecordStatus | [BGH1] 10.82.104.12 RecStatus : Standby
+2025-10-24 20:42:00.104 I CCd.exe[34652] BGH1c.cpp:721 GetRecordStatus | [BGH1] 10.82.104.11 RecStatus : Standby
+2025-10-24 20:42:00.104 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "run",
+    "Token": "1024_20415975763_d54",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Status": "OK"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Status": "OK"
+        }
+    ]
+}
+2025-10-24 20:42:00.106 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20420010543_nxu",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.106 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20420010543_nxu",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:00.114 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20420011237_d6h",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.116 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_20420011237_d6h",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 20:42:00.136 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20420013393_e3y",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.136 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20420013393_e3y",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:00.340 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20420033957_mci",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.340 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20420033994_ejf",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:00.340 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20420033994_ejf",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:00.340 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20420033957_mci",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:34.453 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423445133_ykk",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:34.453 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423445128_yxb",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:34.453 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20423445133_ykk",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:34.453 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20423445128_yxb",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:34.453 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423445130_twp",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:34.453 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20423445130_twp",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:39.497 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Model": "BGH1"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Model": "BGH1"
+        }
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423949606_dc7",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.497 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_20423949606_dc7",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 20:42:39.501 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423949937_f6e",
+    "Action": "run",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.501 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "run",
+    "Token": "1024_20423949937_f6e",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Status": "OK"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Status": "OK"
+        }
+    ]
+}
+2025-10-24 20:42:39.504 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423950285_g4b",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.504 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20423950285_g4b",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:39.506 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423950588_3x7",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.508 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_20423950588_3x7",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 20:42:39.509 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20423950808_v0p",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:39.510 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20423950808_v0p",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:41.567 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20424156658_az5",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:41.567 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20424156677_jdq",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:41.567 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20424156658_az5",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:41.567 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_20424156677_jdq",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 20:42:57.599 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_20425759850_1cm",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 20:42:57.603 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_20425759850_1cm",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 21:01:07.661 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010766029_szf",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.661 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010766027_fet",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.661 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010766027_fet",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.661 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010766026_hlq",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.661 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010766029_szf",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.661 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010766026_hlq",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.699 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Model": "BGH1"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Model": "BGH1"
+        }
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010769773_ii5",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.699 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21010769773_ii5",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:07.702 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010770072_vw9",
+    "Action": "run",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.703 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "run",
+    "Token": "1024_21010770072_vw9",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Status": "OK"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Status": "OK"
+        }
+    ]
+}
+2025-10-24 21:01:07.705 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010770374_8ui",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.705 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010770374_8ui",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.709 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010770711_6dd",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.711 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21010770711_6dd",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 21:01:07.712 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010770928_qr8",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.712 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010770928_qr8",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.764 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010776361_np6",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.764 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21010776378_qfp",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:07.764 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010776361_np6",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:07.765 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21010776378_qfp",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.134 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012513384_s1b",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.134 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012513388_sbo",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.134 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012513384_s1b",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.134 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012513384_32x",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.134 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012513388_sbo",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.134 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012513384_32x",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.176 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Model": "BGH1"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Model": "BGH1"
+        }
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012517547_lot",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.177 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "AddCamera",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21012517547_lot",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": ""
+}
+2025-10-24 21:01:25.179 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012517790_v6o",
+    "Action": "run",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.179 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Operation",
+    "Section3": "Connect",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "run",
+    "Token": "1024_21012517790_v6o",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "Status": "OK"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "Status": "OK"
+        }
+    ]
+}
+2025-10-24 21:01:25.181 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012518023_224",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.181 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012518023_224",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.186 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012518514_gtl",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.188 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012518719_zoo",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.188 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012518719_zoo",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.189 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21012518514_gtl",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 21:01:25.254 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012525289_djr",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.254 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21012525307_lqd",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:25.254 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012525289_djr",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-30BA69",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1600.0,
+            "ISO": "Auto",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 0.0,
+            "NoiseReduction": 0.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5400K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.265",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "SystemFrequency": "NTSC",
+            "PhotoStyle": "Like709",
+            "FilterEffect": "Off",
+            "Adjust_AB": 0,
+            "Adjust_GM": 0,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 60,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:25.254 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetCameraInfo",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21012525307_lqd",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.12",
+            "SubnetMask": "255.255.255.0",
+            "GatewayAddress": "10.82.1.1",
+            "ModelName": "BGH1",
+            "UUID": "BGH1-177541",
+            "FirmwareVersion": "2.51",
+            "ManualFocusPosition": 0,
+            "ZoomPosition": 0,
+            "FocusMode": "Manual",
+            "AutoFocusPoint": "1-Area",
+            "ExposureMode": "Manual",
+            "AeArea": "Center",
+            "Aperture": 65534,
+            "ShutterSpeed": 1300.0,
+            "ISO": "3200",
+            "WhiteBalance": "ColorTemperature 1",
+            "ExposureCompensation": "0.0",
+            "ImageStabilizationMode": "Off",
+            "Contrast": 0.0,
+            "Sharpness": 1.0,
+            "NoiseReduction": 5.0,
+            "Saturation": 0.0,
+            "Hue": 0.0,
+            "ColorTemperature": "5300K",
+            "FocusPeakingLv": "Off",
+            "LuminanceLevel": "Full_range",
+            "CMOSOffsetCorrectLevel": 0,
+            "LensPower": "On",
+            "StreamType": "Main",
+            "Codec": "H.264",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "SystemFrequency": "PAL",
+            "PhotoStyle": "Standard",
+            "FilterEffect": "Off",
+            "Adjust_AB": -3,
+            "Adjust_GM": -1,
+            "ColorBars": "SMPTE",
+            "KneeSetting": "Off",
+            "KneePoint": 93.0,
+            "KneeSlope": 85,
+            "ApertureList": [
+                65534,
+                220
+            ],
+            "ZoomPositionList": {
+                "upper": 50,
+                "lower": 12,
+                "step": 1
+            }
+        }
+    ]
+}
+2025-10-24 21:01:43.336 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21014333316_t41",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:43.339 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21014333316_t41",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 21:01:46.228 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetVideoFormat",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21014622640_6oa",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:01:46.228 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetVideoFormat",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21014622640_6oa",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "ModelName": "BGH1",
+            "StreamType": "Main",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "Codec": "H.265"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "ModelName": "BGH1",
+            "StreamType": "Main",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "Codec": "H.264"
+        }
+    ]
+}
+2025-10-24 21:02:20.169 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21022016825_uka",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:02:20.173 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21022016825_uka",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}
+2025-10-24 21:02:22.140 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Cameras": [
+        "10.82.104.11",
+        "10.82.104.12"
+    ],
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetVideoFormat",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21022213775_6un",
+    "Action": "get",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:02:22.140 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Camera",
+    "Section2": "Information",
+    "Section3": "GetVideoFormat",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "get",
+    "Token": "1024_21022213775_6un",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Cameras": [
+        {
+            "IPAddress": "10.82.104.11",
+            "ModelName": "BGH1",
+            "StreamType": "Main",
+            "VideoFormatMain": "UHD-60",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 30,
+            "VideoGopMain": "30",
+            "Codec": "H.265"
+        },
+        {
+            "IPAddress": "10.82.104.12",
+            "ModelName": "BGH1",
+            "StreamType": "Main",
+            "VideoFormatMain": "UHD-50",
+            "VideoBitrateMain": "50.0",
+            "VideoGop": 24,
+            "VideoGopMain": "24",
+            "Codec": "H.264"
+        }
+    ]
+}
+2025-10-24 21:02:55.179 D CCd.exe[34652] CCd.cpp:722 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "From": "4DDM",
+    "To": "CCd",
+    "Token": "1024_21025517871_ygh",
+    "Action": "set",
+    "DMPDIP": "10.82.104.100"
+}
+2025-10-24 21:02:55.182 I CCd.exe[34652] CCd.cpp:920 ProcMessage | {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "To": "4DDM",
+    "From": "CCd",
+    "Action": "set",
+    "Token": "1024_21025517871_ygh",
+    "SendState": "response",
+    "ResultCode": 1000,
+    "ErrorMsg": "",
+    "Version": {
+        "CCd": {
+            "version": "4.3.0.8",
+            "date": "Dec 17 2024 - 17:59:29",
+            "mac": "10:FF:E0:CD:61:95"
+        }
+    }
+}

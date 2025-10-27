@@ -1,0 +1,25 @@
+2025-10-25 13:26:03.164 I SCd.exe[35292] main.cpp:41 main | Version : 4.2.0.1
+2025-10-25 13:26:03.164 I SCd.exe[35292] main.cpp:42 main | v : Version check
+2025-10-25 13:26:03.164 E SCd.exe[35292] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-25 13:26:12.504 I SCd.exe[35292] DMServer.cpp:144 RunSocket | Connected IP : 10.82.104.100
+2025-10-25 13:26:12.509 I SCd.exe[35292] DMServer.cpp:147 RunSocket | Local IP Address : 10.82.104.100
+2025-10-25 13:26:12.509 I SCd.exe[35292] DMServer.cpp:150 RunSocket | accept socket 272
+2025-10-25 13:26:17.715 I SCd.exe[35292] DaemonMgr.cpp:132 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_13261771398_2uj","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:26:17.715 I SCd.exe[35292] DaemonMgr.cpp:448 SCdProc | {"Version":{"SCd":{"version":"4.2.0.1","date":"Aug 12 2024 - 13:48:56"}},"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_13261771398_2uj","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:26:17.719 I SCd.exe[35292] DaemonMgr.cpp:132 RecJson | {"Switches":[],"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_13261771669_p7f","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-25 13:26:17.719 I SCd.exe[35292] DaemonMgr.cpp:448 SCdProc | {"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_13261771669_p7f","ResultCode":40026,"ErrorMsg":"Switch Array Size Zero"}
+2025-10-25 13:30:10.608 I SCd.exe[35292] DaemonMgr.cpp:132 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_13301060760_105","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 13:30:10.608 I SCd.exe[35292] DaemonMgr.cpp:448 SCdProc | {"Version":{"SCd":{"version":"4.2.0.1","date":"Aug 12 2024 - 13:48:56"}},"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_13301060760_105","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 13:30:10.614 I SCd.exe[35292] DaemonMgr.cpp:132 RecJson | {"Switches":[],"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_13301061070_g1k","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-25 13:30:10.614 I SCd.exe[35292] DaemonMgr.cpp:448 SCdProc | {"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_13301061070_g1k","ResultCode":40026,"ErrorMsg":"Switch Array Size Zero"}
+2025-10-25 18:44:46.632 I SCd.exe[2732] main.cpp:41 main | Version : 4.2.0.1
+2025-10-25 18:44:46.632 I SCd.exe[2732] main.cpp:42 main | v : Version check
+2025-10-25 18:44:46.632 E SCd.exe[2732] main.cpp:48 main | 4.2.0.1 - Aug 12 2024 : 13:48:56
+2025-10-25 18:45:19.457 I SCd.exe[2732] DMServer.cpp:144 RunSocket | Connected IP : 10.82.104.100
+2025-10-25 18:45:19.462 I SCd.exe[2732] DMServer.cpp:147 RunSocket | Local IP Address : 10.82.104.100
+2025-10-25 18:45:19.462 I SCd.exe[2732] DMServer.cpp:150 RunSocket | accept socket 300
+2025-10-25 18:45:39.017 I SCd.exe[2732] DaemonMgr.cpp:132 RecJson | {"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_18453901650_h13","Action":"set","DMPDIP":"10.82.104.100"}
+2025-10-25 18:45:39.017 I SCd.exe[2732] DaemonMgr.cpp:448 SCdProc | {"Version":{"SCd":{"version":"4.2.0.1","date":"Aug 12 2024 - 13:48:56"}},"Section1":"Daemon","Section2":"Information","Section3":"Version","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_18453901650_h13","ResultCode":1000,"ErrorMsg":""}
+2025-10-25 18:45:39.020 I SCd.exe[2732] DaemonMgr.cpp:132 RecJson | {"Switches":[],"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"request","From":"4DDM","To":"SCd","Token":"1025_18453901918_1t1","Action":"get","DMPDIP":"10.82.104.100"}
+2025-10-25 18:45:39.020 I SCd.exe[2732] DaemonMgr.cpp:448 SCdProc | {"Section1":"Switch","Section2":"Information","Section3":"Model","SendState":"response","From":"SCd","To":"4DDM","Token":"1025_18453901918_1t1","ResultCode":40026,"ErrorMsg":"Switch Array Size Zero"}
+2025-10-25 18:47:22.835 I SCd.exe[2732] DMServer.cpp:238 handle_clnt | Close Socket IP : 10.82.104.100, Type : MTd, SockNum : 300

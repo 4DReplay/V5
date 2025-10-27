@@ -1,0 +1,12 @@
+2025-10-26 17:59:15.390 E EMd.exe[22092] main.cpp:27 main | 4.3.0.3 - Jul 20 2023 : 10:53:26
+2025-10-26 17:59:15.399 I EMd.exe[22092] main.cpp:31 main | Version : 4.3.0.3
+2025-10-26 17:59:15.399 I EMd.exe[22092] main.cpp:32 main | v : Version check
+2025-10-26 18:52:50.501 E EMd.exe[28880] main.cpp:27 main | 4.3.0.3 - Jul 20 2023 : 10:53:26
+2025-10-26 18:52:50.509 I EMd.exe[28880] main.cpp:31 main | Version : 4.3.0.3
+2025-10-26 18:52:50.509 I EMd.exe[28880] main.cpp:32 main | v : Version check
+2025-10-26 19:24:38.437 E EMd.exe[26452] main.cpp:27 main | 4.3.0.3 - Jul 20 2023 : 10:53:26
+2025-10-26 19:24:38.445 I EMd.exe[26452] main.cpp:31 main | Version : 4.3.0.3
+2025-10-26 19:24:38.445 I EMd.exe[26452] main.cpp:32 main | v : Version check
+2025-10-26 22:12:04.306 E EMd.exe[33184] main.cpp:27 main | 4.3.0.3 - Jul 20 2023 : 10:53:26
+2025-10-26 22:12:04.314 I EMd.exe[33184] main.cpp:31 main | Version : 4.3.0.3
+2025-10-26 22:12:04.314 I EMd.exe[33184] main.cpp:32 main | v : Version check
