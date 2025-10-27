@@ -64,6 +64,85 @@ $RegHKLM64 = [Microsoft.Win32.RegistryKey]::OpenBaseKey(
   [Microsoft.Win32.RegistryView]::Registry64
 )
 
+
+# --- PATH helpers (system + per-service) -------------------------------------
+function Ensure-SystemPathIncludes {
+  param([string[]]$Entries)
+
+  # 현재 시스템 PATH
+  $cur = [Environment]::GetEnvironmentVariable('Path','Machine')
+  $parts = ($cur -split ';') | Where-Object { $_ } | ForEach-Object { $_.Trim() }
+
+  $add = @()
+  foreach ($e in $Entries) {
+    if (-not (Test-Path $e)) { continue }
+    $abs = (Resolve-Path $e).Path
+    if (-not ($parts | Where-Object { $_.ToLower() -eq $abs.ToLower() })) {
+      $add += $abs
+    }
+  }
+  if ($add.Count -gt 0) {
+    $newPath = ($parts + $add) -join ';'
+    [Environment]::SetEnvironmentVariable('Path', $newPath, 'Machine')
+
+    # 환경변수 변경 브로드캐스트
+    Add-Type -Namespace Win32 -Name NativeMethods -MemberDefinition @"
+using System;
+using System.Runtime.InteropServices;
+public static class NativeMethods {
+  [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
+  public static extern IntPtr SendMessageTimeout(IntPtr hWnd, int Msg, IntPtr wParam, string lParam, int flags, int timeout, out IntPtr lpdwResult);
+}
+"@ -ErrorAction SilentlyContinue
+    $HWND_BROADCAST = [IntPtr]0xffff
+    $WM_SETTINGCHANGE = 0x1A
+    $null = [Win32.NativeMethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [IntPtr]::Zero, "Environment", 2, 5000, [ref]([IntPtr]::Zero))
+  }
+}
+
+function Set-ServiceEnvironmentPath {
+  param(
+    [string]$ServiceName,
+    [string[]]$ExtraEntries
+  )
+
+  # 서비스 키 보장
+  $svcKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$ServiceName")
+
+  # 시스템 PATH + 추가 경로 결합
+  $sysPath = [Environment]::GetEnvironmentVariable('Path','Machine')
+  $all = @()
+  if ($sysPath) { $all += ($sysPath -split ';') }
+
+  foreach ($e in $ExtraEntries) {
+    if (Test-Path $e) { $all += (Resolve-Path $e).Path }
+  }
+
+  # 중복 제거(대소문자 무시)
+  $set = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+  $ordered = New-Object System.Collections.Generic.List[string]
+  foreach ($p in $all) { if ($p -and $set.Add($p)) { [void]$ordered.Add($p) } }
+
+  $mergedPath = ($ordered -join ';')
+
+  # 기존 Environment(REG_MULTI_SZ) 읽어 PATH= 항목만 교체
+  $existing = $svcKey.GetValue("Environment", $null, [Microsoft.Win32.RegistryValueOptions]::None)
+  $list = @()
+  if ($existing -is [string[]]) {
+    # PATH= 로 시작하는 항목 제거
+    $list = @($existing | Where-Object { $_ -and ($_ -notmatch '^(?i)PATH=') })
+  }
+
+  # 새 PATH= 추가 (string[] 로 캐스팅 중요)
+  $newEnv = @($list + @("PATH=$mergedPath"))
+  $svcKey.SetValue(
+    "Environment",
+    [string[]]$newEnv,
+    [Microsoft.Win32.RegistryValueKind]::MultiString
+  )
+}
+
+
 # --- Paths / Constants --------------------------------------------------------
 $RepoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 $SvcName  = 'DMs'
@@ -71,7 +150,7 @@ $Display  = '4DReplay DMs Agent'
 $LogDir   = Join-Path $RepoRoot 'logs\DMS'
 $ServicePy= Join-Path $PSScriptRoot 'dms_service.py'
 
-# 서비스 실행에 필요한 PATH 엔트리
+# NEW: 서비스 실행에 필요한 PATH 엔트리
 $ExtraPathEntries = @(
   (Join-Path $RepoRoot 'library\daemon'),
   (Join-Path $RepoRoot 'library\ffmpeg')
@@ -109,49 +188,6 @@ function Ensure-Pywin32 {
   & $Py -m pip install --upgrade --no-warn-script-location pywin32 | Out-Host
 }
 
-# --- PATH 보강 (머신) --------------------------------------------------------
-function Ensure-MachinePath {
-  param([string[]]$Entries)
-
-  $envKey = "SYSTEM\CurrentControlSet\Control\Session Manager\Environment"
-  $envReg = $RegHKLM64.OpenSubKey($envKey, $true)
-  $path   = $envReg.GetValue("Path", "", [Microsoft.Win32.RegistryValueOptions]::DoNotExpandEnvironmentNames)
-
-  $parts = @()
-  if ($path) { $parts = $path -split ';' | Where-Object { $_ -ne '' } }
-
-  foreach ($e in $Entries) {
-    if (-not (Test-Path $e)) { continue }
-    if (-not ($parts | ForEach-Object { $_.Trim() } | Where-Object { $_.ToLower() -eq $e.ToLower() })) {
-      $parts += $e
-      Write-Info "PATH added: $e"
-    } else {
-      Write-Info "PATH already contains: $e"
-    }
-  }
-
-  $newPath = ($parts -join ';')
-  $envReg.SetValue("Path", $newPath, [Microsoft.Win32.RegistryValueKind]::ExpandString)
-  [Environment]::SetEnvironmentVariable("Path", $newPath, [System.EnvironmentVariableTarget]::Machine)
-
-  # WM_SETTINGCHANGE 브로드캐스트
-  Add-Type -Namespace Win32 -Name NativeMethods -MemberDefinition @"
-using System;
-using System.Runtime.InteropServices;
-public static class NativeMethods {
-  [DllImport("user32.dll", SetLastError=true, CharSet=CharSet.Auto)]
-  public static extern IntPtr SendMessageTimeout(
-    IntPtr hWnd, int Msg, IntPtr wParam, string lParam,
-    int fuFlags, int uTimeout, out IntPtr lpdwResult);
-}
-"@
-  $HWND_BROADCAST = [intptr]0xffff
-  $WM_SETTINGCHANGE = 0x1A
-  $SMTO_ABORTIFHUNG = 0x2
-  [intptr]$result = [intptr]::Zero
-  [Win32.NativeMethods]::SendMessageTimeout($HWND_BROADCAST, $WM_SETTINGCHANGE, [intptr]::Zero, "Environment", $SMTO_ABORTIFHUNG, 5000, [ref]$result) | Out-Null
-}
-
 # --- Service ops -------------------------------------------------------------
 function Service-Exists {
   $p = Start-Process -FilePath $SC -ArgumentList "query $SvcName" -NoNewWindow -Wait -PassThru
@@ -169,7 +205,9 @@ function Service-Stop-Delete {
 }
 
 function Write-Parameters {
-  param([string]$PyExe)
+  param(
+    [string]$PyExe
+  )
   $svcKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName")
   $parKey = $RegHKLM64.CreateSubKey("SYSTEM\CurrentControlSet\Services\$SvcName\Parameters")
 
@@ -213,6 +251,9 @@ function Install-ViaWin32ServiceUtil {
 
   # Parameters 보강 (환경 의존성 제거)
   Write-Parameters -PyExe $Py
+  # PATH 보강 (시스템 PATH + 서비스 전용 PATH)
+  Ensure-SystemPathIncludes -Entries $ExtraPathEntries
+  Set-ServiceEnvironmentPath -ServiceName $SvcName -ExtraEntries $ExtraPathEntries
 
   # 실패시 자동 재시작 (3회, 5초 간격)
   Write-Info "Configure failure actions..."
@@ -265,10 +306,10 @@ Write-Host "PythonPath : $Py"
 Write-Host "LogDir     : $LogDir"
 
 Install-ViaWin32ServiceUtil -Py $Py
-Ensure-MachinePath -Entries $ExtraPathEntries   # 서비스 시작 전 PATH 보강
 Start-And-Show
 
 Write-Host "`nOK: DMs Service installed and started."
 Write-Host "Check :  sc.exe qc $SvcName"
 Write-Host "Query :  sc.exe query $SvcName"
 Write-Host "Debug :  `"$Py`" `"$ServicePy`" debug   (Ctrl+C to stop)"
+
