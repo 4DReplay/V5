@@ -1,0 +1,147 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Log Viewer</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --card:#0b1220; --line:#243045;
+      --btn:#1e40af; --btn2:#334155; --th:#0f172a;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:16px}
+    header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+    h2{margin:0 12px 0 0;font-size:20px}
+    button{background:var(--btn);color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
+    button.btn2{background:var(--btn2)}
+    select{background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+    label{display:flex;align-items:center;gap:6px}
+    #meta{margin-left:auto;font-size:12px;color:#cbd5e1}
+    #log{height:calc(100vh - 92px);overflow:auto;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;white-space:pre-wrap;margin:0}
+    a.link{color:#93c5fd;text-decoration:none}
+  </style>
+</head>
+<body>
+  <header>
+    <button id="btnBack" class="btn2">← Back</button>
+    <h2 id="title">Logs</h2>
+    <select id="selDate"></select>
+    <select id="selTail">
+      <option value="20000">20 KB</option>
+      <option value="50000" selected>50 KB</option>
+      <option value="200000">200 KB</option>
+      <option value="1000000">1 MB</option>
+    </select>
+    <label><input type="checkbox" id="cbAuto" checked> auto</label>
+    <button id="btnRefresh" class="btn2">Refresh</button>
+    <span id="meta">-</span>
+  </header>
+  <pre id="log">(loading...)</pre>
+
+<script>
+(function(){
+  const qs = new URLSearchParams(location.search);
+  const name = qs.get("name") || "";
+  const initialDate = qs.get("date") || "";
+  const initialTail = qs.get("tail") || "";
+  const title = document.getElementById("title");
+  const selDate = document.getElementById("selDate");
+  const selTail = document.getElementById("selTail");
+  const cbAuto = document.getElementById("cbAuto");
+  const btnRefresh = document.getElementById("btnRefresh");
+  const btnBack = document.getElementById("btnBack");
+  const meta = document.getElementById("meta");
+  const log = document.getElementById("log");
+  let timer = null;
+
+  title.textContent = `Logs • ${name || "(unknown)"}`;
+  if(initialTail) selTail.value = initialTail;
+
+  function api(path){
+    return fetch(path, {cache:"no-store"}).then(async r=>{
+      const ct=r.headers.get("content-type")||"";
+      const isJson=ct.includes("application/json");
+      if(!r.ok) throw new Error(isJson ? (await r.json()).error||r.statusText : await r.text());
+      return isJson ? r.json() : r.text();
+    });
+  }
+
+  async function loadDates(){
+    selDate.innerHTML = "";
+    try{
+      const r = await api(`/logs/list/${encodeURIComponent(name)}`);
+      const dates = (r && r.dates) || [];
+      if(dates.length === 0){
+        const opt = document.createElement("option");
+        opt.value=""; opt.textContent="(no logs)";
+        selDate.appendChild(opt);
+      }else{
+        dates.forEach(d=>{
+          const opt=document.createElement("option");
+          opt.value=d; opt.textContent=d;
+          selDate.appendChild(opt);
+        });
+        if(initialDate && dates.includes(initialDate)) selDate.value = initialDate;
+      }
+    }catch(e){
+      const opt=document.createElement("option");
+      opt.value=""; opt.textContent="(load failed)";
+      selDate.appendChild(opt);
+    }
+  }
+
+  async function refresh(){
+    if(!name) return;
+    const params = new URLSearchParams();
+    const d = selDate.value;
+    if(d) params.set("date", d);
+    params.set("tail", selTail.value || "50000");
+    try{
+      const r = await api(`/logs/${encodeURIComponent(name)}?`+params.toString());
+      if(r && r.ok){
+        log.textContent = r.text || "";
+        meta.textContent = `${r.path} • ${r.size} bytes • date ${r.date} • tail ${r.tail} bytes`;
+        // 아래로 고정
+        log.scrollTop = log.scrollHeight;
+      }else{
+        log.textContent = (r && r.error) ? r.error : "(no content)";
+        meta.textContent = "-";
+      }
+    }catch(e){
+      log.textContent = String(e.message || e);
+      meta.textContent = "-";
+    }
+  }
+
+  function startAuto(){
+    stopAuto();
+    if(cbAuto.checked){
+      timer = setInterval(refresh, 2000);
+    }
+  }
+  function stopAuto(){
+    if(timer){ clearInterval(timer); timer=null; }
+  }
+
+  // events
+  btnBack.addEventListener("click", ()=>{
+    if(document.referrer){ history.back(); }
+    else { location.href = "/dms-control.html"; }
+  });
+  btnRefresh.addEventListener("click", refresh);
+  cbAuto.addEventListener("change", startAuto);
+  selTail.addEventListener("change", refresh);
+  selDate.addEventListener("change", refresh);
+
+  // init
+  (async function init(){
+    await loadDates();
+    await refresh();
+    startAuto();
+  })();
+})();
+</script>
+</body>
+</html>

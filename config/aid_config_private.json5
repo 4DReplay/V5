@@ -6,7 +6,7 @@
 {
   //────────────────────────────────────────────────────────
   // Release info (usually injected from md by loader)  
-  // 릴리즈 정보, release.md 파일로 부터 최신의 정보로 update
+  // 릴리즈 정보, aid_release.md 파일로 부터 최신의 정보로 update
   //────────────────────────────────────────────────────────
   "Information": {
     "_product": "AId",

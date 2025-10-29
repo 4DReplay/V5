@@ -1,0 +1,321 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>4DReplay V5 - DMs Config Editor</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --card:#0b1220; --line:#243045; --line2:#1f2937;
+      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+    h2 small{font-size:14px;opacity:.8}
+    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px}
+    .toolbar .note{color:var(--muted);font-size:13px}
+    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer}
+    button:hover{opacity:.93}
+    button[disabled]{opacity:.55;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
+    .btn-secondary{background:var(--btn2)}
+    .pill{display:inline-block;border:1px solid var(--line);background:#0f172a;border-radius:999px;font-size:12px;padding:2px 10px}
+    .pill-ok{border-color:var(--ok);color:#a7f3d0;background:#0d3b1a}
+    .pill-bad{border-color:var(--bad);color:#fecaca;background:#3b0d0d}
+
+    table{border-collapse:collapse;width:100%;max-width:1300px}
+    th, td {
+  border: 1px solid var(--line2);
+  padding: 4px 6px;             /* 기존 8px → 줄임 */
+  vertical-align: middle;       /* 가운데 정렬 */
+}
+    th{background:#0f172a;text-align:left;position:sticky;top:0}
+    tbody tr:nth-child(odd){background:#0c121b}
+    input[type="text"], textarea, select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0b1220;
+  color: #e5e7eb;
+  border: 1px solid var(--line);
+  border-radius: 6px;           /* 약간 줄임 */
+  padding: 4px 6px;             /* 내부 여백 줄임 */
+  font: 13px ui-monospace, monospace;
+}
+    textarea {
+  height: 36px;                 /* 기존 70px → 36px으로 축소 */
+  resize: none;                 /* 유동 크기 조절 제거 */
+}
+    .col-narrow{width:90px}
+    .col-btns{white-space:nowrap}
+    .muted{color:var(--muted)}
+    .help{margin-top:10px;color:var(--muted);font-size:13px}
+    .sep{height:1px;background:var(--line2);margin:12px 0}
+    .right{margin-left:auto}
+
+    /* ✅ 아래 부분 새로 추가 */
+    button {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: filter 0.2s ease;
+    }
+    button:hover {
+      filter: brightness(1.15);
+    }
+  </style>
+</head>
+<body>
+  <h2>
+    <span>4DReplay V5 - DMs Config Editor</span>
+    <small id="titleHost"></small>
+  </h2>
+
+  <div class="toolbar">
+    <button id="btnGoDashboard" class="btn-secondary" title="Back to Dashboard">🧭 Dashboard</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <button id="btnFormat" class="btn-ghost">🧹Format</button>
+    <button id="btnAdd" class="btn-ghost">➕ Add</button>
+    <button id="btnSave">💾 Save</button>
+    <span id="saveState" class="pill">Idle</span>
+    <span class="right note">File: <span id="metaPath">-</span> (<span id="metaSize">-</span> bytes, mtime <span id="metaMtime">-</span>) • Agent heartbeat: <span id="hb">-</span>s</span>
+  </div>
+
+  <table id="grid">
+    <thead>
+      <tr>
+        <th class="col-narrow">select</th>
+        <th>Name</th>
+        <th>Alias</th>
+        <th>Path</th>
+        <th>Args (JSON array / space)</th>
+        <th class="col-narrow">auto_restart</th>
+        <th class="col-narrow">start_on_boot</th>
+        <th class="col-btns">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="help">
+    • Saving with <code>select:false</code> will make the Agent terminate that process on the next tick.<br/>
+    • <code>heartbeat_interval_sec</code> is the Agent’s internal cycle, and this page automatically reflects meta/heartbeat polling intervals.
+  </div>
+
+  <div class="sep"></div>
+
+<script>
+/* ───────────────────────── 공통 유틸 ───────────────────────── */
+(function setTitleHost(){
+  try{
+    const host=(window.DASHBOARD_HOST&&String(window.DASHBOARD_HOST).trim())||(location&&location.hostname)||"";
+    const el=document.getElementById("titleHost"); if(el&&host) el.textContent=`(${host})`;
+  }catch(_){}
+})();
+
+async function api(path,method="GET",body=null){
+  const opt={method,cache:"no-store",headers:{}};
+  if(body!==null){
+    if(typeof body==="string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
+    else { opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
+  }
+  const r=await fetch(path,opt);
+  const ct=r.headers.get("content-type")||"";
+  const isJson=ct.includes("application/json");
+  if(!r.ok){
+    let msg=r.statusText;
+    try{ msg=isJson?(await r.json()).error||r.statusText:await r.text(); }catch{}
+    throw new Error(msg||`HTTP ${r.status}`);
+  }
+  return isJson?await r.json():await r.text();
+}
+
+/* ────────────────── /config 로드/저장 (+json5 허용) ───────────────── */
+async function loadConfigText(){ return api("/config","GET"); }
+async function saveConfigText(text){ return api("/config","POST",text); }
+
+// 서버가 /config-format 또는 /config/format 둘 중 하나만 있을 수 있어 둘 다 시도
+async function formatOnServer(text){
+  try{ return await api("/config-format","POST",text); }
+  catch(_){ return await api("/config/format","POST",text); }
+}
+async function loadConfigObj(){
+  const raw=await loadConfigText();
+  // 먼저 JSON으로 시도
+  try{
+    return JSON.parse(raw);
+  }catch(_){
+    // 서버 포맷터로 교정 후 파싱
+    const fr=await formatOnServer(raw);
+    return JSON.parse(fr.text);
+  }
+}
+
+/* ───────────────────────── 화면 요소 ───────────────────────── */
+const TBody   = document.querySelector("#grid tbody");
+const SaveTag = document.getElementById("saveState");
+const HB_EL   = document.getElementById("hb");
+const M_PATH  = document.getElementById("metaPath");
+const M_SIZE  = document.getElementById("metaSize");
+const M_TIME  = document.getElementById("metaMtime");
+
+let CONFIG=null;
+let POLL=null, POLL_MS=1500;
+let IS_SAVING=false;
+
+/* ───────────────────── 행/필드 렌더링 ───────────────────── */
+function parseArgs(val){
+  if(!val) return [];
+  const s=String(val).trim();
+  if(!s) return [];
+  try{
+    const j=JSON.parse(s);
+    return Array.isArray(j)?j:(j?String(j).split(/\s+/):[]);
+  }catch(_){
+    return s.split(/\s+/);
+  }
+}
+function argsToText(arr){
+  if(!arr) return "";
+  try{ return JSON.stringify(arr); }catch{ return String(arr); }
+}
+function ensureConfigShape(cfg){
+  cfg = cfg||{};
+  if(!Array.isArray(cfg.executables)) cfg.executables=[];
+  return cfg;
+}
+function uniqueName(base){
+  const used=new Set((CONFIG.executables||[]).map(e=>e.name));
+  if(!used.has(base)) return base;
+  let i=2; while(used.has(`${base}_${i}`)) i++;
+  return `${base}_${i}`;
+}
+
+function row(exe, idx){
+  const tr=document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="checkbox" data-k="select" ${exe.select===true?"checked":""}></td>
+    <td><input type="text" data-k="name" value="${exe.name||""}" placeholder="e.g. MTd"></td>
+    <td><input type="text" data-k="alias" value="${exe.alias||""}" placeholder="Message Transport - main"></td>
+    <td><input type="text" data-k="path" value="${exe.path||""}" placeholder="daemon/MTd/MTd.exe"></td>
+    <td><textarea data-k="args" placeholder='["--foo","bar"] or "--foo bar"'>${argsToText(exe.args||[])}</textarea></td>
+    <td style="text-align:center"><input type="checkbox" data-k="auto_restart" ${exe.auto_restart!==false?"checked":""}></td>
+    <td style="text-align:center"><input type="checkbox" data-k="start_on_boot" ${exe.start_on_boot? "checked":""}></td>
+    <td class="col-btns">
+      <button data-a="up"   class="btn-ghost">▲</button>
+      <button data-a="down" class="btn-ghost">▼</button>
+      <button data-a="dup"  class="btn-ghost">Duplicate</button>
+      <button data-a="del"  class="btn-secondary">Delete</button>
+    </td>
+  `;
+
+  tr.addEventListener("change",(ev)=>{
+    const t=ev.target; const k=t.getAttribute("data-k"); if(!k) return;
+    const v=(t.type==="checkbox")?t.checked:(k==="args"?parseArgs(t.value):t.value);
+    CONFIG.executables[idx][k]=v;
+    touchDirty("Edited");
+  });
+
+  tr.addEventListener("click",(ev)=>{
+    const b=ev.target.closest("button"); if(!b) return;
+    const a=b.getAttribute("data-a"); const arr=CONFIG.executables;
+    if(a==="up" && idx>0){ [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]]; render(); }
+    else if(a==="down" && idx<arr.length-1){ [arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]]; render(); }
+    else if(a==="dup"){ const copy=JSON.parse(JSON.stringify(arr[idx])); copy.name=uniqueName(copy.name||"New"); arr.splice(idx+1,0,copy); render(); }
+    else if(a==="del"){ if(confirm("Delete this row?")){ arr.splice(idx,1); render(); } }
+  });
+
+  return tr;
+}
+
+function render(){
+  CONFIG = ensureConfigShape(CONFIG);
+  TBody.innerHTML="";
+  CONFIG.executables.forEach((e,i)=>TBody.appendChild(row(e,i)));
+}
+function touchDirty(text="Edited"){
+  SaveTag.textContent=text; SaveTag.className="pill";
+}
+
+/* ───────────────────── 메타/하트비트 폴링 ───────────────────── */
+async function loadMeta(){
+  try{
+    const m=await api("/config/meta","GET");
+    M_PATH.textContent=m.path||"-";
+    M_SIZE.textContent=String(m.size??"-");
+    M_TIME.textContent=m.mtime||"-";
+  }catch(_){ M_PATH.textContent="(meta error)"; }
+}
+async function loadHeartbeat(){
+  try{
+    const s=await api("/status","GET");
+    // /status 형식이 map일 수 있으므로 hb는 config에서 보완
+    if(typeof s.heartbeat_interval_sec==="number"){
+      const hb=s.heartbeat_interval_sec;
+      HB_EL.textContent=hb;
+      POLL_MS=Math.max(1000, Math.min(3000, Math.floor(hb*1000)));
+    }
+  }catch(_){ HB_EL.textContent="-"; }
+  if(POLL){clearInterval(POLL); POLL=null;}
+  POLL=setInterval(()=>Promise.allSettled([loadMeta(),loadHeartbeat()]), POLL_MS);
+}
+
+/* ───────────────────── 버튼 액션 ───────────────────── */
+async function reloadConfig(){
+  const obj=await loadConfigObj();
+  CONFIG=ensureConfigShape(obj);
+  render();
+  SaveTag.textContent="Loaded"; SaveTag.className="pill";
+  await Promise.allSettled([loadMeta(), loadHeartbeat()]);
+}
+async function formatConfig(){
+  const txt=JSON.stringify(CONFIG);
+  const r=await formatOnServer(txt);
+  try{ CONFIG=JSON.parse(r.text); }catch{}
+  render();
+  SaveTag.textContent="Formatted"; SaveTag.className="pill";
+}
+async function saveConfig(){
+  if(IS_SAVING) return;
+  IS_SAVING=true; SaveTag.textContent="Saving..."; SaveTag.className="pill";
+  try{
+    const txt=JSON.stringify(CONFIG);
+    const r=await formatOnServer(txt);     // 정렬
+    await saveConfigText(r.text);          // 저장
+    SaveTag.textContent="Saved"; SaveTag.className="pill pill-ok";
+    await reloadConfig();
+    await loadMeta();                // 저장 직후 즉시 메타 갱신
+  }catch(e){
+    alert("Save failed: "+(e.message||e));
+    SaveTag.textContent="Save failed"; SaveTag.className="pill pill-bad";
+  }finally{ IS_SAVING=false; }
+}
+
+document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
+  location.href = "/dms-control.html";
+});
+document.getElementById("btnReload").addEventListener("click", reloadConfig);
+document.getElementById("btnFormat").addEventListener("click", formatConfig);
+document.getElementById("btnSave").addEventListener("click", saveConfig);
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  CONFIG=ensureConfigShape(CONFIG);
+  CONFIG.executables.push({
+    name: uniqueName("New"),
+    alias:"",
+    path:"",
+    args:[],
+    select:false,
+    auto_restart:true,
+    start_on_boot:false
+  });
+  render(); touchDirty("Edited");
+});
+
+/* ───────────────────────── 초기화 ───────────────────────── */
+(async function init(){
+  await reloadConfig();
+})();
+</script>
+</body>
+</html>

@@ -1,6 +1,6 @@
 {									
-	"version": "4.2.0.10",					
-	"packageVersion": "1.0.0.1",	
+	"version": "5.0.0.0",					
+	"packageVersion": "5.0.0.0",	
 	"programFileList": [			
 		"MMdServer.exe",			
 		"ESMSDIPlayer.dll",			

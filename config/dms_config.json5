@@ -4,12 +4,140 @@
   "log_dir": "logs/DMS",
   "heartbeat_interval_sec": 5,
   "executables": [
-    { "name":"CMd", "path":"daemon/CMd/CMd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"EMd", "path":"daemon/EMd/EMd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"CCd", "path":"daemon/CCd/CCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"MTd", "path":"daemon/MTd/MTd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"PCd", "path":"daemon/PCd/PCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"SCd", "path":"daemon/SCd/SCd.exe", "args":[], "auto_restart":true, "start_on_boot":true },
-    { "name":"GCd", "path":"daemon/GCd/GCd.exe", "args":[], "auto_restart":true, "start_on_boot":true }
+    {
+      "name": "MTd",
+      "alias": "Message Transport",
+      "path": "daemon/MTd/MTd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "EMd",
+      "alias": "Enterprise Manager",
+      "path": "daemon/EMd/EMd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "CCd",
+      "alias": "Camera Control",
+      "path": "daemon/CCd/CCd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "SCd",
+      "alias": "Switch Control",
+      "path": "daemon/SCd/SCd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "GCd",
+      "alias": "Gimbal Control",
+      "path": "daemon/GCd/GCd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "PCd",
+      "alias": "Processor Control",
+      "path": "daemon/PCd/PCd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "PreSd",
+      "alias": "Pre Storage [#n]",
+      "path": "daemon/PreSd/PreSd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "PostSd",
+      "alias": "Post Storage [#n]",
+      "path": "daemon/PostSd/PostSd.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "MMd",
+      "alias": "Multimedia Maker",
+      "path": "daemon/GCd/MMdServer.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "MMc",
+      "alias": "Multimedia Maker Client [#n]",
+      "path": "daemon/MMc/MMdClient.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "AId",
+      "alias": "Artificial Intelligence",
+      "path": "daemon/AId/AId.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "AIc",
+      "alias": "Artificial Intelligence Client [#n]",
+      "path": "daemon/AId/AIc.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "CMd",
+      "alias": "Compute Multimedia",
+      "path": "daemon/CMd/CMd.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "AMd",
+      "alias": "Audio Manager",
+      "path": "daemon/AMd/AMd.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "VPd",
+      "alias": "Vision Processor [#n]",
+      "path": "daemon/VPd/VPd.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    }
   ]
 }

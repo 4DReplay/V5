@@ -1,6 +1,6 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# dms_agent.py (final, duplicate-proof, serves web/dms-control.html)
-# date: 2025-10-25
+# dms_agent.py (minimal-fix)
+# date: 2025-10-27
 # owner: hongsu jung
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -12,6 +12,7 @@ import signal
 import subprocess
 import threading
 import time
+import sys, traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Dict, Optional, List
@@ -76,7 +77,6 @@ def _taskkill_pid(pid: int, force: bool = True) -> None:
         pass
 
 def _pids_by_image_name(image: str) -> List[int]:
-    """IMAGENAME 기준(부정확) 보조 수단."""
     try:
         out = subprocess.check_output(
             ["tasklist", "/FI", f"IMAGENAME eq {image}"],
@@ -89,10 +89,6 @@ def _pids_by_image_name(image: str) -> List[int]:
         return []
 
 def _pids_by_exact_path(path: Path) -> List[int]:
-    """
-    정확히 ExecutablePath == path 인 PID 목록.
-    PowerShell Here-String으로 경로를 넣어 이스케이프 문제 제거.
-    """
     p = str(path.resolve())
     try:
         ps = [
@@ -122,14 +118,28 @@ def _guess_type(p: Path) -> str:
     if suf in (".png", ".jpg", ".jpeg", ".gif", ".svg"): return "image/" + suf.lstrip(".")
     return "application/octet-stream"
 
+def _log_dirs_for_exe(exe_path: Path) -> list[Path]:
+    base = exe_path.parent    
+    return [base / "log", base / "logs"]
+
+def _list_logs_in_dir(d: Path) -> list[Path]:
+    try:
+        if not d.exists():
+            return []
+        return [p for p in d.glob("*.log") if p.is_file()]
+    except Exception:
+        return []
+
 # ── supervisor ──────────────────────────────────────────────────────────────
 class ProcSpec:
-    def __init__(self, name: str, path: Path, args: list, auto_restart: bool, start_on_boot: bool):
+    def __init__(self, name: str, path: Path, args: list, auto_restart: bool, start_on_boot: bool, select: bool, alias: str = ""):
         self.name = name
         self.path = path
+        self.alias = alias or ""
         self.args = args
         self.auto_restart = auto_restart
         self.start_on_boot = start_on_boot
+        self.select = select
 
 class ProcState:
     def __init__(self, spec: ProcSpec):
@@ -139,29 +149,61 @@ class ProcState:
         self.last_start_ms: Optional[int] = None
         self.last_exit_code: Optional[int] = None
 
+    # ✅ 호환용: 자식 프로세스 핸들만 확인 (외부 스캔 없음, 매우 빠름)
     def is_running(self) -> bool:
-        # 핸들 확인 + OS 조회(경로 기준)
+        return bool(self.proc is not None and (self.proc.poll() is None))
+
+    def is_running_fast(self, psnap: dict) -> bool:
+        # 1) 자식 프로세스 핸들이 살아 있으면 그대로 신뢰
         if self.proc is not None and (self.proc.poll() is None):
+            self.pid = self.proc.pid
             return True
-        pids = _pids_by_exact_path(self.spec.path)
-        if pids:
-            self.pid = pids[0]
+        # 2) 스냅샷에서 경로로 매칭 (비차단, O(1))
+        p = str(self.spec.path.resolve()).lower()
+        pid = psnap.get(p)
+        if pid:
+            self.pid = pid
             return True
         return False
+
+    def status(self, name: Optional[str] = None) -> dict:
+        with self._lock:
+            if name:
+                st = self.states.get(name)
+                if not st:
+                    return {"ok": False, "error": f"unknown process: {name}"}
+                return {"ok": True, "data": st.to_dict()}
+            return {"ok": True, "data": {k: v.to_dict() for k, v in self.states.items()}}
+        with self._lock:
+            snap = self._proc_snapshot()
+            def row(st: ProcState):
+                running = st.is_running_fast(snap)
+                d = st.to_dict()
+                d["running"] = running
+                d["pid"] = st.pid
+                return d
+            if name:
+                st = self.states.get(name)
+                if not st:
+                    return {"ok": False, "error": f"unknown process: {name}"}
+                return {"ok": True, "data": row(st)}
+            return {"ok": True, "data": {k: row(v) for k, v in self.states.items()}}
 
     def to_dict(self) -> dict:
         exe_posix = self.spec.path.as_posix()
         return {
             "name": self.spec.name,
-            "exe": exe_posix,                     # 기존 키
-            "path": exe_posix,                    # 새 UI 키
+            "alias": self.spec.alias,           # ← 추가
+            "exe": exe_posix,
+            "path": exe_posix,
             "args": self.spec.args,
+            "select": self.spec.select,               
             "auto_restart": self.spec.auto_restart,
             "start_on_boot": self.spec.start_on_boot,
-            "running": self.is_running(),
+            "running": bool(self.proc is not None and (self.proc.poll() is None)),
             "pid": self.pid,
-            "last_rc": self.last_exit_code,       # 기존 키
-            "last_exit_code": self.last_exit_code # 새 UI 키
+            "last_rc": self.last_exit_code,
+            "last_exit_code": self.last_exit_code
         }
 
 class DmsSupervisor:
@@ -179,24 +221,271 @@ class DmsSupervisor:
 
         for item in config.get("executables", []):
             name = str(item["name"])
+            alias = str(item.get("alias", "") or "")
             path = (ROOT / item["path"]).resolve()
             args = list(item.get("args", []))
             auto_restart = bool(item.get("auto_restart", True))
             start_on_boot = bool(item.get("start_on_boot", False))
-            spec = ProcSpec(name, path, args, auto_restart, start_on_boot)
+            select = bool(item.get("select", True))
+            spec = ProcSpec(name, path, args, auto_restart, start_on_boot, select)
             self.specs[name] = spec
             self.states[name] = ProcState(spec)
 
         self._stop_evt = threading.Event()
         self._http_thread: Optional[threading.Thread] = None
         self._tick_thread: Optional[threading.Thread] = None
+        self._cfg_mtime = DEFAULT_CONFIG.stat().st_mtime if DEFAULT_CONFIG.exists() else 0
 
+        # 프로세스 스냅샷 캐시(2초 TTL)
+        self._psnap_ts = 0.0
+        self._psnap = {}  # {lowercased_path: pid}
+        self._status_cache = None
+        self._status_cache_ts = 0.0
+
+    def _proc_snapshot(self) -> dict:
+        now = time.time()
+        if (now - self._psnap_ts) < 2.0 and self._psnap:
+            return self._psnap
+        try:
+            ps = [
+                "powershell", "-NoProfile", "-Command",
+                ("Get-CimInstance Win32_Process | "
+                "Where-Object {$_.ExecutablePath} | "
+                "ForEach-Object { [Console]::Out.WriteLine(\"{0}|{1}\" -f $_.ProcessId, $_.ExecutablePath) }")
+            ]
+            out = subprocess.check_output(
+                ps, stderr=subprocess.STDOUT,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            ).decode(errors="ignore")
+            snap = {}
+            for line in out.splitlines():
+                if "|" not in line:
+                    continue
+                pid_str, path = line.split("|", 1)
+                path = path.strip().lower()
+                if path:
+                    # pid 추출
+                    m = re.search(r"\d+", pid_str)
+                    if m:
+                        snap[path] = int(m.group(0))
+            self._psnap = snap
+        except Exception:
+            self._psnap = {}
+        self._psnap_ts = now
+        return self._psnap
+
+    def _get_state(self, name: str) -> Optional[ProcState]:
+        if not name:
+            return None
+        low = name.lower()
+        # 1) exact key
+        if name in self.states:
+            return self.states[name]
+        # 2) case-insensitive by spec.name
+        for st_name, st in self.states.items():
+            if st_name.lower() == low:
+                return st
+        # 3) alias (case-insensitive)
+        for st in self.states.values():
+            if (st.spec.alias or "").lower() == low:
+                return st
+        # 4) exe stem (e.g., CCd == CCd.exe)
+        for st in self.states.values():
+            if st.spec.path.stem.lower() == low:
+                return st
+        return None
+
+    def _collect_log_dirs(self, exe_path: Path) -> list[Path]:
+        """exe 기준으로 위/아래 후보 log 디렉토리 수집"""
+        seen = set()
+        cands: list[Path] = []
+        base = exe_path.parent
+        # exe 폴더 ~ 2레벨 위까지
+        for up in [base, base.parent, base.parent.parent]:
+            if not up:
+                continue
+            for dn in ("log", "logs", "Log", "Logs"):
+                p = (up / dn).resolve()
+                key = str(p).lower()
+                if key not in seen:
+                    seen.add(key)
+                    cands.append(p)
+        return cands
+
+    def _log_scan_note(self, name: str, exe: Path, dirs: list[Path], found: list[Path] | None = None):
+        """찾은(또는 못 찾은) 위치를 DMs.log에 상세 기록"""
+        self._log(f"[LOG-SCAN] name={name} exe={exe}")
+        for d in dirs:
+            self._log(f"[LOG-SCAN]  dir: {d}  exists={d.exists()}")
+        if found is None:
+            self._log(f"[LOG-SCAN]  found: (scan pending)")
+        elif not found:
+            self._log(f"[LOG-SCAN]  found: (none)")
+        else:
+            for fp in found:
+                self._log(f"[LOG-SCAN]  found file: {fp}  size={fp.stat().st_size}")
+
+    def _log_path_for(self, name: str, date_str: Optional[str]) -> Optional[Path]:
+        st = self._get_state(name)
+        if not st:
+            self._log(f"[LOG-SCAN] name={name} -> unknown process")
+            return None
+
+        dirs = self._collect_log_dirs(st.spec.path)
+        self._log_scan_note(name, st.spec.path, dirs, found=None)  # 스캔 시작 기록
+
+        logs: list[Path] = []
+        for d in dirs:
+            try:
+                if d.exists():
+                    logs.extend([p for p in d.glob("*.log") if p.is_file()])
+            except Exception as e:
+                self._log(f"[LOG-SCAN]  scan error on {d}: {e!r}")
+
+        # 스캔 결과 기록
+        self._log_scan_note(name, st.spec.path, dirs, found=logs)
+
+        if not logs:
+            return None
+
+        # 날짜 지정
+        if date_str and re.fullmatch(r"\d{4}-\d{2}-\d{2}", date_str):
+            exact = [p for p in logs if p.name.lower() == f"{date_str}.log".lower()]
+            if exact:
+                pick = sorted(exact, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+                self._log(f"[LOG-SCAN]  pick(exact) -> {pick}")
+                return pick
+            pref = [p for p in logs if p.name.lower().startswith(date_str.lower())]
+            if pref:
+                pick = sorted(pref, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+                self._log(f"[LOG-SCAN]  pick(prefix) -> {pick}")
+                return pick
+            self._log(f"[LOG-SCAN]  no match for date={date_str}")
+            return None
+
+        # 최신 선택
+        pick = sorted(logs, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+        self._log(f"[LOG-SCAN]  pick(latest) -> {pick}")
+        return pick
+
+    def _log_dates_for(self, name: str) -> list[str]:
+        st = self._get_state(name)           # ← 변경
+        if not st:
+            return []
+        dates: set[str] = set()
+        for d in _log_dirs_for_exe(st.spec.path):
+            for p in _list_logs_in_dir(d):
+                m = re.match(r"(\d{4}-\d{2}-\d{2})", p.stem)
+                if m:
+                    dates.add(m.group(1))
+        return sorted(dates, reverse=True)
+
+    def _log_debug_info(self, name: str) -> dict:
+        st = self._get_state(name)
+        if not st:
+            self._log(f"[LOG-SCAN] debug name={name} -> unknown")
+            return {"ok": False, "error": "unknown process", "name": name}
+
+        dirs = self._collect_log_dirs(st.spec.path)
+        info = []
+        for d in dirs:
+            try:
+                files = []
+                if d.exists():
+                    files = [p.name for p in d.glob("*.log") if p.is_file()]
+                info.append({"dir": str(d), "exists": d.exists(), "count": len(files),
+                            "files": sorted(files, reverse=True)[:50]})
+            except Exception as e:
+                info.append({"dir": str(d), "exists": d.exists(), "error": repr(e)})
+
+        # 디버그 호출도 파일에 남김
+        self._log_scan_note(name, st.spec.path, [Path(x["dir"]) for x in info],
+                            found=[(Path(x["dir"]) / fn) for x in info if x.get("exists") for fn in x.get("files", [])])
+
+        return {"ok": True, "name": name, "exe": str(st.spec.path), "dirs": info}
+
+    def _status_payload(self, use_snapshot: bool) -> dict:
+        """use_snapshot=True면 _proc_snapshot()을 호출해 running 계산, False면 스냅샷 생성 생략(lite)."""
+        if use_snapshot:
+            snap = self._proc_snapshot()
+        else:
+            snap = self._psnap  # 마지막 스냅샷 그대로 (없으면 빈 dict)
+
+        def row(st: ProcState):
+            running = st.is_running_fast(snap) if use_snapshot else bool(st.proc and st.proc.poll() is None)
+            d = st.to_dict()
+            d["running"] = running
+            d["pid"] = st.pid
+            return d
+
+        return {"ok": True, "data": {k: row(v) for k, v in self.states.items()}}
+
+    def status_cached(self) -> dict:
+        now = time.time()
+        if (now - self._status_cache_ts) < 1.0 and self._status_cache is not None:
+            return self._status_cache
+        payload = self._status_payload(use_snapshot=True)
+        self._status_cache = payload
+        self._status_cache_ts = now
+        return payload
+
+    def _can_run(self, name: str) -> bool:
+        st = self.states.get(name)
+        return bool(st and st.spec.select)
+
+    def _reload_config_if_needed(self):
+        try:
+            mt = DEFAULT_CONFIG.stat().st_mtime
+        except Exception:
+            return
+        if mt == self._cfg_mtime:
+            return
+        self._cfg_mtime = mt
+        try:
+            cfg = load_config(DEFAULT_CONFIG)
+        except Exception:
+            return
+
+        # 이름 → 아이템 매핑
+        items = {str(it["name"]): it for it in cfg.get("executables", [])}
+        # 1) 기존 항목 업데이트
+        for nm, st in list(self.states.items()):
+            it = items.get(nm)
+            if not it:
+                # 설정에서 제거되었으면 내려주고 목록에서도 제거(선택)
+                try:
+                    self.stop(nm, force=True)
+                except Exception:
+                    pass
+                self.states.pop(nm, None)
+                self.specs.pop(nm, None)
+                continue
+            # spec 필드 갱신
+            st.spec.select = bool(it.get("select", True))
+            st.spec.auto_restart = bool(it.get("auto_restart", True))
+            st.spec.start_on_boot = bool(it.get("start_on_boot", False))
+            st.spec.args = list(it.get("args", []))
+            st.spec.path = (ROOT / it["path"]).resolve()
+
+        # 2) 신규 항목 추가
+        for nm, it in items.items():
+            if nm in self.states:
+                continue
+            spec = ProcSpec(
+                nm,
+                (ROOT / it["path"]).resolve(),
+                list(it.get("args", [])),
+                bool(it.get("auto_restart", True)),
+                bool(it.get("start_on_boot", False)),
+                bool(it.get("select", True)),
+            )
+            self.specs[nm] = spec
+            self.states[nm] = ProcState(spec)
+        
     # -- process control ------------------------------------------------------
     def _preclean_existing(self, spec: ProcSpec) -> int:
-        """시작 전에 같은 경로의 기존/고아 프로세스를 모두 정리."""
         killed = _kill_all_by_path(spec.path)
         if not killed:
-            # 경로 매칭 실패하는 환경 대비: 이미지명으로도 한 번 더
             for pid in _pids_by_image_name(spec.path.name):
                 _taskkill_pid(pid, True)
                 killed += 1
@@ -205,7 +494,6 @@ class DmsSupervisor:
         return killed
 
     def _enforce_singleton_after_start(self, st: ProcState):
-        """시작 직후 중복이 있으면 1개만 남도록 정리."""
         time.sleep(0.3)
         pids = _pids_by_exact_path(st.spec.path)
         if not pids:
@@ -221,13 +509,27 @@ class DmsSupervisor:
             st = self.states.get(name)
             if not st:
                 return {"ok": False, "error": f"unknown process: {name}"}
+
+            # ✅ select=false면 시작하지 않고 "skipped"로 정상 반환
+            if not st.spec.select:
+                self._log(f"[START-SKIP] {name} select=false")
+                return {"ok": True, "skipped": True, "msg": f"{name} is not selected (select=false)"}
+
             spec = st.spec
             if not spec.path.exists():
                 return {"ok": False, "error": f"executable not found: {spec.path}"}
 
-            # 시작 전 절대 중복 금지: 모두 제거
-            self._preclean_existing(spec)
+            # 이미 실행 중이면 바로 반환 (자식 핸들 → 스냅샷 순)
+            if st.is_running():
+                return {"ok": True, "msg": f"{name} already running", "pid": st.pid}
+            snap = self._proc_snapshot()
+            p = str(spec.path.resolve()).lower()
+            pid = snap.get(p)
+            if pid:
+                st.pid = pid
+                return {"ok": True, "msg": f"{name} already running", "pid": st.pid}
 
+            self._preclean_existing(spec)
             if st.is_running():
                 return {"ok": True, "msg": f"{name} already running", "pid": st.pid}
 
@@ -271,7 +573,6 @@ class DmsSupervisor:
                 except Exception:
                     pass
 
-            # 동일 경로의 나머지 전부 강제 종료
             _kill_all_by_path(st.spec.path)
 
             st.last_exit_code = None if not st.proc else st.proc.poll()
@@ -281,30 +582,44 @@ class DmsSupervisor:
             return {"ok": True, "msg": "stopped"}
 
     def restart(self, name: str) -> dict:
+        st = self.states.get(name)
+        if st and not st.spec.select:
+            return {"ok": False, "error": f"{name} is not selected (select=false)"}
+            
         r1 = self.stop(name, force=True)
         r2 = self.start(name)
         return {"ok": r1.get("ok") and r2.get("ok"), "stop": r1, "start": r2}
 
     def status(self, name: Optional[str] = None) -> dict:
         with self._lock:
+            snap = self._proc_snapshot()
+
+            def row(st: ProcState):
+                running = st.is_running_fast(snap)
+                d = st.to_dict()
+                d["running"] = running
+                d["pid"] = st.pid
+                return d
+
             if name:
                 st = self.states.get(name)
                 if not st:
                     return {"ok": False, "error": f"unknown process: {name}"}
-                return {"ok": True, "data": st.to_dict()}
-            return {"ok": True, "data": {k: v.to_dict() for k, v in self.states.items()}}
+                return {"ok": True, "data": row(st)}
+
+            return {"ok": True, "data": {k: row(v) for k, v in self.states.items()}}
 
     # -- loops & http ---------------------------------------------------------
     def _tick_loop(self):
         self._log("[DMs] tick loop started")
         for nm, st in self.states.items():
-            if st.spec.start_on_boot:
+            if st.spec.start_on_boot and st.spec.select:  # ← select 체크 추가
                 self.start(nm)
 
         while not self._stop_evt.is_set():
+            self._reload_config_if_needed()
             with self._lock:
                 for nm, st in self.states.items():
-                    # 중복 감시: 동일 경로 PID가 2개 이상이면 하나만 남김
                     pids = _pids_by_exact_path(st.spec.path)
                     if len(pids) > 1:
                         keep = st.pid if (st.pid in pids) else pids[0]
@@ -313,10 +628,19 @@ class DmsSupervisor:
                                 _taskkill_pid(pid, True)
                         st.pid = keep
 
-                    # 죽었고 과거에 시작된 적 있으며 auto_restart면 재기동
                     if not pids and st.spec.auto_restart and st.last_start_ms is not None:
                         self._log(f"[RESTART] {nm} restarting...")
                         self.start(nm)
+
+                    # select=false 는 무조건 내려가도록 강제
+                    if not st.spec.select:
+                        if st.is_running():
+                            self._log(f"[ENFORCE STOP] {nm} select=false -> stopping")
+                            try:
+                                self.stop(nm, force=True)
+                            except Exception:
+                                pass
+                        continue  # 아래 보정(중복/auto_restart)은 선택된 것만
             self._stop_evt.wait(self.heartbeat_interval)
         self._log("[DMs] tick loop ended")
 
@@ -324,12 +648,22 @@ class DmsSupervisor:
         sup = self
 
         class H(BaseHTTPRequestHandler):
+            # ── minimal-fix: safe writer ──────────────────────────────────────
             def _ok(self, code=200, payload=None):
-                self.send_response(code)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
-                self.end_headers()
-                if payload is None: payload = {"ok": True}
-                self.wfile.write(json.dumps(payload).encode("utf-8"))
+                try:
+                    self.send_response(code)
+                    self.send_header("Content-Type", "application/json; charset=utf-8")
+                    self.end_headers()
+                    if payload is None:
+                        payload = {"ok": True}
+                    body = json.dumps(payload).encode("utf-8")
+                    try:
+                        self.wfile.write(body)
+                    except (ConnectionAbortedError, BrokenPipeError):
+                        # client closed connection → ignore
+                        pass
+                except (ConnectionAbortedError, BrokenPipeError):
+                    pass
 
             def _parts(self):
                 return [p for p in self.path.split("?")[0].split("/") if p]
@@ -337,12 +671,65 @@ class DmsSupervisor:
             def do_GET(self):
                 parts = self._parts()
                 try:
-                    # API
-                    if not parts or parts[0] == "status":
-                        name = parts[1] if len(parts) > 1 else None
-                        return self._ok(payload=sup.status(name))
 
-                    # 정적: /dms-control.html
+                    # GET /status-lite  -> 스냅샷 만들지 않고 빠른 상태만
+                    if parts == ["status-lite"]:
+                        hb = getattr(sup, "heartbeat_interval", 5)
+                        lite = sup._status_payload(use_snapshot=False)
+                        out = {"ok": True, "heartbeat_interval_sec": hb}
+                        out.update(lite)
+                        return self._ok(200, out)
+
+                    # 기존 /status 는 캐시 사용
+                    if parts == ["status"]:
+                        hb = getattr(sup, "heartbeat_interval", 5)
+                        st = sup.status_cached()
+                        out = {"ok": True, "heartbeat_interval_sec": hb}
+                        out.update(st)
+                        return self._ok(200, out)
+                        
+                    # API: /status or /status/{name}
+                    if not parts or parts[0] == "status":
+                        name = parts[1] if (len(parts) > 1 and parts[0] == "status") else None
+                        st = sup.status(name)
+                        hb = getattr(sup, "heartbeat_interval", 5)
+                        if name is None:
+                            out = {"ok": True, "heartbeat_interval_sec": hb}
+                            out.update(st)
+                            return self._ok(200, out)
+                        return self._ok(200, st)
+
+                    # /config/meta
+                    if parts == ["config", "meta"]:
+                        if not DEFAULT_CONFIG.exists():
+                            return self._ok(404, {"ok": False, "error": "config not found"})
+                        s = DEFAULT_CONFIG.stat()
+                        return self._ok(200, {
+                            "ok": True,
+                            "path": str(DEFAULT_CONFIG),
+                            "size": s.st_size,
+                            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)),
+                        })
+
+                    # /config  (원문 텍스트 그대로 반환)
+                    if parts == ["config"]:
+                        if not DEFAULT_CONFIG.exists():
+                            return self._ok(404, {"ok": False, "error": "config not found"})
+                        # config 파일 내용 그대로 반환
+                        with open(DEFAULT_CONFIG, "rb") as f:
+                            data = f.read()
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/plain; charset=utf-8")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("Content-Length", str(len(data)))
+                        self.end_headers()
+                        try:
+                            self.wfile.write(data)
+                        except (ConnectionAbortedError, BrokenPipeError):
+                            pass
+                        return
+
+                    # static: dms-control.html
                     if parts[0] == "dms-control.html":
                         fp = (STATIC_ROOT / "dms-control.html").resolve()
                         if fp.is_file() and str(fp).startswith(str(STATIC_ROOT.resolve())):
@@ -352,10 +739,31 @@ class DmsSupervisor:
                             self.send_header("Cache-Control", "no-store")
                             self.send_header("Content-Length", str(len(data)))
                             self.end_headers()
-                            self.wfile.write(data); return
-                        return self._ok(404, {"ok": False, "error": "not found"})
+                            try:
+                                self.wfile.write(data)
+                            except (ConnectionAbortedError, BrokenPipeError):
+                                pass
+                            return
+                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
 
-                    # 정적: /web/...
+                    # static: dms-config.html
+                    if parts[0] == "dms-config.html":
+                        fp = (STATIC_ROOT / "dms-config.html").resolve()
+                        if fp.is_file() and str(fp).startswith(str(STATIC_ROOT.resolve())):
+                            data = fp.read_bytes()
+                            self.send_response(200)
+                            self.send_header("Content-Type", _guess_type(fp))
+                            self.send_header("Cache-Control", "no-store")
+                            self.send_header("Content-Length", str(len(data)))
+                            self.end_headers()
+                            try:
+                                self.wfile.write(data)
+                            except (ConnectionAbortedError, BrokenPipeError):
+                                pass
+                            return
+                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
+
+                    # static under /web/...
                     if parts[0] == "web":
                         sub = unquote("/".join(parts[1:]))
                         fp = (STATIC_ROOT / sub).resolve()
@@ -367,10 +775,14 @@ class DmsSupervisor:
                             self.send_header("Cache-Control", "no-store")
                             self.send_header("Content-Length", str(len(data)))
                             self.end_headers()
-                            self.wfile.write(data); return
-                        return self._ok(404, {"ok": False, "error": "not found"})
+                            try:
+                                self.wfile.write(data)
+                            except (ConnectionAbortedError, BrokenPipeError):
+                                pass
+                            return
+                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
 
-                    # 루트 → 대시보드 파일 반환
+                    # root → dashboard
                     if parts[0] in ("", "/"):
                         fp = (STATIC_ROOT / "dms-control.html").resolve()
                         if fp.is_file():
@@ -380,24 +792,163 @@ class DmsSupervisor:
                             self.send_header("Cache-Control", "no-store")
                             self.send_header("Content-Length", str(len(data)))
                             self.end_headers()
-                            self.wfile.write(data); return
-                        return self._ok(404, {"ok": False, "error": "not found"})
+                            try:
+                                self.wfile.write(data)
+                            except (ConnectionAbortedError, BrokenPipeError):
+                                pass
+                            return
+                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
 
-                    return self._ok(404, {"ok": False, "error": "not found"})
+                    # GET /logs/<name>?date=YYYY-MM-DD&tail=20000
+                    if len(parts) == 2 and parts[0] == "logs" and parts[1] not in ("list", "debug"):
+                        name = parts[1]
+                        from urllib.parse import parse_qs, urlparse
+                        q = parse_qs(urlparse(self.path).query or "")
+                        date_q = q.get("date", [None])[0]
+                        tail_q = q.get("tail", [None])[0]
+                        tail_bytes = 20000
+                        try:
+                            if tail_q is not None:
+                                tail_bytes = max(1000, min(2_000_000, int(tail_q)))
+                        except Exception:
+                            pass
+
+                        fp = sup._log_path_for(name, date_q)
+                        if not fp:
+                            # 힌트 제공 (log / logs 둘 다 확인했다고 알려줌)
+                            return self._ok(404, {
+                                "ok": False,
+                                "error": "log not found",
+                                "hint": "Checked both 'log' and 'logs' directories next to the executable."
+                            })
+
+                        try:
+                            size = fp.stat().st_size
+                            with open(fp, "rb") as f:
+                                if size > tail_bytes:
+                                    f.seek(size - tail_bytes)
+                                    blob = f.read()
+                                    # 첫 줄이 반쯤 잘릴 수 있으니 첫 개행까지 건너뜀
+                                    cut = blob.find(b"\n")
+                                    if cut != -1:
+                                        blob = blob[cut+1:]
+                                else:
+                                    blob = f.read()
+                            text = blob.decode("utf-8", errors="ignore")
+                            return self._ok(200, {
+                                "ok": True,
+                                "name": name,
+                                "path": str(fp),
+                                "date": re.sub(r"\.log$", "", fp.name),
+                                "size": size,
+                                "tail": tail_bytes,
+                                "text": text
+                            })
+                        except Exception as e:
+                            return self._ok(500, {"ok": False, "error": repr(e)})
+
+                    # GET /logs/list/<name>  → 사용 가능한 날짜 목록
+                    if len(parts) == 3 and parts[0] == "logs" and parts[1] == "list":
+                        name = parts[2]
+                        dates = sup._log_dates_for(name)
+                        return self._ok(200, {"ok": True, "name": name, "dates": dates})
+
+                    # GET /logs/debug/<name> → 어디서 무엇을 찾는지 진단 정보
+                    if len(parts) == 3 and parts[0] == "logs" and parts[1] == "debug":
+                        name = parts[2]
+                        info = sup._log_debug_info(name)
+                        return self._ok(200, info)
+
+                    # GET /logs/<name>?date=YYYY-MM-DD&tail=20000
+                    if len(parts) >= 2 and parts[0] == "logs" and parts[1] not in ("list", "debug"):
+                        name = parts[1]
+                        from urllib.parse import parse_qs, urlparse
+                        q = parse_qs(urlparse(self.path).query or "")
+                        date_q = q.get("date", [None])[0]
+                        tail_q = q.get("tail", [None])[0]
+                        tail_bytes = 20000
+                        try:
+                            if tail_q is not None:
+                                tail_bytes = max(1000, min(2_000_000, int(tail_q)))
+                        except Exception:
+                            pass
+
+                        fp = sup._log_path_for(name, date_q)
+                        if not fp:
+                            # 무엇을 어디서 찾았는지 힌트도 함께 제공
+                            hint = sup._log_debug_info(name)
+                            return self._ok(404, {"ok": False, "error": "log not found", "hint": hint})
+
+                        try:
+                            size = fp.stat().st_size
+                            with open(fp, "rb") as f:
+                                if size > tail_bytes:
+                                    f.seek(size - tail_bytes)
+                                    blob = f.read()
+                                    cut = blob.find(b"\n")
+                                    if cut != -1:
+                                        blob = blob[cut+1:]
+                                else:
+                                    blob = f.read()
+                            text = blob.decode("utf-8", errors="ignore")
+                            return self._ok(200, {
+                                "ok": True,
+                                "name": name,
+                                "path": str(fp),
+                                "date": re.sub(r"\.log$", "", fp.name),
+                                "size": size,
+                                "tail": tail_bytes,
+                                "text": text
+                            })
+                        except Exception as e:
+                            return self._ok(code=500, payload={"ok": False, "error": repr(e)})
+
                 except Exception as e:
                     return self._ok(500, {"ok": False, "error": repr(e)})
 
             def do_POST(self):
                 parts = self._parts()
                 try:
+                    length = int(self.headers.get("Content-Length") or 0)
+                    body = self.rfile.read(length).decode("utf-8", errors="ignore")
+
+                    # start/stop/restart/{name}
                     if parts and parts[0] in ("start", "stop", "restart"):
                         name = parts[1] if len(parts) > 1 else ""
                         if parts[0] == "start":
-                            return self._ok(payload=sup.start(name))
+                            return self._ok(code=200, payload=sup.start(name))
                         if parts[0] == "stop":
-                            return self._ok(payload=sup.stop(name, force=True))
+                            return self._ok(code=200, payload=sup.stop(name, force=True))
                         if parts[0] == "restart":
-                            return self._ok(payload=sup.restart(name))
+                            return self._ok(code=200, payload=sup.restart(name))
+
+                    if parts and parts[0] == "logs":
+                        self.do_GET()  # POST를 GET처럼 처리
+                        return
+
+                    # save config (POST /config)                    
+                    if parts == ["config"]:
+                        DEFAULT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
+                        # 그대로 저장 (JSON/JSON5 둘 다 허용)
+                        DEFAULT_CONFIG.write_text(body, encoding="utf-8")
+                        s = DEFAULT_CONFIG.stat()                        
+                        sup._cfg_mtime = 0; 
+                        sup._reload_config_if_needed()  # ← 저장 직후 즉시 반영
+                        sup._log(f"[CONFIG SAVED] {DEFAULT_CONFIG} ({s.st_size} bytes, mtime={time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(s.st_mtime))})")
+                        return self._ok(200, {"ok": True})
+
+                    # 포맷: POST /config-format
+                    if parts == ["config-format"] or parts == ["config","format"]:
+                        try:
+                            cleaned = _strip_json5_comments(body)
+                            cleaned = re.sub(r'(?m)(?<!["\w])([A-Za-z_][A-Za-z0-9_]*)\s*:(?!\s*")', r'"\1":', cleaned)
+                            cleaned = re.sub(r",\s*([\]})])", r"\1", cleaned)
+                            obj = json.loads(cleaned)
+                            pretty = json.dumps(obj, ensure_ascii=False, indent=2)
+                            return self._ok(200, {"ok": True, "text": pretty})
+                        except Exception as ee:
+                            return self._ok(400, {"ok": False, "error": repr(ee)})
+
                     return self._ok(404, {"ok": False, "error": "not found"})
                 except Exception as e:
                     return self._ok(500, {"ok": False, "error": repr(e)})
@@ -450,16 +1001,22 @@ def main():
             "http_host": "0.0.0.0",
             "http_port": 51050,
             "log_dir": str(LOG_DIR_DEFAULT),
-            "heartbeat_interval_sec": 5,
+            "heartbeat_interval_sec": 2,
             "executables": [],
         }
 
     log_dir = Path(cfg.get("log_dir", str(LOG_DIR_DEFAULT)))
     if not log_dir.is_absolute():
         log_dir = (ROOT / log_dir).resolve()
-
-    sup = DmsSupervisor(cfg, log_dir)
-    sup.run()
+    try:
+        sup = DmsSupervisor(cfg, log_dir)
+        sup.run()
+    except Exception:
+        ensure_dir(LOG_DIR_DEFAULT)
+        (LOG_DIR_DEFAULT / "DMs.log").open("a", encoding="utf-8").write(
+            "FATAL EXCEPTION:\n" + traceback.format_exc() + "\n"
+        )
+        sys.exit(2)
 
 if __name__ == "__main__":
     if os.name == "nt":

@@ -4,7 +4,7 @@
             "name": "Python: Current File",
             "type": "debugpy",
             "request": "launch",
-            "program": "C:\\4DReplay\\AID\\src\\aid_main.py",
+            "program": "C:\\4DReplay\\V5\\src\\AId\\aid_main.py",
             "console": "integratedTerminal",            
         }
     ]

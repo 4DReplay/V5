@@ -1,0 +1,847 @@
+2025-10-29 08:50:17 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:22 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:22 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:25 [HTTP] "POST /logs/MTd HTTP/1.1" 404 -
+2025-10-29 08:50:26 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:33 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:34 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:34 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:34 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:38 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:41 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:45 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:45 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:45 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:46 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:49 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:52 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:56 [LOG-SCAN] name=MTd exe=C:\4DReplay\V5\daemon\MTd\MTd.exe
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\log  exists=True
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\logs  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:50:56 [LOG-SCAN]  found: (scan pending)
+2025-10-29 08:50:56 [LOG-SCAN] name=MTd exe=C:\4DReplay\V5\daemon\MTd\MTd.exe
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\log  exists=True
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\logs  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:50:56 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-24.log  size=321337
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-25.log  size=477011
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-26.log  size=1950
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-27.log  size=12514
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-28.log  size=14471
+2025-10-29 08:50:56 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-29.log  size=387
+2025-10-29 08:50:56 [LOG-SCAN]  pick(latest) -> C:\4DReplay\V5\daemon\MTd\log\2025-10-29.log
+2025-10-29 08:50:56 [HTTP] "GET /logs/MTd HTTP/1.1" 200 -
+2025-10-29 08:50:57 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:50:57 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:50:57 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:01 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:04 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:09 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:09 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:09 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:13 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "GET /dms-control.html HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "GET /config HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "POST /config-format HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:21 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:24 [HTTP] "POST /logs/MTd HTTP/1.1" 404 -
+2025-10-29 08:51:25 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:29 [LOG-SCAN] name=MTd exe=C:\4DReplay\V5\daemon\MTd\MTd.exe
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\log  exists=True
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\logs  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:51:29 [LOG-SCAN]  found: (scan pending)
+2025-10-29 08:51:29 [LOG-SCAN] name=MTd exe=C:\4DReplay\V5\daemon\MTd\MTd.exe
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\log  exists=True
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\MTd\logs  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:51:29 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-24.log  size=321337
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-25.log  size=477011
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-26.log  size=1950
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-27.log  size=12514
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-28.log  size=14471
+2025-10-29 08:51:29 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\MTd\log\2025-10-29.log  size=387
+2025-10-29 08:51:29 [LOG-SCAN]  pick(latest) -> C:\4DReplay\V5\daemon\MTd\log\2025-10-29.log
+2025-10-29 08:51:29 [HTTP] "GET /logs/MTd HTTP/1.1" 200 -
+2025-10-29 08:51:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:32 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:36 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:39 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "POST /logs/EMd HTTP/1.1" 404 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:44 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:44 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:44 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:48 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:51 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:54 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:56 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:51:56 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:51:57 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:03 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:08 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:08 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:09 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:12 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:15 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:20 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:24 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:27 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN] name=EMd exe=C:\4DReplay\V5\daemon\EMd\EMd.exe
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\log  exists=True
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\logs  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:52:28 [LOG-SCAN]  found: (scan pending)
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN] name=EMd exe=C:\4DReplay\V5\daemon\EMd\EMd.exe
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\log  exists=True
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\logs  exists=False
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:52:28 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-24.log  size=123044
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-25.log  size=318240
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-26.log  size=1008
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-27.log  size=8055
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-28.log  size=7144
+2025-10-29 08:52:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:28 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-29.log  size=249
+2025-10-29 08:52:28 [LOG-SCAN]  pick(latest) -> C:\4DReplay\V5\daemon\EMd\log\2025-10-29.log
+2025-10-29 08:52:28 [HTTP] "GET /logs/EMd HTTP/1.1" 200 -
+2025-10-29 08:52:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:32 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:36 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:39 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:44 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:44 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:45 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:48 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:51 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:54 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:52:56 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:52:56 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:08 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:08 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:12 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:20 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:24 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:27 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:32 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:34 [HTTP] "POST /logs/SCd HTTP/1.1" 404 -
+2025-10-29 08:53:36 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:43 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:44 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:47 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:50 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:54 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:55 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:53:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:53:59 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:02 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:07 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:11 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:14 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:19 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:23 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:26 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:32 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:32 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:36 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:40 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:44 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:44 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:48 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:51 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:52 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:54:56 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:54:56 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:03 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:08 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:08 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:12 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:15 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:19 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:20 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:23 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:26 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:31 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:35 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:38 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:43 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:47 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:50 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:55 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:55:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:55:59 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:02 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:07 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:07 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:11 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:14 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:19 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:23 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:26 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:31 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:31 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:35 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:38 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:43 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:43 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:47 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:50 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:55 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:56:55 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:56:59 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:02 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:06 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:08 [LOG-SCAN] name=EMd exe=C:\4DReplay\V5\daemon\EMd\EMd.exe
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\log  exists=True
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\logs  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:57:08 [LOG-SCAN]  found: (scan pending)
+2025-10-29 08:57:08 [LOG-SCAN] name=EMd exe=C:\4DReplay\V5\daemon\EMd\EMd.exe
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\log  exists=True
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\EMd\logs  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\log  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\daemon\logs  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\log  exists=False
+2025-10-29 08:57:08 [LOG-SCAN]  dir: C:\4DReplay\V5\logs  exists=True
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-24.log  size=123044
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-25.log  size=318240
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-26.log  size=1008
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-27.log  size=8055
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-28.log  size=7144
+2025-10-29 08:57:08 [LOG-SCAN]  found file: C:\4DReplay\V5\daemon\EMd\log\2025-10-29.log  size=249
+2025-10-29 08:57:08 [LOG-SCAN]  pick(latest) -> C:\4DReplay\V5\daemon\EMd\log\2025-10-29.log
+2025-10-29 08:57:08 [HTTP] "GET /logs/EMd HTTP/1.1" 200 -
+2025-10-29 08:57:10 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:10 [HTTP] "GET /dms-control.html HTTP/1.1" 200 -
+2025-10-29 08:57:10 [HTTP] "GET /config HTTP/1.1" 200 -
+2025-10-29 08:57:10 [HTTP] "POST /config-format HTTP/1.1" 200 -
+2025-10-29 08:57:13 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:15 [HTTP] "POST /logs/MTd HTTP/1.1" 404 -
+2025-10-29 08:57:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:17 [HTTP] "POST /logs/EMd HTTP/1.1" 404 -
+2025-10-29 08:57:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:18 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:19 [HTTP] "POST /logs/CCd HTTP/1.1" 404 -
+2025-10-29 08:57:19 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:20 [HTTP] "POST /logs/GCd HTTP/1.1" 404 -
+2025-10-29 08:57:22 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:30 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:34 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:37 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:42 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:42 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:46 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:49 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:54 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:57:54 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:54 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:57:58 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:01 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:06 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:06 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:10 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:13 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "POST /logs/MTd HTTP/1.1" 404 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:18 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:18 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:21 [HTTP] "POST /logs/EMd HTTP/1.1" 404 -
+2025-10-29 08:58:22 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:26 [HTTP] "POST /logs/CCd HTTP/1.1" 404 -
+2025-10-29 08:58:26 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:26 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:29 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:30 [HTTP] "POST /logs/SCd HTTP/1.1" 404 -
+2025-10-29 08:58:33 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:34 [HTTP] "POST /logs/GCd HTTP/1.1" 404 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:41 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:42 [HTTP] "POST /logs/PreSd HTTP/1.1" 404 -
+2025-10-29 08:58:45 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:53 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:58:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:58:57 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:04 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:05 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:09 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:16 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:17 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:21 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:28 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:29 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:30 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:33 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:41 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:45 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:50 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:51 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:53 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 08:59:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 08:59:57 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:02 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:03 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:05 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:09 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:12 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:14 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:15 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:17 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:21 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:26 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:27 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:29 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:33 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:38 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:39 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:41 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:45 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:48 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:53 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:00:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:00:57 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:05 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:09 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:12 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:17 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:17 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:21 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:24 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:25 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:29 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:29 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:33 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:36 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:37 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:41 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:41 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:45 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:48 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:49 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:53 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:01:53 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:01:57 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:02:00 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:02:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:01 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:05 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:02:05 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:09 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:02:12 [DMs] tick loop ended
+2025-10-29 09:02:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:13 [HTTP] "GET /config/meta HTTP/1.1" 200 -
+2025-10-29 09:02:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:13 [HTTP] "GET /status HTTP/1.1" 200 -
+2025-10-29 09:02:13 [STOP] MTd done
+2025-10-29 09:02:14 [STOP] EMd done
+2025-10-29 09:02:14 [STOP] CCd done
+2025-10-29 09:02:15 [STOP] SCd done
+2025-10-29 09:02:16 [STOP] GCd done
+2025-10-29 09:02:16 [STOP] PCd done
+2025-10-29 09:02:17 [STOP] PreSd done
+2025-10-29 09:02:17 [STOP] PostSd done
+2025-10-29 09:02:18 [STOP] MMd done
+2025-10-29 09:02:18 [STOP] MMc done
+2025-10-29 09:02:19 [STOP] AId done

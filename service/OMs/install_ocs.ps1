@@ -146,7 +146,8 @@ class ProcessManager:
             return st
 
     def is_running(self) -> bool:
-        return (self._proc is not None) and (self._proc.poll() is None)
+        #return (self._proc is not None) and (self._proc.poll() is None)
+        return bool(self.proc is not None and (self.proc.poll() is None))
 
     def _wait_terminate(self, timeout) -> bool:
         t0 = time.time()

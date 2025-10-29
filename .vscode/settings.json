@@ -67,8 +67,6 @@
         "xtr1common": "cpp",
         "xtree": "cpp",
         "xutility": "cpp"
-    },
-    //"python.defaultInterpreterPath": "C:/msys64/mingw64/bin/python.exe"
-    //"cmake.sourceDirectory": "D:/OneDrive - 4DREPLAY/1.Workspace/_Dev/v4_aid/opencv/3rdparty/tbb"
+    },        
     "json.validate.enable": false
 }

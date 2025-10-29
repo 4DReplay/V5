@@ -873,7 +873,7 @@ if __name__ == '__main__':
     fd_log.info(f"─────────────────────────────────────────────────────────────────────────────")
     fd_log.info(f"📂 [AId] Working directory: {conf._path_base}")
 
-    ver, date = conf.read_latest_release_from_md("./src/fd_release_aid.md")
+    ver, date = conf.read_latest_release_from_md("./src/aid_release.md")
     conf._version = ver
     conf._release_date = date
 
