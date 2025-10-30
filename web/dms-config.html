@@ -73,7 +73,7 @@
   </h2>
 
   <div class="toolbar">
-    <button id="btnGoDashboard" class="btn-secondary" title="Back to Dashboard">🧭 Dashboard</button>
+    <button id="btnGoDashboard" class="btn-secondary" title="Back to Control">🧭 Control</button>
     <button id="btnReload" class="btn-secondary">🔄 Reload</button>
     <button id="btnFormat" class="btn-ghost">🧹Format</button>
     <button id="btnAdd" class="btn-ghost">➕ Add</button>
@@ -354,7 +354,7 @@ async function saveConfig(){
 }
 
 document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
-  location.href = "dms-dashboard.html";
+  location.href = "dms-control.html";
 });
 document.getElementById("btnReload").addEventListener("click", reloadConfig);
 document.getElementById("btnFormat").addEventListener("click", formatConfig);

@@ -757,18 +757,18 @@ class DmsSupervisor:
                     parts = [p for p in norm_path.split('/') if p]
 
                     # ── [리다이렉트] 루트/별칭
-                    #  - / 또는 /dms  → /web/dms-dashboard.html
-                    #  - /cms         → /web/cms-dashboard.html
+                    #  - / 또는 /dms  → /web/dms-control.html
+                    #  - /cms         → /web/cms-control.html
                     if clean_path in ("/", "/dms"):
                         self.send_response(302)
-                        self.send_header("Location", "/web/dms-dashboard.html")
+                        self.send_header("Location", "/web/dms-control.html")
                         self.send_header("Cache-Control", "no-store")
                         self.send_header("Content-Length", "0")
                         self.end_headers()
                         return
                     if clean_path == "/cms":
                         self.send_response(302)
-                        self.send_header("Location", "/web/cms-dashboard.html")
+                        self.send_header("Location", "/web/cms-control.html")
                         self.send_header("Cache-Control", "no-store")
                         self.send_header("Content-Length", "0")
                         self.end_headers()
@@ -836,7 +836,7 @@ class DmsSupervisor:
                         sub = "/".join(parts[1:])
                         return _serve_static_safe(self, sub)
 
-                    # ── [정적] 루트에서도 *.html 직접 서빙 (예: /dms-config.html, /dms-dashboard.html, /cms-dashboard.html)
+                    # ── [정적] 루트에서도 *.html 직접 서빙 (예: /dms-config.html, /dms-control.html, /cms-control.html)
                     if clean_path.endswith(".html"):
                         return _serve_static_safe(self, clean_path.lstrip("/"))
 
@@ -902,7 +902,7 @@ class DmsSupervisor:
                             except (ConnectionAbortedError, BrokenPipeError): pass
                             return
                         return self._ok(code=404, payload={"ok": False, "error": "not found"})
-                    
+                                        
                     # 없으면 404
                     return self._ok(404, {"ok": False, "error": "not found"})
 

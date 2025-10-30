@@ -248,7 +248,7 @@ def check_batter_frame(type_target, frame, timestamp):
         # ─────────────────────────────────────────────────────────────────────────────
 
     finally:        
-        # update info to dashboard
+        # update info to control
         object_status       = set_object_status(type_target,detected_status)
         player_handedness   = set_player_handedness(type_target,detected_handedness)
         if detected_is_back:
@@ -548,7 +548,7 @@ def check_pitcher_frame(frame, timestamp):
         pass
     finally:
         # ─────────────────────────────────────────────────────────────────────────────
-        # 🔁 Dashboard update
+        # 🔁 Control update
         # ─────────────────────────────────────────────────────────────────────────────
         object_status = set_object_status(type_target, detected_status)
 

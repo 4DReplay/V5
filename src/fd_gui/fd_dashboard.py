@@ -39,7 +39,7 @@ class DetectDashboard(QWidget):
     def __init__(self, conf):
         super().__init__()
         self.conf = conf
-        self.setWindowTitle("Dashboard - Live Status")
+        self.setWindowTitle("Control - Live Status")
         self.setFont(QFont("맑은고딕", 9))
         self.resize(600, 600)
 

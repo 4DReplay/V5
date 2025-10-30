@@ -48,7 +48,7 @@
   </h2>
 
   <div class="toolbar">
-    <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS Dashboard">🧭 OMS Dashboard</button>
+    <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS Control">🧭 OMS Control</button>
     <button id="btnReload" class="btn-secondary">🔄 Reload</button>
     <button id="btnFormat" class="btn-ghost">🧹Format</button>
     <button id="btnAdd" class="btn-ghost">➕ Add</button>
@@ -329,7 +329,7 @@ function uniqueNodeName(base){
 
 
 /* ───────── buttons ───────── */
-document.getElementById("btnGoDashboard").addEventListener("click", ()=>{ location.href = "oms-dashboard.html"; });
+document.getElementById("btnGoDashboard").addEventListener("click", ()=>{ location.href = "oms-control.html"; });
 document.getElementById("btnReload").addEventListener("click", reloadConfig);
 document.getElementById("btnFormat").addEventListener("click", formatConfig);
 document.getElementById("btnSave").addEventListener("click", saveConfig);

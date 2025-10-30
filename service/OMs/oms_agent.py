@@ -196,10 +196,10 @@ class Orchestrator:
                         ct = hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
                         return self._write(st, data, ct)
 
-                    # ── [리다이렉트] / 또는 /oms → /web/oms-dashboard.html
+                    # ── [리다이렉트] / 또는 /oms → /web/oms-control.html
                     if clean_path in ("/", "/oms"):
                         self.send_response(302)
-                        self.send_header("Location", "/web/oms-dashboard.html")
+                        self.send_header("Location", "/web/oms-control.html")
                         self.send_header("Cache-Control", "no-store")
                         self.send_header("Content-Length", "0")
                         self.end_headers()
@@ -210,7 +210,7 @@ class Orchestrator:
                         sub = "/".join(parts[1:])
                         return _serve_static_safe(self, sub)
 
-                    # ── [정적] 루트에서 *.html 도 허용 (예: /oms-config.html, /oms-dashboard.html)
+                    # ── [정적] 루트에서 *.html 도 허용 (예: /oms-config.html, /oms-control.html)
                     if clean_path.endswith(".html"):
                         # clean_path 는 앞에 / 가 있으므로 lstrip
                         return _serve_static_safe(self, clean_path.lstrip("/"))
@@ -274,7 +274,6 @@ class Orchestrator:
                         except (ConnectionAbortedError, BrokenPipeError):
                             pass
                         return
-
                     # ── 없다
                     return self._write(404, json.dumps({"ok": False, "error": "not found"}).encode("utf-8"))
 

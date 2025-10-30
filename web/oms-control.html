@@ -42,7 +42,7 @@
 </head>
 <body>
   <h2>
-    <span>4DReplay V5 - OMs Dashboard</span>
+    <span>4DReplay V5 - OMs Control</span>
     <small id="meta"></small>
   </h2>
 
@@ -189,12 +189,12 @@ function toProcList(status){
   return [];
 }
 function nodeCellHtml(node, procIdx, perNodeTotal){
-  const linkHref = `/proxy/${encodeURIComponent(node.name)}/dms-dashboard.html`;
+  const linkHref = `/proxy/${encodeURIComponent(node.name)}/dms-control.html`;
   const title = node.alias || node.name;
   const ndx = (typeof procIdx==="number" && typeof perNodeTotal==="number")
     ? ` (${procIdx+1}/${perNodeTotal})` : "";
   return `
-    <a class="node" href="${linkHref}" target="_blank" title="Open DMS dashboard">${title}</a>
+    <a class="node" href="${linkHref}" target="_blank" title="Open DMS Control">${title}</a>
     <br><span class="muted">${node.host}:${node.port}${ndx}</span>
   `;
 }
