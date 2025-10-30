@@ -63,7 +63,7 @@
       "alias": "Pre Storage [#n]",
       "path": "daemon/PreSd/PreSd.exe",
       "args": [],
-      "select": true,
+      "select": false,
       "auto_restart": true,
       "start_on_boot": true
     },
@@ -79,7 +79,7 @@
     {
       "name": "MMd",
       "alias": "Multimedia Maker",
-      "path": "daemon/GCd/MMdServer.exe",
+      "path": "daemon/MMd/MMdServer.exe",
       "args": [],
       "select": false,
       "auto_restart": true,

@@ -16,62 +16,122 @@
     h2{margin:0 12px 0 0;font-size:20px}
     button{background:var(--btn);color:#fff;border:0;border-radius:8px;padding:8px 12px;cursor:pointer}
     button.btn2{background:var(--btn2)}
-    select{background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
+    select, input[type="text"]{background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:6px 8px}
     label{display:flex;align-items:center;gap:6px}
     #meta{margin-left:auto;font-size:12px;color:#cbd5e1}
-    #log{height:calc(100vh - 92px);overflow:auto;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;white-space:pre-wrap;margin:0}
+    #log{height:calc(100vh - 76px);overflow:auto;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;white-space:pre-wrap;margin:0}
     a.link{color:#93c5fd;text-decoration:none}
   </style>
 </head>
 <body>
   <header>
-    <button id="btnBack" class="btn2">← Back</button>
     <h2 id="title">Logs</h2>
-    <select id="selDate"></select>
-    <select id="selTail">
+
+    <input id="tbName" type="text" placeholder="process name" style="min-width:140px">
+    <select id="selDate" title="date"></select>
+    <select id="selTail" title="tail bytes">
       <option value="20000">20 KB</option>
       <option value="50000" selected>50 KB</option>
       <option value="200000">200 KB</option>
       <option value="1000000">1 MB</option>
     </select>
-    <label><input type="checkbox" id="cbAuto" checked> auto</label>
+    <label title="auto refresh"><input type="checkbox" id="cbAuto" checked> auto</label>
     <button id="btnRefresh" class="btn2">Refresh</button>
     <span id="meta">-</span>
   </header>
+
   <pre id="log">(loading...)</pre>
 
 <script>
 (function(){
-  const qs = new URLSearchParams(location.search);
-  const name = qs.get("name") || "";
-  const initialDate = qs.get("date") || "";
-  const initialTail = qs.get("tail") || "";
-  const title = document.getElementById("title");
-  const selDate = document.getElementById("selDate");
-  const selTail = document.getElementById("selTail");
-  const cbAuto = document.getElementById("cbAuto");
-  const btnRefresh = document.getElementById("btnRefresh");
-  const btnBack = document.getElementById("btnBack");
-  const meta = document.getElementById("meta");
-  const log = document.getElementById("log");
-  let timer = null;
+  /* ───────── Proxy 지원: /proxy/<node>/ 자동감지 + fetch 패치 ───────── */
+  const PROXY_NODE = (() => {
+    const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+    return m ? decodeURIComponent(m[1]) : "";
+  })();
 
-  title.textContent = `Logs • ${name || "(unknown)"}`;
-  if(initialTail) selTail.value = initialTail;
+  if (PROXY_NODE) {
+    // <base> 주입: 상대경로를 /proxy/<node>/ 기준으로 해석
+    const base = document.createElement("base");
+    base.href = `/proxy/${encodeURIComponent(PROXY_NODE)}/`;
+    document.head.prepend(base);
 
-  function api(path){
-    return fetch(path, {cache:"no-store"}).then(async r=>{
-      const ct=r.headers.get("content-type")||"";
-      const isJson=ct.includes("application/json");
-      if(!r.ok) throw new Error(isJson ? (await r.json()).error||r.statusText : await r.text());
-      return isJson ? r.json() : r.text();
-    });
+    // fetch 패치: 절대경로("/...") 앞에 /proxy/<node> 자동부착
+    const orig = window.fetch;
+    window.fetch = function(input, init){
+      let url = (typeof input === "string") ? input : (input && input.url) || "";
+      if (typeof url === "string" && url.startsWith("/") && !url.startsWith("/proxy/")) {
+        url = `/proxy/${encodeURIComponent(PROXY_NODE)}${url}`;
+      }
+      if (typeof input !== "string" && input && input.url) {
+        return orig(new Request(url, input), init);
+      }
+      return orig(url, init);
+    };
   }
 
+  /* ───────── Query Params ───────── */
+  const qs = new URLSearchParams(location.search);
+  const NODE_Q = qs.get("node") || "";            // 쿼리의 node (없어도 됨)
+  const NAME0  = qs.get("name") || "";
+  const DATE0  = qs.get("date") || "";
+  const TAIL0  = qs.get("tail") || "";
+  const AUTO0  = qs.get("auto");                  // "1"|"0"|null
+
+  /* ───────── Mode / Base URL ─────────
+     우선순위: ① URL이 /proxy/<node>/로 열렸으면 그 노드 사용
+               ② 쿼리에 node= 있으면 그 노드 사용
+               ③ 그 외에는 로컬(DMS 직접 접근) */
+  const EFFECTIVE_NODE = PROXY_NODE || NODE_Q;
+  const BASE = EFFECTIVE_NODE ? `/proxy/${encodeURIComponent(EFFECTIVE_NODE)}` : "";
+
+  /* ───────── DOM ───────── */
+  const title     = document.getElementById("title");
+  const tbName    = document.getElementById("tbName");
+  const selDate   = document.getElementById("selDate");
+  const selTail   = document.getElementById("selTail");
+  const cbAuto    = document.getElementById("cbAuto");
+  const btnRefresh= document.getElementById("btnRefresh");
+  const meta      = document.getElementById("meta");
+  const logEl     = document.getElementById("log");
+  let timer = null;
+
+  if (TAIL0) cbAuto.value = TAIL0;
+  if (AUTO0 === "0") cbAuto.checked = false;
+  tbName.value = NAME0;
+
+  function setTitle(){
+    const nm = tbName.value.trim() || "(unknown)";
+    title.textContent = EFFECTIVE_NODE ? `Logs • ${nm} @ ${EFFECTIVE_NODE}` : `Logs • ${nm}`;
+  }
+  setTitle();
+
+  /* ───────── Fetch helper ───────── */
+  async function jget(path){
+    const r = await fetch(path, {cache:"no-store"});
+    const ct = r.headers.get("content-type") || "";
+    const isJson = ct.includes("application/json");
+    if(!r.ok){
+      let msg;
+      try{ msg = isJson ? (await r.json()).error || r.statusText : await r.text(); }catch{ msg = r.statusText; }
+      throw new Error(msg || `HTTP ${r.status}`);
+    }
+    return isJson ? r.json() : r.text();
+  }
+
+  /* ───────── Dates load ───────── */
   async function loadDates(){
     selDate.innerHTML = "";
+    const name = tbName.value.trim();
+    if(!name){
+      const opt=document.createElement("option");
+      opt.value=""; opt.textContent="(enter name)";
+      selDate.appendChild(opt);
+      return;
+    }
     try{
-      const r = await api(`/logs/list/${encodeURIComponent(name)}`);
+      const url = `${BASE}/logs/list/${encodeURIComponent(name)}`;
+      const r = await jget(url);
       const dates = (r && r.dates) || [];
       if(dates.length === 0){
         const opt = document.createElement("option");
@@ -83,7 +143,7 @@
           opt.value=d; opt.textContent=d;
           selDate.appendChild(opt);
         });
-        if(initialDate && dates.includes(initialDate)) selDate.value = initialDate;
+        if(DATE0 && dates.includes(DATE0)) selDate.value = DATE0;
       }
     }catch(e){
       const opt=document.createElement("option");
@@ -92,29 +152,36 @@
     }
   }
 
+  /* ───────── Log refresh ───────── */
   async function refresh(){
-    if(!name) return;
+    const name = tbName.value.trim();
+    if(!name){
+      logEl.textContent = "(name required)";
+      meta.textContent = "-";
+      return;
+    }
     const params = new URLSearchParams();
     const d = selDate.value;
     if(d) params.set("date", d);
     params.set("tail", selTail.value || "50000");
     try{
-      const r = await api(`/logs/${encodeURIComponent(name)}?`+params.toString());
+      const url = `${BASE}/logs/${encodeURIComponent(name)}?${params.toString()}`;
+      const r = await jget(url);
       if(r && r.ok){
-        log.textContent = r.text || "";
+        logEl.textContent = r.text || "";
         meta.textContent = `${r.path} • ${r.size} bytes • date ${r.date} • tail ${r.tail} bytes`;
-        // 아래로 고정
-        log.scrollTop = log.scrollHeight;
+        logEl.scrollTop = logEl.scrollHeight; // stick bottom
       }else{
-        log.textContent = (r && r.error) ? r.error : "(no content)";
+        logEl.textContent = (r && r.error) ? r.error : "(no content)";
         meta.textContent = "-";
       }
     }catch(e){
-      log.textContent = String(e.message || e);
+      logEl.textContent = String(e.message || e);
       meta.textContent = "-";
     }
   }
 
+  /* ───────── Auto refresh ───────── */
   function startAuto(){
     stopAuto();
     if(cbAuto.checked){
@@ -125,22 +192,32 @@
     if(timer){ clearInterval(timer); timer=null; }
   }
 
-  // events
-  btnBack.addEventListener("click", ()=>{
-    if(document.referrer){ history.back(); }
-    else { location.href = "/dms-control.html"; }
-  });
+  /* ───────── Events ───────── */
   btnRefresh.addEventListener("click", refresh);
   cbAuto.addEventListener("change", startAuto);
   selTail.addEventListener("change", refresh);
   selDate.addEventListener("change", refresh);
+  tbName.addEventListener("change", async ()=>{
+    setTitle();
+    await loadDates();
+    await refresh();
+  });
 
-  // init
+  // Keyboard: Ctrl/Cmd+R to refresh (prevent full reload)
+  document.addEventListener("keydown", (e)=>{
+    if((e.ctrlKey || e.metaKey) && e.key.toLowerCase()==="r"){
+      e.preventDefault();
+      refresh();
+    }
+  });
+
+  /* ───────── Init ───────── */
   (async function init(){
     await loadDates();
     await refresh();
     startAuto();
   })();
+
 })();
 </script>
 </body>

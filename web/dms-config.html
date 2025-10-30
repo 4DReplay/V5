@@ -106,6 +106,54 @@
   <div class="sep"></div>
 
 <script>
+/* ───────────────────────── proxy  ───────────────────────── */
+// ① /proxy/<node>/ 접두사 감지
+const __PROXY_PREFIX__ = (() => {
+  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+})();
+
+// ② <base> 주입: 상대경로를 /proxy/<node>/ 기준으로 해석
+(function ensureBase(){
+  if (!__PROXY_PREFIX__) return;
+  const base = document.createElement("base");
+  base.href = __PROXY_PREFIX__ + "/";
+  document.head.prepend(base);
+})();
+
+// ③ fetch 패치: "/config" 같은 절대경로 앞에 /proxy/<node> 자동 부착
+(function patchFetch(){
+  if (!__PROXY_PREFIX__) return;
+  const orig = window.fetch;
+  window.fetch = function(input, init){
+    let url = input;
+    if (typeof input !== "string" && input && input.url) url = input.url;
+
+    if (typeof url === "string") {
+      if (url.startsWith("/") && !url.startsWith("/proxy/")) {
+        url = __PROXY_PREFIX__ + url; // 핵심
+      }
+    }
+    if (typeof input !== "string" && input && input.url) {
+      return orig(new Request(url, input), init);
+    }
+    return orig(url, init);
+  };
+})();
+
+// (옵션) XHR를 쓰는 코드가 있다면 같이 패치
+(function patchXHR(){
+  if (!__PROXY_PREFIX__) return;
+  const origOpen = XMLHttpRequest.prototype.open;
+  XMLHttpRequest.prototype.open = function(method, url, async, user, pass){
+    let u = url;
+    if (typeof u === "string" && u.startsWith("/") && !u.startsWith("/proxy/")) {
+      u = __PROXY_PREFIX__ + u;
+    }
+    return origOpen.call(this, method, u, async !== false, user, pass);
+  };
+})();
+
 /* ───────────────────────── 공통 유틸 ───────────────────────── */
 (function setTitleHost(){
   try{
@@ -260,6 +308,19 @@ async function loadHeartbeat(){
   if(POLL){clearInterval(POLL); POLL=null;}
   POLL=setInterval(()=>Promise.allSettled([loadMeta(),loadHeartbeat()]), POLL_MS);
 }
+async function loadHeartbeatLite(){
+  try{
+    const s = await api("/status-lite", "GET");
+    if (s && typeof s.heartbeat_interval_sec !== "undefined"){
+      const hb = Number(s.heartbeat_interval_sec);
+      if (!isNaN(hb) && hb > 0){
+        HB_EL.textContent = hb;
+        const next = Math.max(1000, Math.floor(hb*1000));
+        if (next !== POLL_MS){ POLL_MS = next; restartPolling(); }
+      }
+    }
+  }catch{ HB_EL.textContent="-"; }
+}
 
 /* ───────────────────── 버튼 액션 ───────────────────── */
 async function reloadConfig(){
@@ -293,7 +354,7 @@ async function saveConfig(){
 }
 
 document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
-  location.href = "/dms-control.html";
+  location.href = "dms-dashboard.html";
 });
 document.getElementById("btnReload").addEventListener("click", reloadConfig);
 document.getElementById("btnFormat").addEventListener("click", formatConfig);

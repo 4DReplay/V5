@@ -1,0 +1,390 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>4DReplay V5 - OMs Config Editor</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --card:#0b1220; --line:#243045; --line2:#1f2937;
+      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+    h2 small{font-size:14px;opacity:.8}
+    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px}
+    .toolbar .note{color:var(--muted);font-size:13px}
+    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
+    button:hover{filter:brightness(1.15)}
+    button[disabled]{opacity:.55;cursor:not-allowed}
+    .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
+    .btn-secondary{background:var(--btn2)}
+    .pill{display:inline-block;border:1px solid var(--line);background:#0f172a;border-radius:999px;font-size:12px;padding:2px 10px}
+    .pill-ok{border-color:var(--ok);color:#a7f3d0;background:#0d3b1a}
+    .pill-bad{border-color:var(--bad);color:#fecaca;background:#3b0d0d}
+    table{border-collapse:collapse;width:100%;max-width:1300px}
+    th,td{border:1px solid var(--line2);padding:4px 6px;vertical-align:middle}
+    th{background:#0f172a;text-align:left;position:sticky;top:0}
+    tbody tr:nth-child(odd){background:#0c121b}
+    input[type="text"], textarea, select{
+      width:100%;box-sizing:border-box;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);
+      border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;
+    }
+    textarea{height:36px;resize:none}
+    .col-narrow{width:90px}
+    .col-btns{white-space:nowrap}
+    .muted{color:var(--muted)}
+    .help{margin-top:10px;color:var(--muted);font-size:13px}
+    .sep{height:1px;background:var(--line2);margin:12px 0}
+    .right{margin-left:auto}
+  </style>
+</head>
+<body>
+  <h2>
+    <span>4DReplay V5 - OMs Config Editor</span>
+    <small id="titleHost"></small>
+  </h2>
+
+  <div class="toolbar">
+    <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS Dashboard">🧭 OMS Dashboard</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <button id="btnFormat" class="btn-ghost">🧹Format</button>
+    <button id="btnAdd" class="btn-ghost">➕ Add</button>
+    <button id="btnSave">💾 Save</button>
+    <span id="saveState" class="pill">Idle</span>
+    <span class="right note">
+      File: <span id="metaPath">-</span> (<span id="metaSize">-</span> bytes, mtime <span id="metaMtime">-</span>)
+      • Agent heartbeat: <span id="hb">-</span>s
+    </span>
+  </div>
+
+  <table id="grid">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Alias</th>
+        <th>Host</th>
+        <th>Port</th>
+        <th class="col-btns">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <div class="help">
+    • Saving with <code>select:false</code> will make the Agent terminate that process on the next tick.<br/>
+    • <code>heartbeat_interval_sec</code> is the Agent’s internal cycle; this page adapts its polling to it.
+  </div>
+  <div class="sep"></div>
+
+<script>
+/* ───────── proxy support ───────── */
+const __PROXY_PREFIX__ = (() => {
+  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+})();
+(function ensureBase(){
+  if (!__PROXY_PREFIX__) return;
+  const base = document.createElement("base");
+  base.href = __PROXY_PREFIX__ + "/";
+  document.head.prepend(base);
+})();
+(function patchFetch(){
+  if (!__PROXY_PREFIX__) return;
+  const orig = window.fetch;
+  window.fetch = function(input, init){
+    let url = input;
+    if (typeof input !== "string" && input && input.url) url = input.url;
+    if (typeof url === "string") {
+      if (url.startsWith("/") && !url.startsWith("/proxy/")) url = __PROXY_PREFIX__ + url;
+    }
+    if (typeof input !== "string" && input && input.url) {
+      return orig(new Request(url, input), init);
+    }
+    return orig(url, init);
+  };
+})();
+
+/* ───────── DOM ───────── */
+const TBody   = document.querySelector("#grid tbody");
+const SaveTag = document.getElementById("saveState");
+const HB_EL   = document.getElementById("hb");
+const M_PATH  = document.getElementById("metaPath");
+const M_SIZE  = document.getElementById("metaSize");
+const M_TIME  = document.getElementById("metaMtime");
+const TITLE   = document.getElementById("titleHost");
+if (TITLE) TITLE.textContent = `(${location.hostname||"-"})`;
+
+/* ───────── endpoint auto-detect (OMS 우선, DMS 폴백) ───────── */
+const EP = {
+  get config(){ return tryPaths(["/oms/config", "/config"]); },
+  get configMeta(){ return tryPaths(["/oms/config/meta", "/config/meta"]); },
+  get configFormat(){ return tryPaths(["/oms/config-format", "/oms/config/format", "/config-format", "/config/format"]); },
+  get status(){ return tryPaths(["/oms/status", "/status"]); },
+};
+async function tryPaths(paths, method="GET", body=null){
+  let lastErr = null;
+  for (const p of paths){
+    try{
+      return await api(p, method, body);
+    }catch(e){
+      lastErr = e;
+      // 404 / not found 류만 넘어가고, 나머지는 즉시 throw
+      const msg = String(e.message||"").toLowerCase();
+      if (!(msg.includes("not found") || msg.includes("404"))) throw e;
+    }
+  }
+  throw lastErr || new Error("not found");
+}
+
+async function api(path, method="GET", body=null){
+  const opt = { method, cache:"no-store", headers:{} };
+  if (body !== null){
+    if (typeof body === "string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
+    else { opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
+  }
+  const r = await fetch(path, opt);
+  const ct = r.headers.get("content-type") || "";
+  const isJson = ct.includes("application/json");
+  if (!r.ok){
+    let msg = r.statusText;
+    try{ msg = isJson ? (await r.json()).error || r.statusText : await r.text(); }catch{}
+    throw new Error(msg || `HTTP ${r.status}`);
+  }
+  return isJson ? await r.json() : await r.text();
+}
+
+/* ───────── state ───────── */
+let CONFIG = null;
+let POLL = null, POLL_MS = 1500;
+let IS_SAVING = false;
+
+/* ───────── render helpers ───────── */
+function ensureConfigShape(cfg){ cfg = cfg||{}; if(!Array.isArray(cfg.executables)) cfg.executables=[]; return cfg; }
+function parseArgs(val){
+  if(!val) return [];
+  const s=String(val).trim(); if(!s) return [];
+  try{ const j=JSON.parse(s); return Array.isArray(j)?j:(j?String(j).split(/\s+/):[]); }
+  catch{ return s.split(/\s+/); }
+}
+function argsToText(arr){ try{ return JSON.stringify(arr||[]); }catch{ return String(arr||""); } }
+function uniqueName(base){
+  const used=new Set((CONFIG.executables||[]).map(e=>e.name));
+  if(!used.has(base)) return base;
+  let i=2; while(used.has(`${base}_${i}`)) i++; return `${base}_${i}`;
+}
+function row(exe, idx){
+  const tr=document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="checkbox" data-k="select" ${exe.select===true?"checked":""}></td>
+    <td><input type="text" data-k="name" value="${exe.name||""}" placeholder="e.g. capture"></td>
+    <td><input type="text" data-k="alias" value="${exe.alias||""}" placeholder="Capture Worker"></td>
+    <td><input type="text" data-k="path" value="${exe.path||exe.exe||""}" placeholder="bin/capture.exe"></td>
+    <td><textarea data-k="args" placeholder='["--foo","bar"] or "--foo bar"'>${argsToText(exe.args||[])}</textarea></td>
+    <td style="text-align:center"><input type="checkbox" data-k="auto_restart" ${exe.auto_restart!==false?"checked":""}></td>
+    <td style="text-align:center"><input type="checkbox" data-k="start_on_boot" ${exe.start_on_boot? "checked":""}></td>
+    <td class="col-btns">
+      <button data-a="up"   class="btn-ghost">▲</button>
+      <button data-a="down" class="btn-ghost">▼</button>
+      <button data-a="dup"  class="btn-ghost">Duplicate</button>
+      <button data-a="del"  class="btn-secondary">Delete</button>
+    </td>
+  `;
+  tr.addEventListener("change",(ev)=>{
+    const t=ev.target; const k=t.getAttribute("data-k"); if(!k) return;
+    const v=(t.type==="checkbox")?t.checked:(k==="args"?parseArgs(t.value):t.value);
+    CONFIG.executables[idx][k]=v; touchDirty("Edited");
+  });
+  tr.addEventListener("click",(ev)=>{
+    const b=ev.target.closest("button"); if(!b) return;
+    const a=b.getAttribute("data-a"); const arr=CONFIG.executables;
+    if(a==="up" && idx>0){ [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]]; render(); }
+    else if(a==="down" && idx<arr.length-1){ [arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]]; render(); }
+    else if(a==="dup"){ const copy=JSON.parse(JSON.stringify(arr[idx])); copy.name=uniqueName(copy.name||"New"); arr.splice(idx+1,0,copy); render(); }
+    else if(a==="del"){ if(confirm("Delete this row?")){ arr.splice(idx,1); render(); } }
+  });
+  return tr;
+}
+function rowNode(node, idx){
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input type="text" data-k="name"  value="${node.name||""}"  placeholder="DMS-1"></td>
+    <td><input type="text" data-k="alias" value="${node.alias||""}" placeholder="DMS PC #1"></td>
+    <td><input type="text" data-k="host"  value="${node.host||""}"  placeholder="10.82.104.210"></td>
+    <td><input type="text" data-k="port"  value="${node.port??51050}" placeholder="51050"></td>
+    <td class="col-btns">
+      <button data-a="up"   class="btn-ghost">▲</button>
+      <button data-a="down" class="btn-ghost">▼</button>
+      <button data-a="dup"  class="btn-ghost">Duplicate</button>
+      <button data-a="del"  class="btn-secondary">Delete</button>
+    </td>
+  `;
+
+  tr.addEventListener("change", (ev)=>{
+    const t = ev.target, k = t.getAttribute("data-k"); if(!k) return;
+    let v = t.value;
+    if (k === "port") v = Math.max(1, parseInt(v||"51050", 10));
+    CONFIG.nodes[idx][k] = v;
+    touchDirty("Edited");
+  });
+
+  tr.addEventListener("click", (ev)=>{
+    const b = ev.target.closest("button"); if(!b) return;
+    const a = b.getAttribute("data-a"), arr = CONFIG.nodes;
+    if (a==="up"   && idx>0)               { [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]]; render(); }
+    else if (a==="down" && idx<arr.length-1){ [arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]]; render(); }
+    else if (a==="dup") {
+      const copy = JSON.parse(JSON.stringify(arr[idx]));
+      copy.name = uniqueNodeName(copy.name||"NewNode");
+      arr.splice(idx+1, 0, copy); render();
+    } else if (a==="del") {
+      if (confirm("Delete this node?")) { arr.splice(idx,1); render(); }
+    }
+  });
+
+  return tr;
+}
+function render(){
+  CONFIG = ensureOmsShape(CONFIG);
+  TBody.innerHTML = "";
+  CONFIG.nodes.forEach((n,i)=> TBody.appendChild(rowNode(n,i)));
+}
+function touchDirty(text="Edited"){ SaveTag.textContent=text; SaveTag.className="pill"; }
+
+/* ───────── meta & heartbeat ───────── */
+async function loadMeta(){
+  try{
+    const m = await EP.configMeta;
+    // config-meta가 오브젝트이면 그대로, 문자열이면 무시
+    if (m && typeof m === "object"){
+      M_PATH.textContent = m.path || "-";
+      M_SIZE.textContent = String(m.size ?? "-");
+      M_TIME.textContent = m.mtime || "-";
+    }
+  }catch{ M_PATH.textContent="(meta error)"; }
+}
+async function loadHeartbeat(){
+  try{
+    const s = await EP.status;
+    const hb = Number(s && s.heartbeat_interval_sec);
+    if (!isNaN(hb) && hb > 0){
+      HB_EL.textContent = hb;
+      const next = Math.max(1000, Math.floor(hb*1000));
+      if (next !== POLL_MS){ POLL_MS = next; restartPolling(); }
+    }
+  }catch{ HB_EL.textContent="-"; }
+}
+function restartPolling(){
+  if (POLL){ clearInterval(POLL); POLL=null; }
+  POLL = setInterval(()=> Promise.allSettled([loadMeta(), loadHeartbeat()]), POLL_MS);
+}
+
+/* ───────── load/format/save ───────── */
+async function loadConfigObj(){
+  // 1) 원문 읽기 (OMS→DMS 자동 감지)
+  const raw = await EP.config;
+  // 2) 문자열이면 parse 시도, 실패 시 서버 포맷터 사용
+  if (typeof raw === "string"){
+    try{ return JSON.parse(raw); }
+    catch{ const fr = await EP.configFormat.then(()=>EP.configFormat).catch(()=>null); const fm = fr ? await tryPaths(["/oms/config-format","/oms/config/format","/config-format","/config/format"],"POST",raw) : null; return fm && fm.text ? JSON.parse(fm.text) : JSON.parse(raw); }
+  }
+  // 이미 JSON이면 그대로
+  return raw;
+}
+async function formatOnServer(text){
+  return await tryPaths(["/oms/config-format","/oms/config/format","/config-format","/config/format"], "POST", text);
+}
+async function saveConfigText(text){
+  // OMS 우선 → DMS 폴백
+  try{ return await api("/oms/config","POST",text); }
+  catch(e1){
+    const msg = String(e1.message||"").toLowerCase();
+    if (msg.includes("not found") || msg.includes("404")) return await api("/config","POST",text);
+    throw e1;
+  }
+}
+
+/* ───────── nodes ───────── */
+function ensureOmsShape(cfg){
+  cfg = cfg || {};
+  if (!Array.isArray(cfg.nodes)) cfg.nodes = [];
+  // 기본 필드 보정
+  cfg.nodes = cfg.nodes.map(n => ({
+    name:  n?.name  ?? "",
+    alias: n?.alias ?? "",
+    host:  n?.host  ?? "",
+    port:  Number(n?.port ?? 51050)
+  }));
+  return cfg;
+}
+function uniqueNodeName(base){
+  const used = new Set((CONFIG.nodes||[]).map(n => n.name));
+  if (!used.has(base)) return base;
+  let i = 2;
+  while (used.has(`${base}_${i}`)) i++;
+  return `${base}_${i}`;
+}
+
+
+/* ───────── buttons ───────── */
+document.getElementById("btnGoDashboard").addEventListener("click", ()=>{ location.href = "oms-dashboard.html"; });
+document.getElementById("btnReload").addEventListener("click", reloadConfig);
+document.getElementById("btnFormat").addEventListener("click", formatConfig);
+document.getElementById("btnSave").addEventListener("click", saveConfig);
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  CONFIG=ensureConfigShape(CONFIG);
+  CONFIG.executables.push({ name: uniqueName("New"), alias:"", path:"", args:[], select:false, auto_restart:true, start_on_boot:false });
+  render(); touchDirty("Edited");
+});
+
+/* ───────── actions ───────── */
+async function reloadConfig(){
+  SaveTag.textContent="Loading..."; SaveTag.className="pill";
+  CONFIG = await loadConfigObj();
+  CONFIG = ensureOmsShape(CONFIG);
+  render();
+  SaveTag.textContent="Loaded"; SaveTag.className="pill";
+  await Promise.allSettled([loadMeta(), loadHeartbeat()]);
+}
+document.getElementById("btnAdd").addEventListener("click", ()=>{
+  CONFIG = ensureOmsShape(CONFIG);
+  CONFIG.nodes.push({
+    name: uniqueNodeName("DMS-NEW"),
+    alias: "",
+    host: "",
+    port: 51050
+  });
+  render(); touchDirty("Edited");
+});
+async function formatConfig(){
+  const txt = JSON.stringify(CONFIG);
+  try{
+    const r = await formatOnServer(txt);
+    if (r && r.text) CONFIG = JSON.parse(r.text);
+  }catch{}
+  render();
+  SaveTag.textContent="Formatted"; SaveTag.className="pill";
+}
+async function saveConfig(){
+  if (IS_SAVING) return;
+  IS_SAVING = true; SaveTag.textContent="Saving..."; SaveTag.className="pill";
+  try{
+    // OMS는 nodes 기반 스키마를 그대로 저장
+    const txt = JSON.stringify(CONFIG, null, 2);
+    await saveConfigText(txt);
+    SaveTag.textContent="Saved"; SaveTag.className="pill pill-ok";
+    await reloadConfig();
+    await loadMeta();
+  }catch(e){
+    alert("Save failed: "+(e.message||e));
+    SaveTag.textContent="Save failed"; SaveTag.className="pill pill-bad";
+  }finally{ IS_SAVING=false; }
+}
+
+/* ───────── init ───────── */
+(async function init(){ await reloadConfig(); })();
+</script>
+</body>
+</html>

@@ -54,7 +54,7 @@ agent = _load_agent_module()
 
 SERVICE_NAME  = "DMs"
 DISPLAY_NAME  = "4DReplay DMs Agent"
-DESCRIPTION   = "Process supervisor + HTTP control for 4DReplay (pywin32 service)."
+DESCRIPTION   = "Process supervisor + HTTP control for 4DReplay"
 
 
 class DMsService(win32serviceutil.ServiceFramework):

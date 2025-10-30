@@ -16,12 +16,12 @@ import sys, traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Dict, Optional, List
-from urllib.parse import unquote
+from urllib.parse import unquote, urlsplit
 
 # ── paths ────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve()
 ROOT = HERE.parents[2] if HERE.parts[-3].lower() == "service" else HERE.parent
-DEFAULT_CONFIG = ROOT / "config" / "dms_config.json5"
+DEFAULT_CONFIG = ROOT / "config" / "dms_config.json"
 LOG_DIR_DEFAULT = ROOT / "logs" / "DMS"
 STATIC_ROOT = ROOT / "web"
 
@@ -118,6 +118,49 @@ def _guess_type(p: Path) -> str:
     if suf in (".png", ".jpg", ".jpeg", ".gif", ".svg"): return "image/" + suf.lstrip(".")
     return "application/octet-stream"
 
+def _collect_log_dirs(self, exe_path: Path) -> list[Path]:
+    """exe 기준으로 위/아래 후보 log 디렉토리 수집 (두 단계 위까지)"""
+    seen = set()
+    cands: list[Path] = []
+    base = exe_path.parent
+    for up in [base, base.parent, base.parent.parent]:
+        if not up:
+            continue
+        for dn in ("log", "logs", "Log", "Logs"):
+            p = (up / dn).resolve()
+            key = str(p).lower()
+            if key not in seen:
+                seen.add(key)
+                cands.append(p)
+    # supervisor 기본 로그 폴더도 후보에 추가(있다면)
+    try:
+        dms_log = Path(str(self.log_dir)).resolve()
+        for dn in ("log", "logs"):
+            p = (dms_log / dn).resolve()
+            k = str(p).lower()
+            if k not in seen:
+                seen.add(k); cands.append(p)
+    except Exception:
+        pass
+    return cands
+
+def _log_dates_for(self, name: str) -> list[str]:
+    st = self._get_state(name)
+    if not st:
+        return []
+    dates: set[str] = set()
+    for d in self._collect_log_dirs(st.spec.path):
+        try:
+            if not d.exists():
+                continue
+            for p in d.glob("*.log"):
+                m = re.match(r"(\d{4}-\d{2}-\d{2})", p.stem)
+                if m:
+                    dates.add(m.group(1))
+        except Exception:
+            pass
+    return sorted(dates, reverse=True)
+
 def _log_dirs_for_exe(exe_path: Path) -> list[Path]:
     base = exe_path.parent    
     return [base / "log", base / "logs"]
@@ -129,6 +172,30 @@ def _list_logs_in_dir(d: Path) -> list[Path]:
         return [p for p in d.glob("*.log") if p.is_file()]
     except Exception:
         return []
+
+def _serve_static_safe(handler, rel_path: str):
+    # STATIC_ROOT 하위 파일만 서빙 (디렉토리 탈출 방지)
+    rel = rel_path.lstrip("/")
+    fp = (STATIC_ROOT / rel).resolve()
+    base = STATIC_ROOT.resolve()
+    if not fp.is_file() or not str(fp).startswith(str(base)):
+        handler.send_response(404)
+        handler.send_header("Content-Type", "application/json; charset=utf-8")
+        handler.send_header("Cache-Control", "no-store")
+        body = b'{"ok": false, "error": "not found"}'
+        handler.send_header("Content-Length", str(len(body)))
+        handler.end_headers()
+        try: handler.wfile.write(body)
+        except (ConnectionAbortedError, BrokenPipeError): pass
+        return
+    data = fp.read_bytes()
+    handler.send_response(200)
+    handler.send_header("Content-Type", _guess_type(fp))
+    handler.send_header("Cache-Control", "no-store")
+    handler.send_header("Content-Length", str(len(data)))
+    handler.end_headers()
+    try: handler.wfile.write(data)
+    except (ConnectionAbortedError, BrokenPipeError): pass
 
 # ── supervisor ──────────────────────────────────────────────────────────────
 class ProcSpec:
@@ -671,8 +738,109 @@ class DmsSupervisor:
             def do_GET(self):
                 parts = self._parts()
                 try:
+                    # 쿼리 제거한 순수 경로
+                    clean_path = urlsplit(self.path).path
+                    clean_path = re.sub(r'/+', '/', clean_path)  # // -> /
+                    norm_path  = re.sub(r'^/(?:web/)+', '/web/', clean_path)  # /web/web/... -> /web/...
+                    if norm_path != clean_path:
+                        # 쿼리 보존하여 302 리다이렉트
+                        qs = urlsplit(self.path).query
+                        loc = norm_path + (('?' + qs) if qs else '')
+                        self.send_response(302)
+                        self.send_header("Location", loc)
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
 
-                    # GET /status-lite  -> 스냅샷 만들지 않고 빠른 상태만
+                    # 이후 분기에서 사용할 parts는 정규화된 경로 기준으로 다시 계산
+                    parts = [p for p in norm_path.split('/') if p]
+
+                    # ── [리다이렉트] 루트/별칭
+                    #  - / 또는 /dms  → /web/dms-dashboard.html
+                    #  - /cms         → /web/cms-dashboard.html
+                    if clean_path in ("/", "/dms"):
+                        self.send_response(302)
+                        self.send_header("Location", "/web/dms-dashboard.html")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+                    if clean_path == "/cms":
+                        self.send_response(302)
+                        self.send_header("Location", "/web/cms-dashboard.html")
+                        self.send_header("Cache-Control", "no-store")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+
+                    # ───────── 로그 라우트: 최우선으로 처리 ─────────
+                    if parts and parts[0] == "logs":
+                        # /logs/list/<name>
+                        if len(parts) == 3 and parts[1] == "list":
+                            name = parts[2]
+                            dates = sup._log_dates_for(name)
+                            return self._ok(200, {"ok": True, "name": name, "dates": dates})
+
+                        # /logs/debug/<name>
+                        if len(parts) == 3 and parts[1] == "debug":
+                            name = parts[2]
+                            info = sup._log_debug_info(name)  # 기존 함수 사용 가능
+                            return self._ok(200, info)
+
+                        # /logs/<name>?date=YYYY-MM-DD&tail=50000
+                        if len(parts) >= 2:
+                            name = parts[1]
+                            from urllib.parse import parse_qs, urlparse
+                            q = parse_qs(urlparse(self.path).query or "")
+                            date_q = q.get("date", [None])[0]
+                            tail_q = q.get("tail", [None])[0]
+                            tail_bytes = 50000
+                            try:
+                                if tail_q is not None:
+                                    tail_bytes = max(1000, min(2_000_000, int(tail_q)))
+                            except Exception:
+                                pass
+
+                            fp = sup._log_path_for(name, date_q)
+                            if not fp:
+                                hint = sup._log_debug_info(name)
+                                return self._ok(404, {"ok": False, "error": "log not found", "hint": hint})
+
+                            try:
+                                size = fp.stat().st_size
+                                with open(fp, "rb") as f:
+                                    if size > tail_bytes:
+                                        f.seek(size - tail_bytes)
+                                        blob = f.read()
+                                        cut = blob.find(b"\n")
+                                        if cut != -1:
+                                            blob = blob[cut+1:]
+                                    else:
+                                        blob = f.read()
+                                text = blob.decode("utf-8", errors="ignore")
+                                return self._ok(200, {
+                                    "ok": True,
+                                    "name": name,
+                                    "path": str(fp),
+                                    "date": re.sub(r"\.log$", "", fp.name),
+                                    "size": size,
+                                    "tail": tail_bytes,
+                                    "text": text
+                                })
+                            except Exception as e:
+                                return self._ok(500, {"ok": False, "error": repr(e)})
+
+                    # ── [정적] /web/... (그대로 파일 매핑)
+                    if parts[:1] == ["web"]:
+                        sub = "/".join(parts[1:])
+                        return _serve_static_safe(self, sub)
+
+                    # ── [정적] 루트에서도 *.html 직접 서빙 (예: /dms-config.html, /dms-dashboard.html, /cms-dashboard.html)
+                    if clean_path.endswith(".html"):
+                        return _serve_static_safe(self, clean_path.lstrip("/"))
+
+                    # ── [빠른 상태] /status-lite
                     if parts == ["status-lite"]:
                         hb = getattr(sup, "heartbeat_interval", 5)
                         lite = sup._status_payload(use_snapshot=False)
@@ -680,26 +848,20 @@ class DmsSupervisor:
                         out.update(lite)
                         return self._ok(200, out)
 
-                    # 기존 /status 는 캐시 사용
+                    # ── [상태] /status (캐시)
                     if parts == ["status"]:
                         hb = getattr(sup, "heartbeat_interval", 5)
                         st = sup.status_cached()
                         out = {"ok": True, "heartbeat_interval_sec": hb}
                         out.update(st)
                         return self._ok(200, out)
-                        
-                    # API: /status or /status/{name}
-                    if not parts or parts[0] == "status":
-                        name = parts[1] if (len(parts) > 1 and parts[0] == "status") else None
-                        st = sup.status(name)
-                        hb = getattr(sup, "heartbeat_interval", 5)
-                        if name is None:
-                            out = {"ok": True, "heartbeat_interval_sec": hb}
-                            out.update(st)
-                            return self._ok(200, out)
-                        return self._ok(200, st)
 
-                    # /config/meta
+                    # ── [상태: name 지정] /status/{name}
+                    if parts and parts[0] == "status" and len(parts) > 1:
+                        name = parts[1]
+                        return self._ok(200, sup.status(name))
+
+                    # ── [설정 메타] /config/meta
                     if parts == ["config", "meta"]:
                         if not DEFAULT_CONFIG.exists():
                             return self._ok(404, {"ok": False, "error": "config not found"})
@@ -711,11 +873,10 @@ class DmsSupervisor:
                             "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)),
                         })
 
-                    # /config  (원문 텍스트 그대로 반환)
+                    # ── [설정 원문] /config (텍스트 그대로 반환)
                     if parts == ["config"]:
                         if not DEFAULT_CONFIG.exists():
                             return self._ok(404, {"ok": False, "error": "config not found"})
-                        # config 파일 내용 그대로 반환
                         with open(DEFAULT_CONFIG, "rb") as f:
                             data = f.read()
                         self.send_response(200)
@@ -723,15 +884,13 @@ class DmsSupervisor:
                         self.send_header("Cache-Control", "no-store")
                         self.send_header("Content-Length", str(len(data)))
                         self.end_headers()
-                        try:
-                            self.wfile.write(data)
-                        except (ConnectionAbortedError, BrokenPipeError):
-                            pass
+                        try: self.wfile.write(data)
+                        except (ConnectionAbortedError, BrokenPipeError): pass
                         return
 
-                    # static: dms-control.html
-                    if parts[0] == "dms-control.html":
-                        fp = (STATIC_ROOT / "dms-control.html").resolve()
+                    # static: log-viewer.html (root에서도 접근 가능)
+                    if parts[0] == "log-viewer.html":
+                        fp = (STATIC_ROOT / "log-viewer.html").resolve()
                         if fp.is_file() and str(fp).startswith(str(STATIC_ROOT.resolve())):
                             data = fp.read_bytes()
                             self.send_response(200)
@@ -739,173 +898,16 @@ class DmsSupervisor:
                             self.send_header("Cache-Control", "no-store")
                             self.send_header("Content-Length", str(len(data)))
                             self.end_headers()
-                            try:
-                                self.wfile.write(data)
-                            except (ConnectionAbortedError, BrokenPipeError):
-                                pass
+                            try: self.wfile.write(data)
+                            except (ConnectionAbortedError, BrokenPipeError): pass
                             return
                         return self._ok(code=404, payload={"ok": False, "error": "not found"})
-
-                    # static: dms-config.html
-                    if parts[0] == "dms-config.html":
-                        fp = (STATIC_ROOT / "dms-config.html").resolve()
-                        if fp.is_file() and str(fp).startswith(str(STATIC_ROOT.resolve())):
-                            data = fp.read_bytes()
-                            self.send_response(200)
-                            self.send_header("Content-Type", _guess_type(fp))
-                            self.send_header("Cache-Control", "no-store")
-                            self.send_header("Content-Length", str(len(data)))
-                            self.end_headers()
-                            try:
-                                self.wfile.write(data)
-                            except (ConnectionAbortedError, BrokenPipeError):
-                                pass
-                            return
-                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
-
-                    # static under /web/...
-                    if parts[0] == "web":
-                        sub = unquote("/".join(parts[1:]))
-                        fp = (STATIC_ROOT / sub).resolve()
-                        base = STATIC_ROOT.resolve()
-                        if fp.is_file() and str(fp).startswith(str(base)):
-                            data = fp.read_bytes()
-                            self.send_response(200)
-                            self.send_header("Content-Type", _guess_type(fp))
-                            self.send_header("Cache-Control", "no-store")
-                            self.send_header("Content-Length", str(len(data)))
-                            self.end_headers()
-                            try:
-                                self.wfile.write(data)
-                            except (ConnectionAbortedError, BrokenPipeError):
-                                pass
-                            return
-                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
-
-                    # root → dashboard
-                    if parts[0] in ("", "/"):
-                        fp = (STATIC_ROOT / "dms-control.html").resolve()
-                        if fp.is_file():
-                            data = fp.read_bytes()
-                            self.send_response(200)
-                            self.send_header("Content-Type", _guess_type(fp))
-                            self.send_header("Cache-Control", "no-store")
-                            self.send_header("Content-Length", str(len(data)))
-                            self.end_headers()
-                            try:
-                                self.wfile.write(data)
-                            except (ConnectionAbortedError, BrokenPipeError):
-                                pass
-                            return
-                        return self._ok(code=404, payload={"ok": False, "error": "not found"})
-
-                    # GET /logs/<name>?date=YYYY-MM-DD&tail=20000
-                    if len(parts) == 2 and parts[0] == "logs" and parts[1] not in ("list", "debug"):
-                        name = parts[1]
-                        from urllib.parse import parse_qs, urlparse
-                        q = parse_qs(urlparse(self.path).query or "")
-                        date_q = q.get("date", [None])[0]
-                        tail_q = q.get("tail", [None])[0]
-                        tail_bytes = 20000
-                        try:
-                            if tail_q is not None:
-                                tail_bytes = max(1000, min(2_000_000, int(tail_q)))
-                        except Exception:
-                            pass
-
-                        fp = sup._log_path_for(name, date_q)
-                        if not fp:
-                            # 힌트 제공 (log / logs 둘 다 확인했다고 알려줌)
-                            return self._ok(404, {
-                                "ok": False,
-                                "error": "log not found",
-                                "hint": "Checked both 'log' and 'logs' directories next to the executable."
-                            })
-
-                        try:
-                            size = fp.stat().st_size
-                            with open(fp, "rb") as f:
-                                if size > tail_bytes:
-                                    f.seek(size - tail_bytes)
-                                    blob = f.read()
-                                    # 첫 줄이 반쯤 잘릴 수 있으니 첫 개행까지 건너뜀
-                                    cut = blob.find(b"\n")
-                                    if cut != -1:
-                                        blob = blob[cut+1:]
-                                else:
-                                    blob = f.read()
-                            text = blob.decode("utf-8", errors="ignore")
-                            return self._ok(200, {
-                                "ok": True,
-                                "name": name,
-                                "path": str(fp),
-                                "date": re.sub(r"\.log$", "", fp.name),
-                                "size": size,
-                                "tail": tail_bytes,
-                                "text": text
-                            })
-                        except Exception as e:
-                            return self._ok(500, {"ok": False, "error": repr(e)})
-
-                    # GET /logs/list/<name>  → 사용 가능한 날짜 목록
-                    if len(parts) == 3 and parts[0] == "logs" and parts[1] == "list":
-                        name = parts[2]
-                        dates = sup._log_dates_for(name)
-                        return self._ok(200, {"ok": True, "name": name, "dates": dates})
-
-                    # GET /logs/debug/<name> → 어디서 무엇을 찾는지 진단 정보
-                    if len(parts) == 3 and parts[0] == "logs" and parts[1] == "debug":
-                        name = parts[2]
-                        info = sup._log_debug_info(name)
-                        return self._ok(200, info)
-
-                    # GET /logs/<name>?date=YYYY-MM-DD&tail=20000
-                    if len(parts) >= 2 and parts[0] == "logs" and parts[1] not in ("list", "debug"):
-                        name = parts[1]
-                        from urllib.parse import parse_qs, urlparse
-                        q = parse_qs(urlparse(self.path).query or "")
-                        date_q = q.get("date", [None])[0]
-                        tail_q = q.get("tail", [None])[0]
-                        tail_bytes = 20000
-                        try:
-                            if tail_q is not None:
-                                tail_bytes = max(1000, min(2_000_000, int(tail_q)))
-                        except Exception:
-                            pass
-
-                        fp = sup._log_path_for(name, date_q)
-                        if not fp:
-                            # 무엇을 어디서 찾았는지 힌트도 함께 제공
-                            hint = sup._log_debug_info(name)
-                            return self._ok(404, {"ok": False, "error": "log not found", "hint": hint})
-
-                        try:
-                            size = fp.stat().st_size
-                            with open(fp, "rb") as f:
-                                if size > tail_bytes:
-                                    f.seek(size - tail_bytes)
-                                    blob = f.read()
-                                    cut = blob.find(b"\n")
-                                    if cut != -1:
-                                        blob = blob[cut+1:]
-                                else:
-                                    blob = f.read()
-                            text = blob.decode("utf-8", errors="ignore")
-                            return self._ok(200, {
-                                "ok": True,
-                                "name": name,
-                                "path": str(fp),
-                                "date": re.sub(r"\.log$", "", fp.name),
-                                "size": size,
-                                "tail": tail_bytes,
-                                "text": text
-                            })
-                        except Exception as e:
-                            return self._ok(code=500, payload={"ok": False, "error": repr(e)})
+                    
+                    # 없으면 404
+                    return self._ok(404, {"ok": False, "error": "not found"})
 
                 except Exception as e:
                     return self._ok(500, {"ok": False, "error": repr(e)})
-
             def do_POST(self):
                 parts = self._parts()
                 try:

@@ -1,0 +1,37 @@
+{
+  "http_host": "0.0.0.0",
+  "http_port": 52050,
+  "heartbeat_interval_sec": 2,
+  "nodes": [
+    {
+      "name": "DMS-1",
+      "alias": "DMS PC #1",
+      "host": "10.82.104.210",
+      "port": 51050
+    },
+    {
+      "name": "DMS-2",
+      "alias": "DMS PC #2",
+      "host": "10.82.104.211",
+      "port": 51050
+    },
+    {
+      "name": "DMS-3",
+      "alias": "DMS PC #3",
+      "host": "10.82.104.212",
+      "port": 51050
+    },
+    {
+      "name": "DMS-4",
+      "alias": "DMS PC #4",
+      "host": "10.82.104.213",
+      "port": 51050
+    },
+    {
+      "name": "DMS-5",
+      "alias": "DMS PC #5",
+      "host": "10.82.104.214",
+      "port": 51050
+    }
+  ]
+}

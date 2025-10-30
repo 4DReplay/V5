@@ -1,0 +1,437 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>4DReplay OMS - Orchestrator Manager</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --th:#0f172a; --line:#243045;
+      --row-run:#0e2416;
+      --row-stop:#171a1e;
+      --badge-ok:#1f9d48;
+      --badge-bad:#b83a3a;
+      --btn:#1e40af; --btn2:#334155;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+    h2 small{font-size:14px;color:var(--muted)}
+    .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid var(--line);padding:10px}
+    th{background:var(--th);text-align:left}
+    tr.running td{ background:var(--row-run); }
+    tr.other   td{ background:var(--row-stop); }
+    .pill{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;line-height:1;font-weight:500;letter-spacing:.3px;background:transparent}
+    .badge-ok { color:#22c55e;border-color:var(--badge-ok); }
+    .badge-bad{ color:#f87171;border-color:var(--badge-bad); }
+    .muted{color:var(--muted)}
+    button{background:var(--btn);color:#fff;border:0;border-radius:14px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
+    .btn-secondary{ background:var(--btn2); }
+    button:hover{ filter:brightness(1.08) }
+    .toolbar button{ border-radius:12px; padding:10px 16px }
+    a.node{color:#93c5fd;text-decoration:none}
+    a.node:hover{text-decoration:underline}
+    .spacer{flex:1}
+    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
+    #busyMsg{margin-left:8px;opacity:.9}
+    #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
+  </style>
+</head>
+<body>
+  <h2>
+    <span>4DReplay V5 - OMs Dashboard</span>
+    <small id="meta"></small>
+  </h2>
+
+  <div class="toolbar">
+    <!-- ✅ 추가: Config Editor -->
+    <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
+
+    <button id="omsStartAll">▶ Start All</button>
+    <button id="omsStopAll" class="btn-secondary">■ Stop All</button>
+    <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <small id="busyMsg" style="margin-left:10px;opacity:.9"></small>
+    <span class="spacer"></span>
+    <label class="chip">
+      <input type="checkbox" id="cbOnlySelected">
+      only selected
+    </label>
+    <span class="chip" id="hb">poll -</span>
+  </div>
+
+  <div id="err"></div>
+
+  <table id="grid">
+    <thead>
+      <tr>
+        <th style="width:260px">Node</th>
+        <th>Process</th>
+        <th style="width:110px">PID</th>
+        <th style="width:160px">Status</th>
+        <th style="width:110px">Last RC</th>
+        <th>Exe</th>
+        <th style="width:460px">Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <p class="muted" style="margin-top:10px">
+    Tip: “Logs” can be accessed through the OMS proxy (<code>/proxy/&lt;node&gt;/…</code>).
+  </p>
+
+<script>
+/* ───────── Proxy helper ───────── */
+const __PROXY_PREFIX__ = (() => {
+  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+})();
+(function ensureBase(){
+  if (!__PROXY_PREFIX__) return;
+  const base = document.createElement("base");
+  base.href = __PROXY_PREFIX__ + "/";
+  document.head.prepend(base);
+})();
+(function patchFetch(){
+  if (!__PROXY_PREFIX__) return;
+  const orig = window.fetch;
+  window.fetch = function(input, init){
+    let url = input;
+    if (typeof input !== "string" && input && input.url) url = input.url;
+    if (typeof url === "string") {
+      if (url.startsWith("/") && !url.startsWith("/proxy/")) url = __PROXY_PREFIX__ + url;
+    }
+    if (typeof input !== "string" && input && input.url) {
+      return orig(new Request(url, input), init);
+    }
+    return orig(url, init);
+  };
+})();
+async function api(path, init = {}){
+  const res = await fetch(path, { cache: "no-store", ...init });
+  const ct = res.headers.get("content-type") || "";
+  const isJson = ct.includes("application/json");
+  if (!res.ok) {
+    let msg = `HTTP ${res.status}`;
+    try {
+      if (isJson) {
+        const j = await res.json();
+        msg = j?.error || j?.message || JSON.stringify(j);
+      } else {
+        msg = (await res.text()) || msg;
+      }
+    } catch {}
+    throw new Error(msg);
+  }
+  return isJson ? res.json() : res.text();
+}
+
+/* ───────── DOM ───────── */
+const TBody = document.querySelector("#grid tbody");
+const HB    = document.getElementById("hb");
+const META  = document.getElementById("meta");
+const BTN   = document.getElementById("btnReload");
+const CB_ONLY_SELECTED = document.getElementById("cbOnlySelected");
+const OMS_BTN_START_ALL   = document.getElementById("omsStartAll");
+const OMS_BTN_STOP_ALL    = document.getElementById("omsStopAll");
+const OMS_BTN_RESTART_ALL = document.getElementById("omsRestartAll");
+const BUSY  = document.getElementById("busyMsg");
+const ERRBOX= document.getElementById("err");
+const BTN_CONFIG = document.getElementById("btnConfig");
+
+let lastData = null;
+
+/* ───────── timeouts ───────── */
+const DEFAULT_REQ_TIMEOUT = 180000;
+const ACTION_TIMEOUTS = { start:180000, stop:180000, restart:300000 };
+
+/* ───────── UI helpers ───────── */
+function setBusy(flag, msg = ""){
+  OMS_BTN_START_ALL.disabled   = flag;
+  OMS_BTN_STOP_ALL.disabled    = flag;
+  OMS_BTN_RESTART_ALL.disabled = flag;
+  BTN.disabled                 = flag;
+  if (BTN_CONFIG) BTN_CONFIG.disabled = flag;  // ✅ Config 버튼도 비활성화
+  BUSY.textContent = msg || "";
+}
+function showErr(msg){ ERRBOX.style.display="block"; ERRBOX.textContent = msg; }
+function clearErr(){ ERRBOX.style.display="none"; ERRBOX.textContent=""; }
+
+/* ───────── helpers ───────── */
+function countProcs(nodes, useOnly){
+  let total = 0, shown = 0;
+  for (const node of (nodes || [])){
+    const all = toProcList(node.status);
+    total += all.length;
+    const sel = useOnly ? all.filter(p => p && p.select === true) : all;
+    shown += sel.length;
+  }
+  return { shown, total };
+}
+
+(function initOnlySelected(){
+  const qs = new URLSearchParams(location.search);
+  const has = qs.has("only");
+  const v = (qs.get("only")||"").trim().toLowerCase();
+  let init = has ? ["selected","true","1","yes","on"].includes(v) : true;
+  CB_ONLY_SELECTED.checked = init;
+  CB_ONLY_SELECTED.addEventListener("change", ()=> render(lastData));
+})();
+const onlySelected = () => !!CB_ONLY_SELECTED.checked;
+
+function toProcList(status){
+  if (!status) return [];
+  if (status.data && typeof status.data === "object") return Object.values(status.data);
+  if (Array.isArray(status.processes))   return status.processes;
+  if (Array.isArray(status.executables)) return status.executables;
+  return [];
+}
+function nodeCellHtml(node, shownCount, totalCount){
+  const linkHref = `/proxy/${encodeURIComponent(node.name)}/dms-dashboard.html`;
+  const title = node.alias || node.name;
+  const cnt = (typeof totalCount==="number") ? ` (${shownCount}/${totalCount})` : "";
+  return `
+    <a class="node" href="${linkHref}" target="_blank" title="Open DMS dashboard">${title}</a>
+    <br><span class="muted">${node.host}:${node.port}${cnt}</span>
+  `;
+}
+function row(node, proc, nodeHtmlCached){
+  const tr = document.createElement("tr");
+  const running = !!proc.running;
+  tr.className = running ? "running" : "other";
+  const exeShort = (proc.exe||proc.path||"").split(/[\\/]/).slice(-2).join("/");
+  const badge = running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`;
+  tr.innerHTML = `
+    <td>${nodeHtmlCached || nodeCellHtml(node)}</td>
+    <td>${proc.name || "-"}${proc.alias?` <span class="muted">(${proc.alias})</span>`:""}</td>
+    <td>${proc.pid ?? "-"}</td>
+    <td>${badge}</td>
+    <td>${(proc.last_rc ?? proc.last_exit_code ?? "-")}</td>
+    <td class="muted" title="${proc.path||proc.exe||""}">${exeShort || "-"}</td>
+    <td>
+      <button data-a="start"   data-node="${node.name}" data-proc="${proc.name}">Start</button>
+      <button class="btn-secondary" data-a="stop"  data-node="${node.name}" data-proc="${proc.name}">Stop</button>
+      <button class="btn-secondary" data-a="restart" data-node="${node.name}" data-proc="${proc.name}">Restart</button>
+      <button class="btn-secondary" data-a="logs"  data-node="${node.name}" data-proc="${proc.name}">📜 Logs</button>
+    </td>`;
+  return tr;
+}
+
+/* ───────── render ───────── */
+function render(data){
+  if(!data) return;
+  lastData = data;
+  HB.textContent = `poll ${data.heartbeat_interval_sec||"-"}s`;
+  const useOnly = onlySelected();
+  const c = countProcs(data.nodes, useOnly);
+  META.textContent = `nodes: ${data.nodes?.length ?? 0}, processes: ${c.shown}`;
+
+  TBody.innerHTML = "";
+
+  for (const node of (data.nodes || [])){
+    const status = node.status;
+    const all = toProcList(status);
+    const shownList = useOnly ? all.filter(p => p && p.select === true) : all;
+
+    if (!status || (all.length === 0 && shownList.length === 0)){
+      const tr = document.createElement("tr");
+      tr.className = "other";
+      tr.innerHTML = `
+        <td>${nodeCellHtml(node, 0, 0)}</td>
+        <td colspan="6" class="muted">unreachable</td>`;
+      TBody.appendChild(tr);
+      continue;
+    }
+
+    const nodeHtml = nodeCellHtml(node, shownList.length, all.length);
+    if (shownList.length === 0){
+      const tr = document.createElement("tr");
+      tr.className = "other";
+      tr.innerHTML = `
+        <td>${nodeHtml}</td>
+        <td colspan="6" class="muted">no selected processes</td>`;
+      TBody.appendChild(tr);
+      continue;
+    }
+
+    for (const p of shownList){
+      TBody.appendChild(row(node, p, nodeHtml));
+    }
+  }
+}
+
+/* ───────── bulk helpers ───────── */
+function looksOk(r) {
+  if (r && typeof r === "object") return r.ok !== false && !r.error;
+  const s = String(r || "").toLowerCase();
+  return /ok|success|done|started|stopped|restarted/.test(s) && !/error|fail/.test(s);
+}
+async function apiWithTimeout(path, init = {}, timeoutMs = DEFAULT_REQ_TIMEOUT){
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try { return await api(path, { ...init, signal: ctrl.signal }); }
+  finally { clearTimeout(t); }
+}
+async function tryNodeActionBulkEndpoint(nodeName, action, timeoutMs = DEFAULT_REQ_TIMEOUT) {
+  const url = `/proxy/${encodeURIComponent(nodeName)}/${action}`;
+  try {
+    const r = await apiWithTimeout(url, { method: "POST" }, timeoutMs);
+    return { ok: looksOk(r), msg: (r && r.msg) ? r.msg : (typeof r === "string" ? r : "OK") };
+  } catch (e) {
+    const msg = (e.message || "").toLowerCase();
+    if (msg.includes("not found") || msg.includes("404")) return { ok: false, msg: "__FALLBACK__" };
+    return { ok: false, msg: e.message || String(e) };
+  }
+}
+function verbOf(action){
+  if (action.startsWith("start")) return "start";
+  if (action.startsWith("stop"))  return "stop";
+  return "restart";
+}
+async function getProcStatus(nodeName, procName){
+  const st = await api(`/proxy/${encodeURIComponent(nodeName)}/status`);
+  const list =
+    (st && st.data && typeof st.data === "object") ? Object.values(st.data) :
+    (Array.isArray(st.processes)   ? st.processes :
+     Array.isArray(st.executables) ? st.executables : []);
+  return list.find(p => p && p.name === procName) || null;
+}
+async function waitForState(nodeName, procName, desiredRunning, totalTimeoutMs, pollEveryMs=2000){
+  const start = Date.now();
+  while (Date.now() - start < totalTimeoutMs){
+    try{
+      const s = await getProcStatus(nodeName, procName);
+      if (s && !!s.running === !!desiredRunning) return { ok: true };
+    }catch(_){}
+    await new Promise(r => setTimeout(r, pollEveryMs));
+  }
+  return { ok: false, msg: "poll timeout" };
+}
+
+/* 선택 반영된 프로세스 목록 */
+function procNamesForNode(node){
+  const arr = toProcList(node.status);
+  const filtered = onlySelected() ? arr.filter(p => p && p.select === true) : arr;
+  return filtered.map(p => p.name).filter(Boolean);
+}
+
+async function doNodeActionByLoop(nodeName, action, names, timeoutMs = DEFAULT_REQ_TIMEOUT, onProgress = null) {
+  const verb = verbOf(action);
+  const procs = Array.isArray(names) ? names.slice() : [];
+  if (!procs.length) return { okCount:0, failCount:0, ok:false, msg:"no selected processes" };
+
+  let okCount = 0, failCount = 0, lastMsg = "OK";
+  const perProcBudget = Math.max(20000, Math.floor(timeoutMs / Math.max(1, procs.length)));
+
+  for (const p of procs) {
+    try {
+      try{
+        await apiWithTimeout(
+          `/proxy/${encodeURIComponent(nodeName)}/${verb}/${encodeURIComponent(p)}`,
+          { method: "POST" },
+          perProcBudget
+        );
+      }catch(_){}
+      const wantRunning = (verb !== "stop");
+      const waited = await waitForState(nodeName, p, wantRunning, perProcBudget);
+      if (waited.ok) okCount++; else { failCount++; lastMsg = waited.msg || "wait failed"; }
+    } catch (e) {
+      failCount++; lastMsg = e.message || String(e);
+    } finally {
+      if (typeof onProgress === "function") onProgress(1);
+    }
+  }
+  return { okCount, failCount, ok: failCount === 0, msg:lastMsg };
+}
+
+async function runAllOnEveryNode(action) {
+  clearErr();
+  if (!lastData || !Array.isArray(lastData.nodes)) { showErr("No nodes."); return; }
+
+  const label = action.toUpperCase();
+  const verbTimeout = ACTION_TIMEOUTS[verbOf(action)] ?? DEFAULT_REQ_TIMEOUT;
+
+  const perNode = lastData.nodes.map(n => ({ nodeName: n.name, procs: procNamesForNode(n) }));
+  const totalProcs = perNode.reduce((s, x) => s + x.procs.length, 0);
+  if (!totalProcs) { showErr("No target processes."); return; }
+
+  let done = 0, totalOk = 0, totalFail = 0;
+  const bump = (n = 1) => { done += n; setBusy(true, `${label}-ALL... (${done}/${totalProcs})`); };
+
+  setBusy(true, `${label}-ALL... (0/${totalProcs})`);
+
+  const jobs = perNode.map(({ nodeName, procs }) => (async () => {
+    if (procs.length === 0) return;
+    try{
+      const bulk = await tryNodeActionBulkEndpoint(nodeName, action, verbTimeout);
+      if (bulk.ok){
+        totalOk += procs.length;
+        bump(procs.length);
+        return;
+      }
+      if (bulk.msg === "__FALLBACK__"){
+        const r = await doNodeActionByLoop(nodeName, action, procs, verbTimeout, bump);
+        totalOk  += r.okCount;
+        totalFail+= r.failCount;
+        return;
+      }
+      totalFail += procs.length;
+      bump(procs.length);
+    }catch(e){
+      totalFail += procs.length;
+      bump(procs.length);
+    }
+  })());
+
+  await Promise.allSettled(jobs);
+
+  setBusy(false, `${label}-ALL done: ${totalOk} ok, ${totalFail} failed (total ${totalProcs})`);
+
+  try { render(await api("/oms/status")); } catch (e) { console.error(e); }
+}
+
+/* ───────── wireup ───────── */
+document.getElementById("omsStartAll").addEventListener("click", () => runAllOnEveryNode("start-all"));
+document.getElementById("omsStopAll").addEventListener("click", () => runAllOnEveryNode("stop-all"));
+document.getElementById("omsRestartAll").addEventListener("click", () => runAllOnEveryNode("restart-all"));
+document.getElementById("btnReload").addEventListener("click", async ()=> {
+  try { setBusy(true, "RELOAD..."); clearErr(); render(await api("/oms/status")); }
+  catch(e){ showErr(e.message||e); }
+  finally{ setBusy(false); }
+});
+if (BTN_CONFIG){
+  BTN_CONFIG.addEventListener("click", ()=> { location.href = "oms-config.html"; }); // ✅ 이동
+}
+
+const TBodyEl = document.querySelector("#grid tbody");
+TBodyEl.addEventListener("click", async (ev)=>{
+  const b = ev.target.closest("button"); if(!b) return;
+  const act=b.dataset.a, node=b.dataset.node, proc=b.dataset.proc;
+  try{
+    if(act==="logs"){
+      const url = `/web/log-viewer.html?node=${encodeURIComponent(node)}&name=${encodeURIComponent(proc)}`;
+      window.open(url, "_blank"); return;
+    }
+    clearErr(); setBusy(true, `${act.toUpperCase()} ${node}/${proc}...`);
+    await api(`/proxy/${encodeURIComponent(node)}/${act}/${encodeURIComponent(proc)}`,{ method: "POST" });
+    const want = (act !== "stop");
+    await waitForState(node, proc, want, ACTION_TIMEOUTS[act] ?? DEFAULT_REQ_TIMEOUT);
+    setBusy(false, `${act.toUpperCase()} done: ${node}/${proc}`);
+    render(await api("/oms/status"));
+  }catch(e){
+    setBusy(false);
+    showErr(`${act.toUpperCase()} failed: ${node}/${proc} - ${e.message||e}`);
+  }
+});
+
+/* ───────── polling ───────── */
+async function tick(){ try{ render(await api("/oms/status")); }catch(e){ console.error(e); } }
+tick();
+setInterval(tick, 2000);
+</script>
+</body>
+</html>
