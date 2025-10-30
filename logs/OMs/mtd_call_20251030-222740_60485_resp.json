@@ -1,0 +1,19 @@
+{
+  "Section1": "Daemon",
+  "Section2": "Information",
+  "Section3": "Version",
+  "To": "4DOMS",
+  "From": "CCd",
+  "Action": "set",
+  "Token": "2227_1761830860484_q2p",
+  "SendState": "response",
+  "ResultCode": 1000,
+  "ErrorMsg": "",
+  "Version": {
+    "CCd": {
+      "version": "4.3.0.8",
+      "date": "Dec 17 2024 - 17:59:29",
+      "mac": "10:FF:E0:CD:61:95"
+    }
+  }
+}

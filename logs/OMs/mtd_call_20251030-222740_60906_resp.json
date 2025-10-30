@@ -1,0 +1,18 @@
+{
+  "Section1": "Daemon",
+  "Section2": "Information",
+  "Section3": "Version",
+  "SendState": "response",
+  "Token": "2227_1761830860905_l1m",
+  "From": "PCd",
+  "To": "4DOMS",
+  "Action": "set",
+  "Version": {
+    "PCd": {
+      "version": "4.2.0.2",
+      "date": "Aug 12 2024 - 13:48:12"
+    }
+  },
+  "ResultCode": 1000,
+  "ErrorMsg": ""
+}

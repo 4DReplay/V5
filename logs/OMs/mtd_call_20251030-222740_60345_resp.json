@@ -1,0 +1,18 @@
+{
+  "Section1": "Daemon",
+  "Section2": "Information",
+  "Section3": "Version",
+  "SendState": "response",
+  "Token": "2227_1761830860344_4hb",
+  "From": "EMd",
+  "To": "4DOMS",
+  "Action": "set",
+  "Version": {
+    "EMd": {
+      "version": "4.3.0.3",
+      "date": "Jul 20 2023 - 10:53:26"
+    }
+  },
+  "ResultCode": 1000,
+  "ErrorMsg": ""
+}

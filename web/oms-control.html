@@ -4,6 +4,8 @@
   <meta charset="utf-8" />
   <title>4DReplay OMS - Orchestrator Manager</title>
   <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" href="images/4dmain.ico" type="image/x-icon">
+  <link rel="alternate icon" href="images/4dmain.ico">
   <style>
     :root{
       --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
@@ -48,10 +50,9 @@
 
   <div class="toolbar">
     <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
-    <button id="omsStartAll">▶ Start All</button>
-    <button id="omsStopAll" class="btn-secondary">■ Stop All</button>
+    <button id="btnConnect" class="btn-secondary">🧩 Connect</button>
     <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>    
     <small id="busyMsg" style="margin-left:10px;opacity:.9"></small>
     <span class="spacer"></span>
     <label class="chip">
@@ -68,6 +69,7 @@
       <tr>
         <th>Node</th>
         <th>Process</th>
+        <th>Version</th>
         <th>PID</th>
         <th>Status</th>
         <th>Last RC</th>
@@ -83,6 +85,22 @@
   </p>
 
 <script>
+
+/* ───────── for Debug  ───────── */
+window.addEventListener("error", (ev)=>{
+  try{ showErr("JS error: " + ev.message); }catch{}
+});
+
+window._omsSentLog = window._omsSentLog || [];
+function _logSent(rec){
+  try{
+    window._omsSentLog.push(rec);
+    if (window._omsSentLog.length > 500) window._omsSentLog.shift();
+    // 필요하면 콘솔 로그
+    // console.debug('[OMS SENT]', rec);
+  }catch(e){}
+}
+
 /* ───────── Proxy helper ───────── */
 const __PROXY_PREFIX__ = (() => {
   const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
@@ -134,14 +152,293 @@ const HB    = document.getElementById("hb");
 const META  = document.getElementById("meta");
 const BTN   = document.getElementById("btnReload");
 const CB_ONLY_SELECTED = document.getElementById("cbOnlySelected");
-const OMS_BTN_START_ALL   = document.getElementById("omsStartAll");
-const OMS_BTN_STOP_ALL    = document.getElementById("omsStopAll");
 const OMS_BTN_RESTART_ALL = document.getElementById("omsRestartAll");
 const BUSY  = document.getElementById("busyMsg");
 const ERRBOX= document.getElementById("err");
 const BTN_CONFIG = document.getElementById("btnConfig");
-
+const BTN_CONNECT = document.getElementById("btnConnect");
 let lastData = null;
+
+
+/* ───────── for Communication  ───────── */
+
+// 🔹 Connect 이후 받아온 버전 캐시: { "<DaemonName>": { version:"x.y.z", date:"..." } }
+const VERSION_CACHE = Object.create(null);
+const VERSION_CACHE_META = Object.create(null); // { [daemon]: { ts: number, ok: boolean, tries: number } }
+const delay = (ms)=> new Promise(r=>setTimeout(r, ms));
+
+// 🔹 KNOWN_DAEMONS 범위 확장 (PreSd, PostSd 삭제)
+const KNOWN_DAEMONS = new Set(["AId","AMd","CCd","CMd","EMd","GCd","PCd","SCd","SPd"]);
+
+function _makeToken(){
+  const s = Date.now().toString(36);
+  const r = Math.random().toString(36).slice(2,5);
+  const hh = String(new Date().getHours()).padStart(2,"0");
+  const mm = String(new Date().getMinutes()).padStart(2,"0");
+  const ss = String(new Date().getSeconds()).padStart(2,"0");
+  return `${hh}${mm}_${Date.now()}_${r}`;
+}
+
+// ───────── send helper ─────────
+async function sendMessageToDaemon(message, hostOverride = null, portOverride = 19765){
+  const target = hostOverride ? { host: hostOverride } : pickMTdTarget();
+  if (!target || !target.host) {
+    console.warn("sendMessageToDaemon: MTd target not found");
+    showErr?.("No MTd node detected for sending message.");
+    return { error: "no-target" };
+  }
+  const host = hostOverride || target.host;
+  const port = portOverride || 19765;
+
+  const startedAt = Date.now();
+  try{
+    const res = await api("/oms/mtd-connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host, port, message })
+    });
+    _logSent({
+      when: new Date(startedAt).toISOString(),
+      target: `${host}:${port}`,
+      to: message?.To,
+      ok: true
+    });
+    return res;
+  }catch(e){
+    _logSent({
+      when: new Date(startedAt).toISOString(),
+      target: `${host}:${port}`,
+      to: message?.To,
+      ok: false,
+      error: e?.message || String(e)
+    });
+    showErr?.("SEND error: " + (e?.message || e));
+    return { error: e?.message || String(e) };
+  }
+}
+
+function pickMTdTarget(){
+  // lastData.nodes[*].status 안에서 name === "MTd" 인 프로세스를 가진 노드 선택
+  if (!lastData || !Array.isArray(lastData.nodes)) return null;
+  for (const n of lastData.nodes){
+    const st = n.status;
+    const arr = (st && st.data && typeof st.data==="object") ? Object.values(st.data)
+              : (Array.isArray(st.processes) ? st.processes
+              : (Array.isArray(st.executables) ? st.executables : []));
+    if (!arr) continue;
+    if (arr.some(p => p && p.name === "MTd")){
+      return { nodeName: n.name, host: n.host, port: n.port || 51050, procName: "MTd" };
+    }
+  }
+  return null;
+}
+
+function markRowConnected(nodeName, procName){
+  const rows = document.querySelectorAll("#grid tbody tr");
+  for (const tr of rows){
+    const actCell = tr.querySelector("td:last-child [data-node]");
+    if (!actCell) continue;
+    const node = actCell.getAttribute("data-node");
+    const proc = actCell.getAttribute("data-proc");
+    if (node === nodeName && proc === procName){
+      // 3번째(td index 3) Status 셀: RUNNING/STOPPED 뱃지가 들어있음
+      const statusCell = tr.children[3];
+      if (!statusCell) return;
+      statusCell.innerHTML = `<span class="pill" style="border-color:#22c55e;color:#22c55e">CONNECT</span>`;
+      // 행 배경도 러닝과 동일하게 유지
+      tr.className = "running";
+      break;
+    }
+  }
+}
+
+function buildMTDConnectMessage(dmpdIp, daemonList) {
+  const allowed = ["EMd", "CCd", "SCd", "GCd", "PCd"];
+
+  // 유효하지 않은 데몬 제거
+  const filteredList = Object.fromEntries(
+    Object.entries(daemonList).filter(([k]) => allowed.includes(k))
+  );
+
+  return {
+    Section1: "mtd",
+    Section2: "connect",
+    Section3: "",
+    SendState: "request",
+    From: "4DOMS",
+    To: "MTd",
+    Token: _makeToken(),
+    Action: "set",
+    DMPDIP: dmpdIp,
+    DaemonList: filteredList
+  };
+}
+
+function buildDaemonListFromView() {
+  const out = {};
+  if (!lastData || !Array.isArray(lastData.nodes)) return out;
+
+  const useOnly = !!(CB_ONLY_SELECTED && CB_ONLY_SELECTED.checked);
+
+  for (const node of lastData.nodes) {
+    const all = toProcList(node.status);
+    const shown = useOnly ? all.filter(p => p && p.select === true) : all;
+
+    for (const p of shown) {
+      const name = String(p?.name || "").trim();
+      if (!name) continue;
+
+      if (!out[name]) out[name] = node.host; // 데몬 이름 -> 해당 노드의 IP
+    }
+  }
+  return out;
+}
+
+function buildVersionMsg(from, to, extra = {}){
+  return {
+    Section1: "Daemon",
+    Section2: "Information",
+    Section3: "Version",
+    SendState: "request",
+    Token: _makeToken(),
+    From: from,   // "4DOMS"
+    To: to,       // e.g. "CCd"
+    Action: "set",
+    ...extra
+  };
+}
+
+async function requestVersionOnce(host, mtdPort, daemonName, daemonHost = null, attempt = 1){
+  const extra = (daemonName === "PreSd")
+    ? { DMPDIP: host }
+    : {};
+  const msg = buildVersionMsg("4DOMS", daemonName, extra);
+  const startedAt = Date.now();
+  try{
+    const r = await api("/oms/mtd-connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ host, port: mtdPort, message: msg })
+    });
+    const resp = r.response || r;
+    if (Number(resp?.ResultCode) !== 1000) throw new Error(resp?.ErrorMsg || "ResultCode != 1000");
+
+    const v = resp?.Version?.[daemonName];
+    VERSION_CACHE[daemonName] = {
+      version: v?.version ? String(v.version) : "-",
+      date: v?.date ? String(v.date) : "-"
+    };
+    VERSION_CACHE_META[daemonName] = { ts: Date.now(), ok: true, tries: attempt };
+
+    // 전송 로그(프론트 미니 로그) - 필요 시 확인용
+    _logSent({
+      when: new Date(startedAt).toISOString(),
+      target: `${host}:${mtdPort}`,
+      to: daemonName,
+      ok: true,
+      tries: attempt
+    });
+    return true;
+  } catch (e){
+    VERSION_CACHE_META[daemonName] = { ts: Date.now(), ok: false, tries: attempt };
+    _logSent({
+      when: new Date(startedAt).toISOString(),
+      target: `${host}:${mtdPort}`,
+      to: daemonName,
+      ok: false,
+      error: (e && e.message) || String(e),
+      tries: attempt
+    });
+
+    // 재시도 2회까지
+    if (attempt < 2){
+      await delay(200 + Math.random()*200); // 짧은 backoff
+      return requestVersionOnce(host, mtdPort, daemonName, daemonHost, attempt+1);
+    }
+    return false;
+  }
+}
+
+async function fetchAllVersions(daemonList, mtdHost){
+   const mtdPort = 19765;
+   const order = ["MTd", ...Object.keys(daemonList).filter(d => d !== "MTd")];
+   for (const daemon of order){
+    const daemonHost = daemonList[daemon] || null; // buildDaemonListFromView에서 채운 host
+    await requestVersionOnce(mtdHost, mtdPort, daemon, daemonHost);
+    await delay(120); // MTd 처리 여유
+  }
+}
+function refreshVersionCellInline(daemonName){
+  const rows = document.querySelectorAll("#grid tbody tr");
+  for (const tr of rows){
+    const procCell = tr.children[1];
+    if (!procCell) continue;
+    const nameText = (procCell.textContent || "").split("\n")[0].trim();
+    if (nameText === daemonName){
+      const verCell = tr.children[2];
+      const v = VERSION_CACHE[daemonName];
+      verCell.innerHTML = v
+        ? `${escapeHtml(v.version||"-")}<br><span class="muted">${escapeHtml(v.date||"-")}</span>`
+        : `<span class="muted">-<br>-</span>`;
+      // ❌ break 제거: 같은 데몬이 여러 노드에 있을 수 있음
+    }
+  }
+}
+
+document.getElementById("btnConnect").addEventListener("click", async ()=>{
+  const target = pickMTdTarget();
+  if (!target){
+    return showErr ? showErr("No MTd node detected.") : alert("No MTd node detected.");
+  }
+
+  // 1️⃣ 화면 기준 DaemonList 구성 (모든 visible process 기준)
+  const daemonList = buildDaemonListFromView();
+  if (Object.keys(daemonList).length === 0){
+    return showErr ? showErr("No known daemons (EMd/SCd/CCd/GCd/SPd/PCd) visible.") 
+                  : alert("No known daemons visible.");
+  }
+  const dmpdIp = guessMgmtIP(target.host);   // 관리 IP 추정, 로컬이면 MTd IP로 fallback
+  const keys = Object.keys(daemonList);
+  if (keys.length === 0){
+    return showErr ? showErr("No daemon processes visible to connect.") : alert("No daemon processes visible to connect.");
+  }
+
+  // 1) MTd에 먼저 connect
+  const mtdMessage = buildMTDConnectMessage(dmpdIp, daemonList);
+  try{
+    setBusy?.(true, "CONNECT...");
+    const r = await api("/oms/mtd-connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        host: target.host,
+        port: 19765,
+        message: mtdMessage
+      })
+    });
+    const resp = r.response;
+
+    const okCode = Number(resp?.ResultCode) === 1000;
+    const list = resp?.DaemonList || {};
+    const allOk = Object.values(list).every(v => v && String(v.Status||"").toUpperCase()==="OK");
+
+    if (okCode && allOk){
+      markRowConnected(target.nodeName, target.procName);
+
+      // 3️⃣ MTd connect 성공 후 → 각 데몬 버전 요청 (PreSd는 DMPDIP 포함)
+      await fetchAllVersions(daemonList, target.host);
+
+      setBusy?.(false, "CONNECTED. Versions cached. Press Reload to display.");
+    } else {
+      const err = resp?.ErrorMsg || JSON.stringify(resp||{});
+      setBusy?.(false);
+      showErr("CONNECT failed: " + err);
+    }
+  }catch(e){
+    setBusy?.(false);
+    showErr("CONNECT error: " + (e.message||e));
+  }
+});
 
 /* ───────── timeouts ───────── */
 const DEFAULT_REQ_TIMEOUT = 180000;
@@ -149,15 +446,19 @@ const ACTION_TIMEOUTS = { start:180000, stop:180000, restart:300000 };
 
 /* ───────── UI helpers ───────── */
 function setBusy(flag, msg = ""){
-  OMS_BTN_START_ALL.disabled   = flag;
-  OMS_BTN_STOP_ALL.disabled    = flag;
   OMS_BTN_RESTART_ALL.disabled = flag;
-  BTN.disabled                 = flag;
   if (BTN_CONFIG) BTN_CONFIG.disabled = flag;
+  if (BTN_CONNECT) BTN_CONNECT.disabled = flag;
   BUSY.textContent = msg || "";
 }
 function showErr(msg){ ERRBOX.style.display="block"; ERRBOX.textContent = msg; }
 function clearErr(){ ERRBOX.style.display="none"; ERRBOX.textContent=""; }
+function guessMgmtIP(fallback){
+  const h = (location.hostname || "").trim();
+  // 로컬 호스트면 fallback 사용(MTd 노드 IP 등)
+  if (!h || h === "localhost" || h === "127.0.0.1") return fallback;
+  return h;
+}
 
 /* ───────── helpers ───────── */
 function countProcs(nodes, useOnly){
@@ -257,10 +558,16 @@ function buildRow(node, proc, nodeHtmlCached){
   const nameHtml  = aliasText
   ? `${escapeHtml(nameText)}<br><span class="muted">${escapeHtml(aliasText)}</span>`
   : escapeHtml(nameText);
+  // 🔹 Version -> 1st row : version, 2nd row : date
+  const verInfo = VERSION_CACHE[nameText];
+  const verHtml = verInfo
+    ? `${escapeHtml(verInfo.version || "-")}<br><span class="muted">${escapeHtml(verInfo.date || "-")}</span>`
+    : `<span class="muted">-<br>-</span>`;
 
   tr.innerHTML = `
     <td>${nodeHtmlCached || nodeCellHtml(node)}</td>
     <td>${nameHtml}</td>
+    <td>${verHtml}</td>
     <td>${proc.pid ?? "-"}</td>
     <td>${badge}</td>
     <td>${(proc.last_rc ?? proc.last_exit_code ?? "-")}</td>
@@ -464,9 +771,8 @@ async function runAllOnEveryNode(action) {
   try { render(await api("/oms/status")); } catch (e) { console.error(e); }
 }
 
+
 /* ───────── wireup ───────── */
-document.getElementById("omsStartAll").addEventListener("click", () => runAllOnEveryNode("start-all"));
-document.getElementById("omsStopAll").addEventListener("click", () => runAllOnEveryNode("stop-all"));
 document.getElementById("omsRestartAll").addEventListener("click", () => runAllOnEveryNode("restart-all"));
 document.getElementById("btnReload").addEventListener("click", async ()=> {
   try { setBusy(true, "RELOAD..."); clearErr(); render(await api("/oms/status")); }
@@ -499,7 +805,15 @@ TBodyEl.addEventListener("click", async (ev)=>{
 });
 
 /* ───────── polling ───────── */
-async function tick(){ try{ render(await api("/oms/status")); }catch(e){ console.error(e); } }
+async function tick(){
+  try{
+    const data = await api("/oms/status");
+    await render(data);
+  }catch(e){
+    console.error(e);
+    showErr("Failed to load status: " + (e.message || e));
+  }
+}
 tick();
 setInterval(tick, 2000);
 </script>

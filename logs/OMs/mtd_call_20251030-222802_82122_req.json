@@ -1,0 +1,14 @@
+{
+  "host": "10.82.104.210",
+  "port": 19765,
+  "message": {
+    "Section1": "Daemon",
+    "Section2": "Information",
+    "Section3": "Version",
+    "SendState": "request",
+    "Token": "2228_1761830882121_2s0",
+    "From": "4DOMS",
+    "To": "MMc",
+    "Action": "set"
+  }
+}

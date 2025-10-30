@@ -7,6 +7,13 @@ HERE = Path(__file__).resolve()
 ROOT = HERE.parent.parent.parent.resolve()
 LOG_ROOT = ROOT / "logs" / "OMS"; LOG_ROOT.mkdir(parents=True, exist_ok=True)
 
+# 추가 ⬇⬇⬇
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+src_dir = ROOT / "src"
+if src_dir.exists() and str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+    
 def _load_agent():
     try:
         from service.OMs import oms_agent as agent

@@ -162,26 +162,38 @@ const __PROXY_PREFIX__ = (() => {
   }catch(_){}
 })();
 
-async function api(path,method="GET",body=null){
-  const opt={method,cache:"no-store",headers:{}};
-  if(body!==null){
-    if(typeof body==="string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
+// ===== 공통 fetch 래퍼 =====
+async function api(path, method="GET", body=null){
+  const opt = { method, cache:"no-store", headers:{} };
+  if (body !== null){
+    if (typeof body === "string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
     else { opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
   }
-  const r=await fetch(path,opt);
-  const ct=r.headers.get("content-type")||"";
-  const isJson=ct.includes("application/json");
-  if(!r.ok){
-    let msg=r.statusText;
-    try{ msg=isJson?(await r.json()).error||r.statusText:await r.text(); }catch{}
-    throw new Error(msg||`HTTP ${r.status}`);
+  const r = await fetch(path, opt);
+  const ct = r.headers.get("content-type") || "";
+  const isJson = ct.includes("application/json");
+  if (!r.ok){
+    let msg = r.statusText;
+    try{ msg = isJson ? (await r.json()).error || r.statusText : await r.text(); }catch{}
+    throw new Error(msg || `HTTP ${r.status}`);
   }
-  return isJson?await r.json():await r.text();
+  return isJson ? await r.json() : await r.text();
 }
 
 /* ────────────────── /config 로드/저장 (+json5 허용) ───────────────── */
 async function loadConfigText(){ return api("/config","GET"); }
-async function saveConfigText(text){ return api("/config","POST",text); }
+// ===== /config 우선, 실패 시 /oms/config 폴백 =====
+async function saveConfigText(text){
+  try {
+    return await api("/config", "POST", text);     // 루트 우선
+  } catch (e){
+    const m = String(e.message||"").toLowerCase();
+    if (m.includes("not found") || m.includes("404")){
+      return await api("/oms/config", "POST", text); // 폴백
+    }
+    throw e;
+  }
+}
 
 // 서버가 /config-format 또는 /config/format 둘 중 하나만 있을 수 있어 둘 다 시도
 async function formatOnServer(text){
@@ -338,20 +350,40 @@ async function formatConfig(){
   SaveTag.textContent="Formatted"; SaveTag.className="pill";
 }
 async function saveConfig(){
-  if(IS_SAVING) return;
-  IS_SAVING=true; SaveTag.textContent="Saving..."; SaveTag.className="pill";
+  if (IS_SAVING) return;
+  IS_SAVING = true;
   try{
-    const txt=JSON.stringify(CONFIG);
-    const r=await formatOnServer(txt);     // 정렬
-    await saveConfigText(r.text);          // 저장
-    SaveTag.textContent="Saved"; SaveTag.className="pill pill-ok";
+    console.log("[OMS] Save clicked");
+    SaveTag.textContent="Saving..."; SaveTag.className="pill";
+    const txt = JSON.stringify(CONFIG, null, 2);
+
+    // 실제 저장
+    const res = await saveConfigText(txt);
+    console.log("[OMS] Save response:", res);
+
+    // 사용자 피드백
+    SaveTag.textContent = `Saved (${(res && res.bytes) ? res.bytes : txt.length}B)`;
+    SaveTag.className="pill pill-ok";
+
+    // 저장 반영 재로딩
     await reloadConfig();
-    await loadMeta();                // 저장 직후 즉시 메타 갱신
+    await loadMeta();
   }catch(e){
-    alert("Save failed: "+(e.message||e));
+    console.error("[OMS] Save failed:", e);
+    alert("Save failed: " + (e.message||e));
     SaveTag.textContent="Save failed"; SaveTag.className="pill pill-bad";
-  }finally{ IS_SAVING=false; }
+  }finally{
+    IS_SAVING = false;
+  }
 }
+
+
+// ===== 버튼 이벤트가 반드시 한 번만 걸리도록 정리 =====
+document.getElementById("btnSave").onclick = null;
+document.getElementById("btnSave").addEventListener("click", (ev)=>{
+  ev.preventDefault();
+  saveConfig();
+});
 
 document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
   location.href = "dms-control.html";
