@@ -47,9 +47,7 @@
   </h2>
 
   <div class="toolbar">
-    <!-- ✅ 추가: Config Editor -->
     <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
-
     <button id="omsStartAll">▶ Start All</button>
     <button id="omsStopAll" class="btn-secondary">■ Stop All</button>
     <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
@@ -68,13 +66,13 @@
   <table id="grid">
     <thead>
       <tr>
-        <th style="width:260px">Node</th>
+        <th>Node</th>
         <th>Process</th>
-        <th style="width:110px">PID</th>
-        <th style="width:160px">Status</th>
-        <th style="width:110px">Last RC</th>
+        <th>PID</th>
+        <th>Status</th>
+        <th>Last RC</th>
         <th>Exe</th>
-        <th style="width:460px">Actions</th>
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody></tbody>
@@ -155,7 +153,7 @@ function setBusy(flag, msg = ""){
   OMS_BTN_STOP_ALL.disabled    = flag;
   OMS_BTN_RESTART_ALL.disabled = flag;
   BTN.disabled                 = flag;
-  if (BTN_CONFIG) BTN_CONFIG.disabled = flag;  // ✅ Config 버튼도 비활성화
+  if (BTN_CONFIG) BTN_CONFIG.disabled = flag;
   BUSY.textContent = msg || "";
 }
 function showErr(msg){ ERRBOX.style.display="block"; ERRBOX.textContent = msg; }
@@ -190,24 +188,79 @@ function toProcList(status){
   if (Array.isArray(status.executables)) return status.executables;
   return [];
 }
-function nodeCellHtml(node, shownCount, totalCount){
+function nodeCellHtml(node, procIdx, perNodeTotal){
   const linkHref = `/proxy/${encodeURIComponent(node.name)}/dms-dashboard.html`;
   const title = node.alias || node.name;
-  const cnt = (typeof totalCount==="number") ? ` (${shownCount}/${totalCount})` : "";
+  const ndx = (typeof procIdx==="number" && typeof perNodeTotal==="number")
+    ? ` (${procIdx+1}/${perNodeTotal})` : "";
   return `
     <a class="node" href="${linkHref}" target="_blank" title="Open DMS dashboard">${title}</a>
-    <br><span class="muted">${node.host}:${node.port}${cnt}</span>
+    <br><span class="muted">${node.host}:${node.port}${ndx}</span>
   `;
 }
-function row(node, proc, nodeHtmlCached){
+
+function escapeHtml(s){
+  return String(s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+/* ───────── Alias 보강용: config(JSON5) 파서 & 캐시 ───────── */
+function parseJsonLike(text){
+  // strip /* */ comments
+  text = text.replace(/\/\*[\s\S]*?\*\//g, "");
+  // strip // comments (respecting quotes is overkill here; it's fine for our configs)
+  text = text.split("\n").map(line=>{
+    const i = line.indexOf("//");
+    return i>=0 ? line.slice(0,i) : line;
+  }).join("\n");
+  // add quotes for simple unquoted keys: key: value
+  text = text.replace(/(^|[\s,{])([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":');
+  // remove trailing commas
+  text = text.replace(/,\s*([}\]])/g, "$1");
+  return JSON.parse(text);
+}
+// nodeName -> { name: alias }
+const aliasCache = new Map();
+async function ensureNodeAliasMap(nodeName){
+  if (aliasCache.has(nodeName)) return aliasCache.get(nodeName);
+  try{
+    const raw = await api(`/proxy/${encodeURIComponent(nodeName)}/config`);
+    const cfg = typeof raw === "string" ? parseJsonLike(raw) : raw;
+    const map = {};
+    if (cfg && Array.isArray(cfg.executables)){
+      for (const it of cfg.executables){
+        if (!it || !it.name) continue;
+        const al = (it.alias || "").trim();
+        if (al) map[String(it.name)] = al;
+      }
+    }
+    aliasCache.set(nodeName, map);
+    return map;
+  }catch(_){
+    const empty = {};
+    aliasCache.set(nodeName, empty);
+    return empty;
+  }
+}
+
+/* ───────── Row 렌더 ───────── */
+function buildRow(node, proc, nodeHtmlCached){
   const tr = document.createElement("tr");
   const running = !!proc.running;
   tr.className = running ? "running" : "other";
   const exeShort = (proc.exe||proc.path||"").split(/[\\/]/).slice(-2).join("/");
   const badge = running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`;
+  const nameText  = proc.name || "-";
+  const aliasText = (proc._aliasResolved || proc.alias || "").trim();
+  const nameHtml  = aliasText
+  ? `${escapeHtml(nameText)}<br><span class="muted">${escapeHtml(aliasText)}</span>`
+  : escapeHtml(nameText);
+
   tr.innerHTML = `
     <td>${nodeHtmlCached || nodeCellHtml(node)}</td>
-    <td>${proc.name || "-"}${proc.alias?` <span class="muted">(${proc.alias})</span>`:""}</td>
+    <td>${nameHtml}</td>
     <td>${proc.pid ?? "-"}</td>
     <td>${badge}</td>
     <td>${(proc.last_rc ?? proc.last_exit_code ?? "-")}</td>
@@ -222,7 +275,7 @@ function row(node, proc, nodeHtmlCached){
 }
 
 /* ───────── render ───────── */
-function render(data){
+async function render(data){
   if(!data) return;
   lastData = data;
   HB.textContent = `poll ${data.heartbeat_interval_sec||"-"}s`;
@@ -232,10 +285,24 @@ function render(data){
 
   TBody.innerHTML = "";
 
-  for (const node of (data.nodes || [])){
+  const nodesArr = (data.nodes || []);
+  for (let i=0; i<nodesArr.length; i++){
+    const node = nodesArr[i];
     const status = node.status;
     const all = toProcList(status);
     const shownList = useOnly ? all.filter(p => p && p.select === true) : all;
+
+    // alias 미동봉 노드면, 1회 alias 맵을 확보해서 주입
+    let aliasMap = null;
+    if (shownList.some(p => p && !p.alias)){
+      aliasMap = await ensureNodeAliasMap(node.name);
+      for (const p of shownList){
+        if (p && !p.alias){
+          const al = aliasMap[p.name];
+          if (al) p._aliasResolved = al; // 표시용 임시 필드
+        }
+      }
+    }
 
     if (!status || (all.length === 0 && shownList.length === 0)){
       const tr = document.createElement("tr");
@@ -247,19 +314,22 @@ function render(data){
       continue;
     }
 
-    const nodeHtml = nodeCellHtml(node, shownList.length, all.length);
+    const nodeHtml = nodeCellHtml(node, i, nodesArr.length);
     if (shownList.length === 0){
       const tr = document.createElement("tr");
       tr.className = "other";
       tr.innerHTML = `
-        <td>${nodeHtml}</td>
+        <td>${nodeCellHtml(node, 0, 0)}</td>
         <td colspan="6" class="muted">no selected processes</td>`;
       TBody.appendChild(tr);
       continue;
     }
 
-    for (const p of shownList){
-      TBody.appendChild(row(node, p, nodeHtml));
+    const perNodeTotal = shownList.length;
+    for (let j = 0; j < shownList.length; j++){
+      const p = shownList[j];
+      const nodeHtmlPerRow = nodeCellHtml(node, j, perNodeTotal);
+      TBody.appendChild(buildRow(node, p, nodeHtmlPerRow));
     }
   }
 }
@@ -404,7 +474,7 @@ document.getElementById("btnReload").addEventListener("click", async ()=> {
   finally{ setBusy(false); }
 });
 if (BTN_CONFIG){
-  BTN_CONFIG.addEventListener("click", ()=> { location.href = "oms-config.html"; }); // ✅ 이동
+  BTN_CONFIG.addEventListener("click", ()=> { location.href = "oms-config.html"; });
 }
 
 const TBodyEl = document.querySelector("#grid tbody");
