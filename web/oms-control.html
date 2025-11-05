@@ -70,10 +70,7 @@
         <th>Node</th>
         <th>Process</th>
         <th>Version</th>
-        <th>PID</th>
         <th>Status</th>
-        <th>Last RC</th>
-        <th>Exe</th>
         <th>Actions</th>
       </tr>
     </thead>
@@ -96,8 +93,6 @@ function _logSent(rec){
   try{
     window._omsSentLog.push(rec);
     if (window._omsSentLog.length > 500) window._omsSentLog.shift();
-    // 필요하면 콘솔 로그
-    // console.debug('[OMS SENT]', rec);
   }catch(e){}
 }
 
@@ -162,12 +157,10 @@ let lastData = null;
 
 /* ───────── for Communication  ───────── */
 
-// 🔹 Connect 이후 받아온 버전 캐시: { "<DaemonName>": { version:"x.y.z", date:"..." } }
 const VERSION_CACHE = Object.create(null);
-const VERSION_CACHE_META = Object.create(null); // { [daemon]: { ts: number, ok: boolean, tries: number } }
+const VERSION_CACHE_META = Object.create(null);
 const delay = (ms)=> new Promise(r=>setTimeout(r, ms));
 
-// 🔹 KNOWN_DAEMONS 범위 확장 (PreSd, PostSd 삭제)
 const KNOWN_DAEMONS = new Set(["AId","AMd","CCd","CMd","EMd","GCd","PCd","SCd","SPd"]);
 
 function _makeToken(){
@@ -218,7 +211,6 @@ async function sendMessageToDaemon(message, hostOverride = null, portOverride = 
 }
 
 function pickMTdTarget(){
-  // lastData.nodes[*].status 안에서 name === "MTd" 인 프로세스를 가진 노드 선택
   if (!lastData || !Array.isArray(lastData.nodes)) return null;
   for (const n of lastData.nodes){
     const st = n.status;
@@ -241,11 +233,10 @@ function markRowConnected(nodeName, procName){
     const node = actCell.getAttribute("data-node");
     const proc = actCell.getAttribute("data-proc");
     if (node === nodeName && proc === procName){
-      // 3번째(td index 3) Status 셀: RUNNING/STOPPED 뱃지가 들어있음
+      // 현재 컬럼 구조: 0 Node, 1 Process, 2 Version, 3 Status, 4 Actions
       const statusCell = tr.children[3];
       if (!statusCell) return;
       statusCell.innerHTML = `<span class="pill" style="border-color:#22c55e;color:#22c55e">CONNECT</span>`;
-      // 행 배경도 러닝과 동일하게 유지
       tr.className = "running";
       break;
     }
@@ -254,12 +245,9 @@ function markRowConnected(nodeName, procName){
 
 function buildMTDConnectMessage(dmpdIp, daemonList) {
   const allowed = ["EMd", "CCd", "SCd", "GCd", "PCd"];
-
-  // 유효하지 않은 데몬 제거
   const filteredList = Object.fromEntries(
     Object.entries(daemonList).filter(([k]) => allowed.includes(k))
   );
-
   return {
     Section1: "mtd",
     Section2: "connect",
@@ -277,18 +265,14 @@ function buildMTDConnectMessage(dmpdIp, daemonList) {
 function buildDaemonListFromView() {
   const out = {};
   if (!lastData || !Array.isArray(lastData.nodes)) return out;
-
   const useOnly = !!(CB_ONLY_SELECTED && CB_ONLY_SELECTED.checked);
-
   for (const node of lastData.nodes) {
     const all = toProcList(node.status);
     const shown = useOnly ? all.filter(p => p && p.select === true) : all;
-
     for (const p of shown) {
       const name = String(p?.name || "").trim();
       if (!name) continue;
-
-      if (!out[name]) out[name] = node.host; // 데몬 이름 -> 해당 노드의 IP
+      if (!out[name]) out[name] = node.host;
     }
   }
   return out;
@@ -301,17 +285,15 @@ function buildVersionMsg(from, to, extra = {}){
     Section3: "Version",
     SendState: "request",
     Token: _makeToken(),
-    From: from,   // "4DOMS"
-    To: to,       // e.g. "CCd"
+    From: from,
+    To: to,
     Action: "set",
     ...extra
   };
 }
 
 async function requestVersionOnce(host, mtdPort, daemonName, daemonHost = null, attempt = 1){
-  const extra = (daemonName === "PreSd")
-    ? { DMPDIP: host }
-    : {};
+  const extra = (daemonName === "PreSd") ? { DMPDIP: host } : {};
   const msg = buildVersionMsg("4DOMS", daemonName, extra);
   const startedAt = Date.now();
   try{
@@ -330,7 +312,6 @@ async function requestVersionOnce(host, mtdPort, daemonName, daemonHost = null, 
     };
     VERSION_CACHE_META[daemonName] = { ts: Date.now(), ok: true, tries: attempt };
 
-    // 전송 로그(프론트 미니 로그) - 필요 시 확인용
     _logSent({
       when: new Date(startedAt).toISOString(),
       target: `${host}:${mtdPort}`,
@@ -349,10 +330,8 @@ async function requestVersionOnce(host, mtdPort, daemonName, daemonHost = null, 
       error: (e && e.message) || String(e),
       tries: attempt
     });
-
-    // 재시도 2회까지
     if (attempt < 2){
-      await delay(200 + Math.random()*200); // 짧은 backoff
+      await delay(200 + Math.random()*200);
       return requestVersionOnce(host, mtdPort, daemonName, daemonHost, attempt+1);
     }
     return false;
@@ -360,12 +339,12 @@ async function requestVersionOnce(host, mtdPort, daemonName, daemonHost = null, 
 }
 
 async function fetchAllVersions(daemonList, mtdHost){
-   const mtdPort = 19765;
-   const order = ["MTd", ...Object.keys(daemonList).filter(d => d !== "MTd")];
-   for (const daemon of order){
-    const daemonHost = daemonList[daemon] || null; // buildDaemonListFromView에서 채운 host
+  const mtdPort = 19765;
+  const order = ["MTd", ...Object.keys(daemonList).filter(d => d !== "MTd")];
+  for (const daemon of order){
+    const daemonHost = daemonList[daemon] || null;
     await requestVersionOnce(mtdHost, mtdPort, daemon, daemonHost);
-    await delay(120); // MTd 처리 여유
+    await delay(120);
   }
 }
 function refreshVersionCellInline(daemonName){
@@ -380,7 +359,6 @@ function refreshVersionCellInline(daemonName){
       verCell.innerHTML = v
         ? `${escapeHtml(v.version||"-")}<br><span class="muted">${escapeHtml(v.date||"-")}</span>`
         : `<span class="muted">-<br>-</span>`;
-      // ❌ break 제거: 같은 데몬이 여러 노드에 있을 수 있음
     }
   }
 }
@@ -391,19 +369,17 @@ document.getElementById("btnConnect").addEventListener("click", async ()=>{
     return showErr ? showErr("No MTd node detected.") : alert("No MTd node detected.");
   }
 
-  // 1️⃣ 화면 기준 DaemonList 구성 (모든 visible process 기준)
   const daemonList = buildDaemonListFromView();
   if (Object.keys(daemonList).length === 0){
     return showErr ? showErr("No known daemons (EMd/SCd/CCd/GCd/SPd/PCd) visible.") 
-                  : alert("No known daemons visible.");
+                   : alert("No known daemons visible.");
   }
-  const dmpdIp = guessMgmtIP(target.host);   // 관리 IP 추정, 로컬이면 MTd IP로 fallback
+  const dmpdIp = guessMgmtIP(target.host);
   const keys = Object.keys(daemonList);
   if (keys.length === 0){
     return showErr ? showErr("No daemon processes visible to connect.") : alert("No daemon processes visible to connect.");
   }
 
-  // 1) MTd에 먼저 connect
   const mtdMessage = buildMTDConnectMessage(dmpdIp, daemonList);
   try{
     setBusy?.(true, "CONNECT...");
@@ -424,10 +400,7 @@ document.getElementById("btnConnect").addEventListener("click", async ()=>{
 
     if (okCode && allOk){
       markRowConnected(target.nodeName, target.procName);
-
-      // 3️⃣ MTd connect 성공 후 → 각 데몬 버전 요청 (PreSd는 DMPDIP 포함)
       await fetchAllVersions(daemonList, target.host);
-
       setBusy?.(false, "CONNECTED. Versions cached. Press Reload to display.");
     } else {
       const err = resp?.ErrorMsg || JSON.stringify(resp||{});
@@ -455,7 +428,6 @@ function showErr(msg){ ERRBOX.style.display="block"; ERRBOX.textContent = msg; }
 function clearErr(){ ERRBOX.style.display="none"; ERRBOX.textContent=""; }
 function guessMgmtIP(fallback){
   const h = (location.hostname || "").trim();
-  // 로컬 호스트면 fallback 사용(MTd 노드 IP 등)
   if (!h || h === "localhost" || h === "127.0.0.1") return fallback;
   return h;
 }
@@ -507,22 +479,17 @@ function escapeHtml(s){
     .replace(/'/g,"&#39;");
 }
 
-/* ───────── Alias 보강용: config(JSON5) 파서 & 캐시 ───────── */
+/* ───────── Alias 보강: config 파싱 ───────── */
 function parseJsonLike(text){
-  // strip /* */ comments
   text = text.replace(/\/\*[\s\S]*?\*\//g, "");
-  // strip // comments (respecting quotes is overkill here; it's fine for our configs)
   text = text.split("\n").map(line=>{
     const i = line.indexOf("//");
     return i>=0 ? line.slice(0,i) : line;
   }).join("\n");
-  // add quotes for simple unquoted keys: key: value
   text = text.replace(/(^|[\s,{])([A-Za-z_][A-Za-z0-9_]*)\s*:/g, '$1"$2":');
-  // remove trailing commas
   text = text.replace(/,\s*([}\]])/g, "$1");
   return JSON.parse(text);
 }
-// nodeName -> { name: alias }
 const aliasCache = new Map();
 async function ensureNodeAliasMap(nodeName){
   if (aliasCache.has(nodeName)) return aliasCache.get(nodeName);
@@ -546,19 +513,17 @@ async function ensureNodeAliasMap(nodeName){
   }
 }
 
-/* ───────── Row 렌더 ───────── */
+/* ───────── Row 렌더 (PID/Last RC/Exe 제거) ───────── */
 function buildRow(node, proc, nodeHtmlCached){
   const tr = document.createElement("tr");
   const running = !!proc.running;
   tr.className = running ? "running" : "other";
-  const exeShort = (proc.exe||proc.path||"").split(/[\\/]/).slice(-2).join("/");
   const badge = running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`;
   const nameText  = proc.name || "-";
   const aliasText = (proc._aliasResolved || proc.alias || "").trim();
   const nameHtml  = aliasText
-  ? `${escapeHtml(nameText)}<br><span class="muted">${escapeHtml(aliasText)}</span>`
-  : escapeHtml(nameText);
-  // 🔹 Version -> 1st row : version, 2nd row : date
+    ? `${escapeHtml(nameText)}<br><span class="muted">${escapeHtml(aliasText)}</span>`
+    : escapeHtml(nameText);
   const verInfo = VERSION_CACHE[nameText];
   const verHtml = verInfo
     ? `${escapeHtml(verInfo.version || "-")}<br><span class="muted">${escapeHtml(verInfo.date || "-")}</span>`
@@ -568,10 +533,7 @@ function buildRow(node, proc, nodeHtmlCached){
     <td>${nodeHtmlCached || nodeCellHtml(node)}</td>
     <td>${nameHtml}</td>
     <td>${verHtml}</td>
-    <td>${proc.pid ?? "-"}</td>
     <td>${badge}</td>
-    <td>${(proc.last_rc ?? proc.last_exit_code ?? "-")}</td>
-    <td class="muted" title="${proc.path||proc.exe||""}">${exeShort || "-"}</td>
     <td>
       <button data-a="start"   data-node="${node.name}" data-proc="${proc.name}">Start</button>
       <button class="btn-secondary" data-a="stop"  data-node="${node.name}" data-proc="${proc.name}">Stop</button>
@@ -599,14 +561,13 @@ async function render(data){
     const all = toProcList(status);
     const shownList = useOnly ? all.filter(p => p && p.select === true) : all;
 
-    // alias 미동봉 노드면, 1회 alias 맵을 확보해서 주입
     let aliasMap = null;
     if (shownList.some(p => p && !p.alias)){
       aliasMap = await ensureNodeAliasMap(node.name);
       for (const p of shownList){
         if (p && !p.alias){
           const al = aliasMap[p.name];
-          if (al) p._aliasResolved = al; // 표시용 임시 필드
+          if (al) p._aliasResolved = al;
         }
       }
     }
@@ -616,7 +577,7 @@ async function render(data){
       tr.className = "other";
       tr.innerHTML = `
         <td>${nodeCellHtml(node, 0, 0)}</td>
-        <td colspan="6" class="muted">unreachable</td>`;
+        <td colspan="4" class="muted">unreachable</td>`;
       TBody.appendChild(tr);
       continue;
     }
@@ -627,7 +588,7 @@ async function render(data){
       tr.className = "other";
       tr.innerHTML = `
         <td>${nodeCellHtml(node, 0, 0)}</td>
-        <td colspan="6" class="muted">no selected processes</td>`;
+        <td colspan="4" class="muted">no selected processes</td>`;
       TBody.appendChild(tr);
       continue;
     }
@@ -683,13 +644,12 @@ async function waitForState(nodeName, procName, desiredRunning, totalTimeoutMs, 
     try{
       const s = await getProcStatus(nodeName, procName);
       if (s && !!s.running === !!desiredRunning) return { ok: true };
-    }catch(_){}
+    }catch(_){ }
     await new Promise(r => setTimeout(r, pollEveryMs));
   }
   return { ok: false, msg: "poll timeout" };
 }
 
-/* 선택 반영된 프로세스 목록 */
 function procNamesForNode(node){
   const arr = toProcList(node.status);
   const filtered = onlySelected() ? arr.filter(p => p && p.select === true) : arr;
@@ -712,7 +672,7 @@ async function doNodeActionByLoop(nodeName, action, names, timeoutMs = DEFAULT_R
           { method: "POST" },
           perProcBudget
         );
-      }catch(_){}
+      }catch(_){ }
       const wantRunning = (verb !== "stop");
       const waited = await waitForState(nodeName, p, wantRunning, perProcBudget);
       if (waited.ok) okCount++; else { failCount++; lastMsg = waited.msg || "wait failed"; }
@@ -814,6 +774,7 @@ async function tick(){
     showErr("Failed to load status: " + (e.message || e));
   }
 }
+
 tick();
 setInterval(tick, 2000);
 </script>
