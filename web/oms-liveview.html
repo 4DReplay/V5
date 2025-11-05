@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>OMS LiveView (CCd + MediaMTX WebRTC/HLS, no npm)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- 외부 의존성: React/Hls.js (순수 UMD) -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --card:#0b1220; --line:#243045; --line2:#1f2937;
+      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px}
+    .card{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;margin-top:12px}
+    input,select,button,textarea{border-radius:10px;padding:9px 11px;font-size:14px}
+    input,select,textarea{background:#0b1220;color:#e5e7eb;border:1px solid var(--line)}
+    button{background:var(--btn);border:0;color:#fff;cursor:pointer}
+    button.secondary{background:var(--btn2)}
+    .status{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px}
+    .idle{background:#1f2937}.connecting{background:#3b2a0d}.live{background:#0d3b1a}.warn{background:#3b2a0d}.error{background:#3b0d0d}
+    .aspect{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:14px;overflow:hidden}
+    .aspect>video,.aspect>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+    .pill{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px}
+    textarea{width:100%;height:180px;font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
+    label{font-size:12px;color:#cbd5e1;display:block;margin-bottom:6px}
+    .help{font-size:12px;color:#cbd5e1}
+    .right{margin-left:auto}
+    .tabbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
+    .tab{border:1px solid var(--line);background:#0f172a;color:#e5e7eb;border-radius:999px;padding:6px 10px;cursor:pointer}
+    .tab.active{border-color:#60a5fa;color:#bfdbfe;background:#10223a}
+    .urlbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .url{font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:#cbd5e1}
+    a.link{color:#93c5fd;text-decoration:none;border:1px solid #334155;border-radius:999px;padding:6px 10px}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script>
+/* ────────────────────────────────────────────────────────────────────────────
+   Proxy prefix (OMS가 /proxy/<node>/web-liveview.html 로 서비스될 때 절대경로 보정)
+──────────────────────────────────────────────────────────────────────────── */
+const API_PREFIX = (() => {
+  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+})();
+function withPrefix(path){
+  if (!path || typeof path !== "string") return path;
+  if (path.startsWith("/") && !path.startsWith("/proxy/") && API_PREFIX) {
+    return API_PREFIX + path;
+  }
+  return path;
+}
+(function ensureBase(){
+  if (!API_PREFIX) return;
+  const base = document.createElement("base");
+  base.href = API_PREFIX + "/";
+  document.head.prepend(base);
+})();
+(function patchFetchForProxy(){
+  if (!API_PREFIX) return;
+  const orig = window.fetch;
+  window.fetch = function(input, init = {}){
+    if (typeof input === "string") return orig(withPrefix(input), init);
+    try{
+      const u = withPrefix(input.url || "");
+      const req = new Request(u, input);
+      return orig(req);
+    }catch{ return orig(input, init); }
+  };
+})();
+
+/* ────────────────────────────────────────────────────────────────────────────
+   Tiny helpers
+──────────────────────────────────────────────────────────────────────────── */
+const pad = n => (n<10?`0${n}`:`${n}`);
+const ts = () => { const d=new Date(); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes()); };
+const randTok = () => `live_${ts()}_${Math.random().toString(36).slice(2,5)}`;
+const ipToKey = ip => String(ip||"").trim().replaceAll(".","_");
+const buildPathName = (camIp, pathTpl) => {
+  const ip_ = ipToKey(camIp);
+  return (pathTpl && pathTpl.includes("{ip_}")) ? pathTpl.replaceAll("{ip_}", ip_).replace(/^\//,"") : `cam_${ip_}`;
+};
+// MediaMTX URL 빌더 (HLS/WebRTC)
+const buildWebrtcUrl = ({ gwHost, webrtcPort, pathName }) => `http://${gwHost}:${webrtcPort}/${pathName}`;
+const buildHlsUrl    = ({ gwHost, hlsPort, pathName, useHlsPrefix=false }) =>
+  `http://${gwHost}:${hlsPort}/${useHlsPrefix? "hls/": ""}${pathName}/index.m3u8`;
+
+// 공통 fetch 래퍼
+async function api(path, init={}){
+  const res = await fetch(withPrefix(path), { cache:"no-store", mode:"cors", credentials:"include", ...init });
+  const ct = res.headers.get("content-type") || "";
+  if (!res.ok){
+    const t = await res.text().catch(()=> "");
+    try{ if (ct.includes("application/json")) { const j=JSON.parse(t); throw new Error(j?.error||j?.message||t||`HTTP ${res.status}`); } }
+    catch{}
+    throw new Error(t||`HTTP ${res.status}`);
+  }
+  return ct.includes("application/json") ? res.json() : res.text();
+}
+
+// MTd 중계 (OMS -> MTd -> CCd)
+function esOpen(url, opts={withCredentials:true}){ return new EventSource(withPrefix(url), opts); }
+async function mtdConnect({ host, port, message, wait=15, onSseLine }){
+  const payload = { host, port, message, wait_sec: wait };
+  const token = message?.Token || "";
+  let es=null, stopTimer=null;
+  function close(){ try{ es&&es.close(); }catch{} if (stopTimer){ clearTimeout(stopTimer); stopTimer=null; } }
+
+  if (token && typeof onSseLine==="function"){
+    es = esOpen(`/oms/subscribe?token=${encodeURIComponent(token)}`, { withCredentials:true });
+    es.onmessage = ev => {
+      let obj = ev.data; try{ obj=JSON.parse(ev.data); }catch{}
+      onSseLine(obj);
+      if (stopTimer) clearTimeout(stopTimer);
+      stopTimer = setTimeout(close, 1200);
+    };
+    es.onerror = () => close();
+  }
+  const r = await api(`/oms/mtd-connect?wait=${encodeURIComponent(wait)}`, {
+    method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(payload), keepalive:true
+  });
+  return r?.response ?? r;
+}
+
+/* ────────────────────────────────────────────────────────────────────────────
+   React App
+──────────────────────────────────────────────────────────────────────────── */
+const { useEffect, useMemo, useRef, useState } = React;
+
+function App(){
+  // CCd / MediaMTX 게이트웨이 설정
+  const [ccdHost, setCcdHost] = useState("10.82.104.210");
+  const [ccdPort, setCcdPort] = useState(19765);
+  const [dmpdip,  setDmpdip ] = useState("10.82.104.210");
+
+  const [gwHost, setGwHost]       = useState("127.0.0.1");
+  const [hlsPort, setHlsPort]     = useState(8888);
+  const [webrtcPort, setWPort]    = useState(8889);
+  const [pathTpl, setPathTpl]     = useState("cam_{ip_}"); // MediaMTX path name
+  const [useHlsPrefix, setUseHlsPrefix] = useState(false); // /hls/ 경로 쓰는 커스텀 프록시 환경일 때만 체크
+
+  // 모드/플레이어
+  const [opMode, setOpMode] = useState("Live");   // Live | Run
+  const [player, setPlayer] = useState("WebRTC"); // WebRTC | HLS
+  const [msg, setMsg] = useState("");
+  const [status, setStatus] = useState("idle");   // idle / connecting / live / error / warn
+
+  // 카메라
+  const [cameraIp, setCameraIp] = useState("");
+  const [activeList, setActiveList] = useState("10.1.1.107,10.1.1.108");
+  const [inactiveList, setInactiveList] = useState("10.1.1.109,10.1.1.110");
+  const [timeMs, setTimeMs] = useState(1500);
+  const [synctimeMs, setSynctimeMs] = useState(2000);
+  const [synclimit, setSynclimit] = useState(10);
+  const [syncskip, setSyncskip] = useState(false);
+
+  // 재생 URL 및 항목
+  const [playUrl, setPlayUrl] = useState("");
+  const videoRef = useRef(null);
+  const hlsRef = useRef(null);
+
+  // HLS 초기화/해제
+  useEffect(()=>{
+    if (player!=="HLS"){ if (hlsRef.current){ hlsRef.current.destroy(); hlsRef.current=null; } return; }
+    const video = videoRef.current;
+    if (!video) return;
+    if (!playUrl){ video.removeAttribute("src"); return; }
+
+    if (Hls.isSupported()){
+      const hls = new Hls({ enableWorker:true, lowLatencyMode:true });
+      hlsRef.current = hls;
+      hls.attachMedia(video);
+      hls.on(Hls.Events.MEDIA_ATTACHED, ()=> hls.loadSource(playUrl));
+      hls.on(Hls.Events.ERROR, (_e, data)=>{
+        setStatus("warn"); setMsg(`HLS: ${data?.details || data?.type || "unknown"}`);
+      });
+    }else{
+      // Safari일 경우 natively m3u8 가능
+      video.src = playUrl;
+      video.play().catch(()=>{});
+    }
+    return ()=>{ if (hlsRef.current){ hlsRef.current.destroy(); hlsRef.current=null; } };
+  }, [player, playUrl]);
+
+  const pathName = useMemo(()=> buildPathName(cameraIp || "0.0.0.0", pathTpl), [cameraIp, pathTpl]);
+  const computedWebrtc = useMemo(()=> buildWebrtcUrl({ gwHost, webrtcPort, pathName }), [gwHost, webrtcPort, pathName]);
+  const computedHls    = useMemo(()=> buildHlsUrl({ gwHost, hlsPort, pathName, useHlsPrefix }), [gwHost, hlsPort, pathName, useHlsPrefix]);
+
+  const setLiveUrl = () => {
+    if (player==="WebRTC"){
+      setPlayUrl(computedWebrtc); // iframe에서 사용
+    }else{
+      setPlayUrl(computedHls);    // video(HLS.js)에서 사용
+    }
+  };
+
+  const appendLog = (title, obj) => {
+    const ta = document.getElementById("rawlog");
+    const line = `\n\n=== ${title} @ ${new Date().toISOString()} ===\n` + JSON.stringify(obj, null, 2);
+    ta.value += line;
+    ta.scrollTop = ta.scrollHeight;
+  };
+
+  async function handleLiveStart(){
+    try{
+      setStatus("connecting"); setMsg("Live 시작 요청…");
+      if (!cameraIp){ setStatus("error"); setMsg("Camera IP를 입력하세요."); return; }
+
+      // 1) 모든 카메라 Run 상태 확보 (Action: run)
+      const tkRun = `1104_${Date.now()}_run`;
+      const reqRun = {
+        Section1:"Camera", Section2:"Operation", Section3:"Live",
+        SendState:"request", From:"4DOMS", To:"CCd", Action:"run",
+        Token: tkRun, DMPDIP: dmpdip
+      };
+      appendLog("REQ Live(run, all)", reqRun);
+      const respRun = await mtdConnect({ host: ccdHost, port: ccdPort, message: reqRun, wait: 12 });
+      appendLog("RESP Live(run, all)", respRun);
+      if ((respRun?.ResultCode??0) !== 1000){ throw new Error(respRun?.ErrorMsg || `Live(run) 실패 (${respRun?.ResultCode})`); }
+
+      // 2) 특정 카메라 Run (Action: set), Cameras=[IP]
+      const tkSet = randTok();
+      const reqSet = {
+        Section1:"Camera", Section2:"Operation", Section3:"Live",
+        SendState:"request", From:"4DOMS", To:"CCd", Action:"set",
+        Token: tkSet, DMPDIP: dmpdip, Cameras:[cameraIp]
+      };
+      appendLog("REQ Live(set, single)", reqSet);
+      const respSet = await mtdConnect({ host: ccdHost, port: ccdPort, message: reqSet, wait: 12 });
+      appendLog("RESP Live(set, single)", respSet);
+      if ((respSet?.ResultCode??0) !== 1000){ throw new Error(respSet?.ErrorMsg || `Live(set) 실패 (${respSet?.ResultCode})`); }
+
+      // 3) 플레이 URL 확정
+      setLiveUrl();
+      setStatus("live"); setMsg(player==="WebRTC" ? "WebRTC 연결" : "HLS 연결");
+    }catch(e){
+      setStatus("error"); setMsg(e?.message || "Live 시작 실패");
+    }
+  }
+
+  async function handleRunStart(){
+    try{
+      setStatus("connecting"); setMsg("Run 시작 요청…");
+      const parse = s => s.split(",").map(x=>x.trim()).filter(Boolean);
+      const act = parse(activeList); const inact = parse(inactiveList);
+      if (act.length===0){ setStatus("error"); setMsg("active 리스트에 1개 이상 필요"); return; }
+      const tk = randTok();
+      const req = {
+        Section1:"Camera", Section2:"Operation", Section3:"Run",
+        SendState:"request", From:"4DPD", To:"CCd", Action:"run",
+        Token: tk, Streaming:true,
+        Status:{ time:Number(timeMs)||1500, synctime:Number(synctimeMs)||2000, syncskip:Boolean(syncskip), synclimit:Number(synclimit)||10, active:act, inactive:inact },
+        delay: act.map(ip=>({ip, delay:0}))
+      };
+      appendLog("REQ Run", req);
+      const resp = await mtdConnect({ host: ccdHost, port: ccdPort, message: req, wait: 15 });
+      appendLog("RESP Run", resp);
+      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Run 실패 (${resp?.ResultCode})`); }
+      // 미리보기: 첫 active 카메라
+      if (!cameraIp && act.length) setCameraIp(act[0]);
+      setLiveUrl();
+      setStatus("live"); setMsg("Run 성공");
+    }catch(e){
+      setStatus("error"); setMsg(e?.message || "Run 시작 실패");
+    }
+  }
+
+  async function handleStop(){
+    try{
+      setMsg("Stop 요청…");
+      const tk = `stop_${Date.now()}`;
+      const cams = (opMode==="Live" && cameraIp) ? [cameraIp] : [];
+      const req = {
+        Section1:"Camera", Section2:"Operation", Section3:"Stop",
+        SendState:"request", From: (opMode==="Live"?"4DOMS":"4DPD"),
+        To:"CCd", Action:"run", Token: tk, DMPDIP:dmpdip, Cameras: cams
+      };
+      appendLog("REQ Stop", req);
+      const resp = await mtdConnect({ host: ccdHost, port: ccdPort, message: req, wait: 8 });
+      appendLog("RESP Stop", resp);
+      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Stop 실패 (${resp?.ResultCode})`); }
+      setPlayUrl(""); setStatus("idle"); setMsg("종료");
+    }catch(e){
+      setStatus("error"); setMsg(e?.message || "Stop 실패");
+    }
+  }
+
+  // 플레이어 탭 바꾸면 URL 재계산
+  useEffect(()=>{ if (status==="live"){ setLiveUrl(); } }, [player, pathName, gwHost, hlsPort, webrtcPort, useHlsPrefix]);
+
+  return (
+    React.createElement(React.Fragment, null,
+      React.createElement("div",{className:"row",style:{justifyContent:"space-between"}},
+        React.createElement("h2",null,"🎥 OMS LiveView"),
+        React.createElement("span",{className:`status ${status}`}, status.toUpperCase())
+      ),
+
+      /* ─ CCd / MediaMTX 설정 ─ */
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"grid"},
+          React.createElement("div",null,
+            React.createElement("label",null,"CCd Host"),
+            React.createElement("input",{value:ccdHost,onChange:e=>setCcdHost(e.target.value.trim())})
+          ),
+          React.createElement("div",null,
+            React.createElement("label",null,"CCd Port"),
+            React.createElement("input",{value:ccdPort,onChange:e=>setCcdPort(parseInt(e.target.value||"0")||19765)})
+          ),
+          React.createElement("div",null,
+            React.createElement("label",null,"DMPDIP"),
+            React.createElement("input",{value:dmpdip,onChange:e=>setDmpdip(e.target.value.trim())})
+          ),
+          React.createElement("div",null,
+            React.createElement("label",null,"Operation"),
+            React.createElement("select",{value:opMode,onChange:e=>setOpMode(e.target.value)},
+              React.createElement("option",null,"Live"),
+              React.createElement("option",null,"Run")
+            )
+          )
+        ),
+        React.createElement("div",{className:"help",style:{marginTop:6}},
+          "Live → From=4DOMS/Action=set · Run → From=4DPD/Action=run"
+        )
+      ),
+
+      /* ─ 플레이어 선택 ─ */
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"tabbar"},
+          React.createElement("div",{className:`tab ${player==="WebRTC"?"active":""}`,onClick:()=>setPlayer("WebRTC")},"WebRTC (저지연, :8889)"),
+          React.createElement("div",{className:`tab ${player==="HLS"?"active":""}`,onClick:()=>setPlayer("HLS")},"HLS (호환, :8888)"),
+          React.createElement("span",{className:"right help"}, msg)
+        ),
+        React.createElement("div",{className:"row",style:{alignItems:"end"}},
+          React.createElement("div",null,
+            React.createElement("label",null,"Gateway Host"),
+            React.createElement("input",{value:gwHost,onChange:e=>setGwHost(e.target.value.trim())})
+          ),
+          player==="HLS" ?
+            React.createElement("div",null,
+              React.createElement("label",null,"HLS Port"),
+              React.createElement("input",{value:hlsPort,onChange:e=>setHlsPort(parseInt(e.target.value||"0")||8888)})
+            )
+          :
+            React.createElement("div",null,
+              React.createElement("label",null,"WebRTC Port"),
+              React.createElement("input",{value:webrtcPort,onChange:e=>setWPort(parseInt(e.target.value||"0")||8889)})
+            ),
+          React.createElement("div",{style:{minWidth:"260px",flex:1}},
+            React.createElement("label",null,"Path Template"),
+            React.createElement("input",{value:pathTpl,onChange:e=>setPathTpl(e.target.value)}),
+            React.createElement("div",{className:"help"},"예) cam_{ip_}  →  10.82.104.11 ⟶ cam_10_82_104_11")
+          ),
+          player==="HLS" && React.createElement("label", {style:{marginBottom:0}},
+            React.createElement("input",{type:"checkbox",checked:useHlsPrefix,onChange:e=>setUseHlsPrefix(e.target.checked)}),
+            "  경로에 ",
+            React.createElement("code",null,"/hls/"),
+            " 접두 사용"
+          )
+        ),
+        React.createElement("div",{className:"urlbar",style:{marginTop:"8px"}},
+          React.createElement("div",{className:"url"},
+            "URL: ",
+            player==="WebRTC" ? computedWebrtc : computedHls
+          ),
+          React.createElement("a",{className:"link",href:(player==="WebRTC"?computedWebrtc:computedHls),target:"_blank",rel:"noreferrer"},"새 탭 열기")
+        ),
+        React.createElement("div",{className:"aspect",style:{marginTop:8}},
+          player==="WebRTC"
+            ? React.createElement("iframe",{src: playUrl || computedWebrtc})
+            : React.createElement("video",{ref:videoRef,controls:true,playsInline:true,muted:true,autoPlay:true})
+        )
+      ),
+
+      /* ─ Live / Run 컨트롤 ─ */
+      React.createElement("div",{className:"card"},
+        opMode==="Live"
+          ? React.createElement(React.Fragment,null,
+              React.createElement("div",{className:"row"},
+                React.createElement("div",{style:{minWidth:"260px",flex:1}},
+                  React.createElement("label",null,"Camera IP"),
+                  React.createElement("input",{placeholder:"10.82.104.11",value:cameraIp,onChange:e=>setCameraIp(e.target.value.trim())})
+                ),
+                React.createElement("button",{onClick:handleLiveStart,disabled:!cameraIp},"Live On"),
+                React.createElement("button",{className:"secondary",onClick:handleStop},"Live Off")
+              )
+            )
+          : React.createElement(React.Fragment,null,
+              React.createElement("div",{className:"row"},
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("label",null,"Active IPs (,로 구분)"),
+                  React.createElement("input",{value:activeList,onChange:e=>setActiveList(e.target.value)})
+                ),
+                React.createElement("div",{style:{flex:1}},
+                  React.createElement("label",null,"Inactive IPs"),
+                  React.createElement("input",{value:inactiveList,onChange:e=>setInactiveList(e.target.value)})
+                )
+              ),
+              React.createElement("div",{className:"row",style:{marginTop:8}},
+                React.createElement("div",null,React.createElement("label",null,"time(ms)"),React.createElement("input",{value:timeMs,onChange:e=>setTimeMs(parseInt(e.target.value||"0")||1500)})),
+                React.createElement("div",null,React.createElement("label",null,"synctime(ms)"),React.createElement("input",{value:synctimeMs,onChange:e=>setSynctimeMs(parseInt(e.target.value||"0")||2000)})),
+                React.createElement("div",null,React.createElement("label",null,"synclimit"),React.createElement("input",{value:synclimit,onChange:e=>setSynclimit(parseInt(e.target.value||"0")||10)})),
+                React.createElement("label",{style:{marginBottom:0}},
+                  React.createElement("input",{type:"checkbox",checked:syncskip,onChange:e=>setSyncskip(e.target.checked)}),
+                  " syncskip"
+                ),
+                React.createElement("button",{onClick:handleRunStart},"Run Start"),
+                React.createElement("button",{className:"secondary",onClick:handleStop},"Stop")
+              )
+            ),
+        React.createElement("div",{className:"help",style:{marginTop:6}}, "상태: ", msg||"-")
+      ),
+
+      /* ─ 로그 ─ */
+      React.createElement("div",{className:"card"},
+        React.createElement("div",{className:"muted"},"Raw Logs (요청/응답)"),
+        React.createElement("textarea",{id:"rawlog",readOnly:true})
+      )
+    )
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(App));
+</script>
+</body>
+</html>

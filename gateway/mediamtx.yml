@@ -1,0 +1,50 @@
+# ──────────────────────────────
+# 로그/기본
+logLevel: info
+
+# ──────────────────────────────
+# RTSP 수신 (카메라 → MediaMTX)
+# ※ 카메라가 UDP RTSP를 허용하면 지연이 더 낮습니다.
+rtsp: yes
+rtspAddress: :8554
+
+# ──────────────────────────────
+# HLS (브라우저 Hls.js 재생용) — LL-HLS 최적화
+hls: yes
+hlsAddress: :8888
+hlsAlwaysRemux: yes
+
+# Low-Latency HLS 튜닝 (가능한 한 낮게)
+hlsVariant: lowLatency
+hlsSegmentDuration: 0.5s      # 세그먼트 0.5s
+hlsPartDuration: 100ms        # 파트 100ms
+
+# ──────────────────────────────
+# WebRTC (브라우저 초저지연 재생용) — <1초 목표
+webrtc: yes
+webrtcAddress: :8889
+# LAN이면 ICE 서버 없어도 동작합니다. 외부망/NAT이면 STUN 추가 권장:
+# webrtcICEServers:
+#   - urls: stun:stun.l.google.com:19302
+#   - urls: stun:stun1.l.google.com:19302
+
+# ──────────────────────────────
+# (선택) RTMP/SRT 꺼도 됩니다. 필요 시 주석 해제
+rtmp: no
+srt: no
+
+# ──────────────────────────────
+# 경로 매핑: RTSP → (온디맨드) → HLS/WebRTC
+paths:
+  cam_10_82_104_11:
+    source: rtsp://10.82.104.11/stream
+    sourceOnDemand: yes
+  cam_10_82_104_12:
+    source: rtsp://10.82.104.12/stream
+    sourceOnDemand: yes
+  cam_10_82_104_13:
+    source: rtsp://10.82.104.13/stream
+    sourceOnDemand: yes
+  cam_10_82_104_14:
+    source: rtsp://10.82.104.14/stream
+    sourceOnDemand: yes
