@@ -183,7 +183,7 @@ const TXT_JSON  = document.getElementById("inputJson");
 const CB_SAN    = document.getElementById("cbSanitize");
 const CB_TOKEN  = document.getElementById("cbAutoToken");
 
-document.getElementById("btnBack").addEventListener("click", ()=> location.href="oms-control.html");
+document.getElementById("btnBack").addEventListener("click", ()=> location.href="oms-system.html");
 document.getElementById("btnClear").addEventListener("click", ()=> {
   TXT_JSON.value=""; RESP_BOX.textContent="-"; REQ_ECHO.textContent="-";
   RESP_META.textContent=""; setRc(null); setPill("Idle"); hideErr();

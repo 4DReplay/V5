@@ -1,0 +1,314 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>4DReplay V5 - OMs System</title>
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" href="images/4dmain.ico" type="image/x-icon">
+  <style>
+    :root{
+      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
+      --th:#0f172a; --line:#243045; --line2:#1f2937;
+      --row-run:#0e2416; --row-stop:#171a1e;
+      --badge-ok:#1f9d48; --badge-bad:#b83a3a;
+      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+    }
+    html,body{height:100%}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
+    h2 small{font-size:14px;color:var(--muted)}
+    .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
+    table{border-collapse:collapse;width:100%}
+    th,td{border:1px solid var(--line);padding:10px}
+    th{background:var(--th);text-align:left}
+    tr.running td{ background:var(--row-run); }
+    tr.other   td{ background:var(--row-stop); }
+    .pill{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;line-height:1;font-weight:500;letter-spacing:.3px;background:transparent}
+    .badge-ok { color:#22c55e;border-color:var(--badge-ok); }
+    .badge-bad{ color:#f87171;border-color:var(--badge-bad); }
+    .pill-ok{ color:#22c55e;border-color:var(--ok); }
+    .pill-bad{ color:#f87171;border-color:var(--bad); }
+    .pill-warn{ color:#fbbf24;border-color:var(--warn); }
+    .muted{color:var(--muted)}
+    button{background:var(--btn);color:#fff;border:0;border-radius:14px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
+    .btn-secondary{ background:var(--btn2); }
+    button:hover{ filter:brightness(1.08) }
+    .toolbar button{ border-radius:12px; padding:10px 16px }
+    a.node{color:#93c5fd;text-decoration:none}
+    a.node:hover{text-decoration:underline}
+    .spacer{flex:1}
+    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
+    #busyMsg{margin-left:8px;opacity:.9}
+    #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
+
+    /* sequence panel */
+    .panel{margin-top:18px;border:1px solid var(--line2);border-radius:12px;padding:12px;background:#0b1220}
+    .kv{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}
+    textarea{width:100%;height:180px;resize:vertical;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px ui-monospace,monospace;}
+    pre{white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:280px;overflow:auto}
+    .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+  <h2>
+    <span>4DReplay V5 - OMs System</span>
+    <small id="meta"></small>
+  </h2>
+
+  <div class="toolbar">
+    <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
+    <small id="busyMsg"></small>
+    <span class="spacer"></span>
+    <label class="chip"><input type="checkbox" id="cbOnlySelected" checked> only selected</label>
+    <span class="chip" id="hb">poll -</span>
+  </div>
+
+  <div id="err"></div>
+
+  <!-- grid -->
+  <table id="grid">
+    <thead>
+      <tr>
+        <th>Node</th>
+        <th>Process</th>
+        <th>Version</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <p class="muted" style="margin-top:10px">
+    Tip: Logs are reachable via OMS proxy (<code>/proxy/&lt;node&gt;/…</code>).
+  </p>
+
+  <!-- sequence panel -->
+  <div class="panel">
+    <h3 style="margin:0 0 8px">Connect Sequence (one-by-one via /oms/mtd-connect)</h3>
+    <div class="kv">
+      <span>MTd Host</span>
+      <input id="seqHost" type="text" placeholder="10.82.x.x or hostname">
+      <span>MTd Port</span>
+      <input id="seqPort" type="number" min="1" max="65535" value="19765">
+      <span>DMPDIP</span>
+      <input id="seqMgmtIP" type="text" placeholder="127.0.0.1">
+    </div>
+
+    <div class="btn-row" style="margin:8px 0">
+      <label class="chip"><input type="checkbox" id="seqAutoToken" checked> Auto Token</label>
+      <label class="chip"><input type="checkbox" id="seqSanitize" checked> Sanitize DaemonList</label>
+      <label class="chip"><input type="checkbox" id="seqDryRun"> Dry-Run</label>
+      <button id="btnSeqFillFromList" class="btn-secondary">🧩 Fill from List</button>
+      <span class="spacer"></span>
+      <span id="seqStatus" class="pill">Idle</span>
+    </div>
+
+    <div class="kv">
+      <span>Daemon Map (JSON)</span>
+      <textarea id="seqDaemonMap" spellcheck="false" placeholder='{
+  "EMd": "10.82.104.210",
+  "CCd": "10.82.104.210",
+  "SCd": "10.82.104.210",
+  "GCd": "10.82.104.210",
+  "PCd": "10.82.104.210",
+  "SPd": "10.82.104.213",
+  "AId": "10.82.104.215"
+}'></textarea>
+    </div>
+
+    <div class="btn-row" style="margin-top:8px">
+      <button id="btnSeqStart">🚀 Run Sequence</button>
+      <button id="btnSeqAbort" class="btn-secondary">⛔ Abort</button>
+      <span class="spacer"></span>
+      <button id="btnCopySeqLog" class="btn-secondary">📋 Copy Log</button>
+      <button id="btnSaveSeqLog" class="btn-secondary">💾 Save Log</button>
+    </div>
+
+    <h4 style="margin:12px 0 6px">Progress</h4>
+    <pre id="seqLog">-</pre>
+  </div>
+
+  <script>
+    // ===== util & grid rendering =====
+    const DEBUG=false;
+    const TBody=document.querySelector("#grid tbody");
+    const HB=document.getElementById("hb");
+    const META=document.getElementById("meta");
+    const BUSY=document.getElementById("busyMsg");
+    const ERR=document.getElementById("err");
+    const CB_ONLY=document.getElementById("cbOnlySelected");
+    const BTN_RELOAD=document.getElementById("btnReload");
+    const BTN_CONFIG=document.getElementById("btnConfig");
+    const BTN_RA=document.getElementById("omsRestartAll");
+    let lastData=null;
+
+    async function api(path, init={}) {
+      const res = await fetch(path, { cache:"no-store", ...init });
+      const ct = res.headers.get("content-type") || "";
+      const isJson = ct.includes("application/json");
+      const body = isJson ? await res.json().catch(()=>({})) : await res.text().catch(()=> "");
+      if (!res.ok) throw new Error(isJson ? (body.error||`HTTP ${res.status}`) : (body||`HTTP ${res.status}`));
+      return body;
+    }
+    function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
+    function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
+    function setBusy(on,msg=""){ BUSY.textContent=msg||""; BTN_RELOAD.disabled=on; BTN_CONFIG.disabled=on; BTN_RA.disabled=on; }
+
+    function toProcList(status){
+      if (!status) return [];
+      if (status.data && typeof status.data==="object") return Object.values(status.data);
+      if (Array.isArray(status.processes)) return status.processes;
+      if (Array.isArray(status.executables)) return status.executables;
+      return [];
+    }
+    function nodeCellHtml(n,i,total){
+      const href = `/proxy/${encodeURIComponent(n.name)}/dms-control.html`;
+      return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${total?` (${i+1}/${total})`:""}</span>`;
+    }
+
+    // ▼ 추가: extra.* 를 프로세스들에 반영
+    function applyOverlays(data){
+      const extra = (data && data.extra) || {};
+      const verMap = extra.versions || {};                 // { EMd:{version,date}, MTd:{...}, MMd:{...}, ... }
+      const presdVer = extra.presd_versions || {};         // { "10.82.104.211":{version,date}, ... }
+      const conn = extra.connected_daemons || {};          // { EMd:true, SPd:true, PreSd:true, ... }
+      const presdIps = extra.presd_ips || [];              // ["10.82.104.211", "10.82.104.212"]
+
+      const nodes = Array.isArray(data.nodes) ? data.nodes : [];
+
+      // 상태/프로세스 접근 유틸
+      const toList = (status)=>{
+        if (!status) return [];
+        if (status.data && typeof status.data==="object") return Object.values(status.data);
+        if (Array.isArray(status.processes)) return status.processes;
+        if (Array.isArray(status.executables)) return status.executables;
+        return [];
+      };
+
+      for (const n of nodes){
+        const procs = toList(n.status);
+        for (const p of procs){
+          if (!p || !p.name) continue;
+
+          // ---- 버전 오버레이 ----
+          // 1) PreSd는 IP별 버전을 우선 매칭
+          const ip = p.ip || p.IP || p.addr || p.address || "";
+          if (p.name === "PreSd" && ip && presdVer[ip]){
+            p.version = presdVer[ip].version || "-";
+            p.version_date = presdVer[ip].date || "-";
+          }
+          // 2) MMd는 서버가 SPd에서 받아 저장하므로 MMd 키로 주입
+          else if (p.name === "MMd" && verMap.MMd){
+            p.version = verMap.MMd.version || "-";
+            p.version_date = verMap.MMd.date || "-";
+          }
+          // 3) 일반 데몬(EMd/MTd/CCd/SCd/PCd/GCd/SPd 등)
+          else if (verMap[p.name]){
+            p.version = verMap[p.name].version || "-";
+            p.version_date = verMap[p.name].date || "-";
+          }
+
+          // ---- 연결 상태 오버레이 ----
+          // SPd가 OK면 MMd/MMc까지 CONNECTED 처리
+          if (conn.SPd && (p.name==="MMd" || p.name==="MMc")){
+            p.connection_state = "CONNECTED";
+          }
+          // PreSd OK면 presd_ips가 있으면 해당 IP만, 없으면 전체 PreSd를 CONNECTED
+          if (conn.PreSd && p.name==="PreSd"){
+            if (!presdIps.length || (ip && presdIps.includes(ip))){
+              p.connection_state = "CONNECTED";
+            }
+          }
+          // 그 외 키들은 같은 이름의 데몬에 직접 반영 (예: EMd, CCd 등)
+          if (conn[p.name]){
+            p.connection_state = "CONNECTED";
+          }
+        }
+      }
+    }
+
+    function render(data){
+      // ▼ 추가: 서버가 보관 중인 버전/연결 정보를 프로세스 리스트에 주입
+      applyOverlays(data);
+      lastData=data; HB.textContent = `poll ${data.heartbeat_interval_sec||"-"}s`;
+      const nodes = Array.isArray(data.nodes)? data.nodes : [];
+      META.textContent = `nodes: ${nodes.length}`;
+      TBody.innerHTML="";
+      if (nodes.length===0){
+        TBody.innerHTML = `<tr class="other"><td colspan="5" class="muted">no nodes</td></tr>`; return;
+      }
+      for(let i=0;i<nodes.length;i++){
+        const n=nodes[i];
+        const all=toProcList(n.status);
+        const shown = CB_ONLY.checked ? all.filter(p=>p&&p.select===true) : all;
+        if (!n.status || all.length===0){
+          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,i,nodes.length)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
+        }
+        if (shown.length===0){
+          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,i,nodes.length)}</td><td colspan="4" class="muted">no selected processes</td></tr>`); continue;
+        }
+        for(const p of shown){
+          const running=!!p.running;
+          const conn=(p.connection_state||"").toUpperCase();
+          const badge = conn==="CONNECTED" ? `<span class="pill badge-ok">CONNECTED</span>` :
+                        conn==="STOPPED"   ? `<span class="pill badge-bad">STOPPED</span>` :
+                        (running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`);
+
+          // ▼ Version 표시(서버 오버레이 값 사용)
+          const verHtml = (p.version || p.version_date)
+            ? `${(p.version||"-")}<br><span class="muted">${(p.version_date||"-")}</span>`
+            : `<span class="muted">-<br>-</span>`;
+
+          TBody.insertAdjacentHTML("beforeend", `
+            <tr class="${running?'running':'other'}">
+              <td>${nodeCellHtml(n,i,nodes.length)}</td>
+              <td>${p.name||"-"}${p.alias?`<br><span class="muted">${p.alias}</span>`:""}</td>
+              <td>${verHtml}</td>
+              <td>${badge}</td>
+              <td>
+                <button class="btn-secondary" data-a="logs"  data-node="${n.name}" data-proc="${p.name}">📜 Logs</button>
+              </td>
+            </tr>`);
+        }
+      }
+    }
+
+    async function reloadNow(){
+      try{ setBusy(true,"RELOAD..."); clearErr(); render(await api("/oms/status")); }
+      catch(e){ showErr(e.message||e); }
+      finally{ setBusy(false); }
+    }
+    BTN_RELOAD.onclick = reloadNow;
+    BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
+    BTN_RA.onclick = async ()=>{
+      try{ setBusy(true,"RESTART-ALL..."); await api("/oms/connect/clear", {method:"POST"}); await reloadNow(); }
+      catch(e){ showErr(e.message||e); }
+      finally{ setBusy(false); }
+    };
+    document.querySelector("#grid tbody").addEventListener("click", ev=>{
+      const b=ev.target.closest("button"); if(!b) return;
+      if (b.dataset.a==="logs"){
+        const url = `/web/log-viewer.html?node=${encodeURIComponent(b.dataset.node)}&name=${encodeURIComponent(b.dataset.proc)}`;
+        window.open(url,"_blank");
+      }
+    });
+
+    // 페이지 초기화
+    reloadNow(); setInterval(()=>reloadNow().catch(()=>{}), 3000);
+  </script>
+
+  <!-- 시퀀스 러너 로딩 & 초기화 -->
+  <script src="/web/oms-sequence.js" defer></script>
+  <script>
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof window.initOmsSequence !== 'function') {
+        console.error('initOmsSequence not found'); return;
+      }
+      window.initOmsSequence({});
+    });
+  </script>
+</body>
+</html>

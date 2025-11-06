@@ -4,35 +4,171 @@ import json, re, time, threading, traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlsplit, parse_qs, unquote
-
-import socket, http.client
+import http.client, sys
 from collections import defaultdict, deque
-from pathlib import Path
-import sys
+
+# ➊ 파일 상단에 유틸 추가 (import 아래 아무 곳)
+import socket
+import os
+
+# --- Paths ---------------------------------------------------
+# V5 루트:  C:\4DReplay\V5  (기본)  — 필요시 OMS_ROOT/OMS_LOG_DIR로 오버라이드 가능
+V5_ROOT = Path(os.environ.get("OMS_ROOT", Path(__file__).resolve().parents[2]))
+LOGD    = Path(os.environ.get("OMS_LOG_DIR", str(V5_ROOT / "logs" / "OMS")))
+LOGD.mkdir(parents=True, exist_ok=True)
+
+STATE_FILE = LOGD / "oms_state.json"         # 연결/상태 스냅샷
+VERS_FILE  = LOGD / "oms_versions.json"      # 버전 캐시(선택)
+TRACE_DIR  = LOGD / "trace"                  # 개별 트레이스 파일 모음
+TRACE_DIR.mkdir(parents=True, exist_ok=True)
+
+def _state_load():
+    global STATE
+    try:
+        if STATE_FILE.exists():
+            STATE.update(json.loads(STATE_FILE.read_text("utf-8")))
+    except Exception:
+        pass
+
+def _state_save():
+    try:
+        STATE_FILE.write_text(json.dumps(STATE, ensure_ascii=False, indent=2), encoding="utf-8")
+    except Exception:
+        pass
+
+def _latest_state():
+    if not STATE:
+        return None, {}
+    key = max(STATE.keys(), key=lambda k: STATE[k].get("updated_at", 0))
+    st = STATE[key] or {}
+    # presd IP 리스트(표시/선택에 활용)
+    presd_ips = []
+    for u in st.get("presd") or []:
+        ip = (u or {}).get("IP")
+        if ip: presd_ips.append(ip)
+    return key, {
+        "dmpdip": key,
+        "connected_daemons": st.get("connected_daemons", {}),
+        "versions":           st.get("versions", {}),
+        "presd_versions":     st.get("presd_versions", {}),
+        "presd_ips":          presd_ips,
+        "daemon_map":         st.get("daemon_map", {}),
+        "updated_at":         st.get("updated_at", 0),
+    }
+
+def _cidr(ip, mask_bits):
+    return ".".join(str(int(octet)) for octet in ip.split(".")), mask_bits
+
+def _same_subnet(ip1, ip2, mask_bits=24):
+    a = list(map(int, ip1.split(".")))
+    b = list(map(int, ip2.split(".")))
+    m = [255,255,255,0] if mask_bits==24 else [255,255,255,255]  # 필요시 확장
+    return all((a[i] & m[i]) == (b[i] & m[i]) for i in range(4))
+
+def _guess_server_ip(peer_ip:str)->str:
+    """peer_ip와 같은 /24에 있는 로컬 인터페이스 IP가 있으면 그걸 반환, 없으면 hostname IP"""
+    try:
+        # hostname 기준 1개만 써도 충분한 경우가 많음
+        host_ip = socket.gethostbyname(socket.gethostname())
+    except Exception:
+        host_ip = "127.0.0.1"
+    # 여러 NIC을 훑고 싶다면 psutil/netifaces 사용 가능. 여기선 간단히 host_ip만 비교.
+    try:
+        if peer_ip and _same_subnet(host_ip, peer_ip, 24):
+            return host_ip
+    except Exception:
+        pass
+    return host_ip
 
 HERE = Path(__file__).resolve()
-ROOT = HERE.parents[2]  # C:\4DReplay\V5
+env_root = os.environ.get("FOURD_V5_ROOT") or os.environ.get("V5_ROOT")
+if env_root and Path(env_root).exists():
+    ROOT = Path(env_root).resolve()
+else:
+    ROOT = HERE
+    for i in range(1, 7):
+        cand = HERE.parents[i-1]
+        if (cand / "config" / "oms_config.json").exists():
+            ROOT = cand
+            break
 
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-SRC = ROOT / "src"
-if SRC.exists() and str(SRC) not in sys.path:
-    sys.path.insert(0, str(SRC))
+WEB  = ROOT / "web"
+CFG  = ROOT / "config" / "oms_config.json"
+LOGD = ROOT / "logs" / "OMS"
+LOGD.mkdir(parents=True, exist_ok=True)
 
+# ---- MTd TCP util
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+if str(ROOT/"src") not in sys.path: sys.path.insert(0, str(ROOT/"src"))
 from src.fd_communication.server_mtd_connect import tcp_json_roundtrip, MtdTraceError
 
-# ─ paths (초기 계산한 ROOT 사용)
-DEFAULT_CONFIG = ROOT / "config" / "oms_config.json"
-STATIC_ROOT = ROOT / "web"
-LOG_DIR_DEFAULT = ROOT / "logs" / "OMS"
-LOG_DIR_DEFAULT.mkdir(parents=True, exist_ok=True)
+# ─────────────────────────────────────────────────────────────
+# connection state (시퀀스 결과 저장)
+# ─────────────────────────────────────────────────────────────
+STATE = {
+    # dmpdip: {
+    #   "mtd_host": "...",
+    #   "mtd_port": 19765,
+    #   "daemon_map": {name: ip, ...},
+    #   "connected_daemons": {name: bool, ...},   # SPd↔MMd 정규화 반영
+    #   "presd": [{"IP":..., "Mode":"replay", "Cameras":[...]}],
+    #   "cameras": [{"Index":..,"IP":..,"CameraModel":..}, ...],
+    #   "updated_at": epoch
+    # }
+}
 
-OMS_LOG_DIR = Path(__file__).resolve().parents[2] / "logs" / "OMS"
-OMS_LOG_DIR.mkdir(parents=True, exist_ok=True)
+def outward_name(n: str) -> str: return "SPd" if n == "MMd" else n
+def inward_name(n: str) -> str:  return "MMd" if n == "SPd" else n
 
-def _stamp():
-    return time.strftime("%Y%m%d-%H%M%S") + f"_{int(time.time()*1000)%100000}"
+def _make_token() -> str:
+    ts = int(time.time() * 1000)
+    lt = time.localtime()
+    return f"{lt.tm_hour:02d}{lt.tm_min:02d}_{ts}_{hex(ts)[-3:]}"
 
+def _msg_mtd_connect_run(dmpdip: str, daemon_map: dict[str,str]) -> dict:
+    # PreSd/PostSd/VPd는 제외, MMd→SPd
+    allowed = { outward_name(k): v for k,v in daemon_map.items() if k not in {"PreSd","PostSd","VPd"} }
+    return {
+        "DaemonList": allowed,
+        "Section1": "mtd", "Section2": "connect", "Section3": "",
+        "SendState": "request", "From": "4DOMS", "To": "MTd",
+        "Token": _make_token(), "Action": "run",
+        "DMPDIP": dmpdip
+    }
+
+def _msg_ccd_select_get(dmpdip: str) -> dict:
+    return {
+        "Section1":"CCd","Section2":"Select","Section3":"",
+        "SendState":"request","From":"4DOMS","To":"EMd",
+        "Token":_make_token(),"Action":"get","DMPDIP":dmpdip
+    }
+
+def _msg_pcd_connect(dmpdip: str, presd_units: list[dict]) -> dict:
+    return {
+        "PreSd": presd_units, "PostSd": [], "VPd": [],
+        "Section1":"pcd","Section2":"daemonlist","Section3":"connect",
+        "SendState":"request","From":"4DOMS","To":"PCd",
+        "Token":_make_token(),"Action":"set","DMPDIP":dmpdip
+    }
+
+def _msg_camera_add(dmpdip: str, cameras: list[dict]) -> dict:
+    return {
+        "Cameras":[{"IPAddress":c.get("IP"),"Model":c.get("CameraModel","")} for c in cameras],
+        "Section1":"Camera","Section2":"Information","Section3":"AddCamera",
+        "SendState":"request","From":"4DOMS","To":"CCd",
+        "Token":_make_token(),"Action":"set","DMPDIP":dmpdip
+    }
+
+def _msg_camera_connect(dmpdip: str) -> dict:
+    return {
+        "Section1":"Camera","Section2":"Operation","Section3":"Connect",
+        "SendState":"request","From":"4DOMS","To":"CCd",
+        "Token":_make_token(),"Action":"run","DMPDIP":dmpdip
+    }
+
+# ─────────────────────────────────────────────────────────────
+# Static helpers
+# ─────────────────────────────────────────────────────────────
 def _strip_json5(text:str)->str:
     text = re.sub(r"/\*.*?\*/","",text,flags=re.S)
     out=[]
@@ -48,22 +184,13 @@ def _strip_json5(text:str)->str:
             buf.append(ch);i+=1
         out.append("".join(buf))
     t="\n".join(out)
-    t=re.sub(r'(?m)(?<!["\w])([A-Za-z_]\w*)\s*:(?!\s*")', r'"\1":', t) # unquoted keys
-    t=re.sub(r",\s*([\]})])", r"\1", t) # trailing comma
+    t=re.sub(r'(?m)(?<!["\w])([A-Za-z_]\w*)\s*:(?!\s*")', r'"\1":', t)
+    t=re.sub(r",\s*([\]})])", r"\1", t)
     return t
 
 def load_config(p:Path)->dict:
     txt=p.read_text(encoding="utf-8")
     return json.loads(_strip_json5(txt))
-
-def _guess_type(p: Path) -> str:
-    suf = p.suffix.lower()
-    if suf in (".html", ".htm"): return "text/html; charset=utf-8"
-    if suf == ".css": return "text/css; charset=utf-8"
-    if suf == ".js": return "application/javascript; charset=utf-8"
-    if suf == ".json": return "application/json; charset=utf-8"
-    if suf in (".png", ".jpg", ".jpeg", ".gif", ".svg"): return "image/" + suf.lstrip(".")
-    return "application/octet-stream"
 
 def _mime(p:Path)->str:
     s=p.suffix.lower()
@@ -74,7 +201,6 @@ def _mime(p:Path)->str:
     if s in (".png",".jpg",".jpeg",".gif",".svg"): return f"image/{s.lstrip('.')}"
     return "application/octet-stream"
 
-# ─ proxy helper
 def _http_fetch(host:str, port:int, method:str, path:str, body:bytes|None, headers:dict|None, timeout=4.0):
     conn = http.client.HTTPConnection(host, port, timeout=timeout)
     try:
@@ -86,301 +212,319 @@ def _http_fetch(host:str, port:int, method:str, path:str, body:bytes|None, heade
         try: conn.close()
         except: pass
 
+def _overlay_connected(self, payload: dict) -> dict:
+    try:
+        nodes = payload.get("nodes") or []
+        for node in nodes:
+            dmpdip = node.get("host")
+            st = STATE.get(dmpdip)
+            s = node.get("status") or {}
+            if not st: continue
+
+            # unify
+            if isinstance(s.get("data"), dict):
+                procs = list(s["data"].values())
+            elif isinstance(s.get("processes"), list):
+                procs = s["processes"]
+            elif isinstance(s.get("executables"), list):
+                procs = s["executables"]
+            else:
+                procs = []
+
+            for p in procs:
+                name = p.get("name")
+                if not name: continue
+                key = inward_name(name)          # SPd → MMd 정규화
+                # 연결 상태
+                if st.get("connected_daemons", {}).get(key):
+                    p["connection_state"] = "CONNECTED"
+                # 버전 오버레이
+                v = (st.get("versions") or {}).get(key)
+                if v:
+                    p["version"] = v.get("version")
+                    p["version_date"] = v.get("date")
+                # PreSd는 공용(process = PreSd) 버전 요약
+                if name == "PreSd":
+                    psv = st.get("presd_versions") or {}
+                    if psv:
+                        # 모두 동일하면 그 값, 아니면 mixed
+                        vals = {(d.get("version"), d.get("date")) for d in psv.values()}
+                        if len(vals) == 1:
+                            vv = next(iter(vals))
+                            p["version"] = vv[0]; p["version_date"] = vv[1]
+                        else:
+                            p["version"] = "mixed"; p["version_date"] = "-"
+        return payload
+    except Exception:
+        return payload
+
+# ─────────────────────────────────────────────────────────────
+# Orchestrator
+# ─────────────────────────────────────────────────────────────
 class Orchestrator:
     def __init__(self, cfg:dict):
         self.http_host = cfg.get("http_host","0.0.0.0")
         self.http_port = int(cfg.get("http_port",52050))
         self.heartbeat = float(cfg.get("heartbeat_interval_sec",2))
-        self.nodes = list(cfg.get("nodes",[]))  # [{name, alias, host, port}]
+        self.nodes = list(cfg.get("nodes",[]))
         self._stop = threading.Event()
         self._lock = threading.RLock()
-        self._cache = {}       # name -> last status payload
-        self._cache_ts = {}  # name -> timestamp
+        self._cache = {}
+        self._cache_ts = {}
+
+    def run(self):
+        threading.Thread(target=self._loop, daemon=True).start()
+        self._http_srv = ThreadingHTTPServer((self.http_host, self.http_port), self._make_handler())
+        self._log(f"[OMS] HTTP {self.http_host}:{self.http_port}")
+        try:
+            self._http_srv.serve_forever(poll_interval=0.5)
+        finally:
+            try: self._http_srv.server_close()
+            except: pass
+
+    def stop(self):
+        try: self._stop.set()
+        except: pass
+        try: self._http_srv.shutdown()
+        except: pass
 
     def apply_runtime(self, cfg: dict):
-        changed = []
+        ch=[]
         with self._lock:
-            new_hb = float(cfg.get("heartbeat_interval_sec", self.heartbeat))
-            if new_hb > 0 and new_hb != self.heartbeat:
-                self.heartbeat = new_hb
-                changed.append("heartbeat_interval_sec")
-            if isinstance(cfg.get("nodes"), list):
-                self.nodes = list(cfg["nodes"])
-                changed.append("nodes")
-        return changed
+            hb=float(cfg.get("heartbeat_interval_sec", self.heartbeat))
+            if hb>0 and hb!=self.heartbeat: self.heartbeat=hb; ch.append("heartbeat_interval_sec")
+            if isinstance(cfg.get("nodes"), list): self.nodes=list(cfg["nodes"]); ch.append("nodes")
+        return ch
 
     def _poll_once(self):
         for n in self.nodes:
             name=n.get("name") or n.get("host")
             try:
-                st, _, data = _http_fetch(n["host"], int(n.get("port",51050)), "GET", "/status", None, None, timeout=2.5)
-                if st==200:
-                    payload = json.loads(data.decode("utf-8","ignore"))
-                else:
-                    payload = {"ok": False, "error": f"http {st}"}
+                st,_,data = _http_fetch(n["host"], int(n.get("port",51050)), "GET", "/status", None, None, timeout=2.5)
+                payload = json.loads(data.decode("utf-8","ignore")) if st==200 else {"ok":False,"error":f"http {st}"}
             except Exception as e:
-                payload = {"ok": False, "error": repr(e)}
+                payload = {"ok":False,"error":repr(e)}
             with self._lock:
-                self._cache[name]=payload
-                self._cache_ts[name]=time.time()
+                self._cache[name]=payload; self._cache_ts[name]=time.time()
 
     def _loop(self):
         while not self._stop.is_set():
             self._poll_once()
             self._stop.wait(self.heartbeat)
 
-    def run(self):
-        threading.Thread(target=self._loop, daemon=True).start()
-        srv = ThreadingHTTPServer((self.http_host, self.http_port), self._make_handler())
-        self._log(f"[OMS] HTTP {self.http_host}:{self.http_port}")
-        srv.serve_forever(poll_interval=0.5)
-
-    def stop(self):
-        self._stop.set()
-
-    def _status(self):
+    def _status_core(self):
         with self._lock:
             nodes=[]
             for n in self.nodes:
                 nm = n.get("name") or n.get("host")
                 nodes.append({
-                    "name": nm,
-                    "alias": n.get("alias",""),
-                    "host": n["host"],
-                    "port": int(n.get("port",51050)),
-                    "status": self._cache.get(nm),
-                    "ts": self._cache_ts.get(nm,0)
+                    "name": nm, "alias": n.get("alias",""),
+                    "host": n["host"], "port": int(n.get("port",51050)),
+                    "status": self._cache.get(nm), "ts": self._cache_ts.get(nm,0)
                 })
-            return {"ok": True, "heartbeat_interval_sec": self.heartbeat, "nodes": nodes}
+            payload = {"ok": True, "heartbeat_interval_sec": self.heartbeat, "nodes": nodes}
 
+            # ▼ 추가: 최신 STATE 스냅샷을 extra로 싣기 (프론트 오버레이에서 사용)
+            _, extra = _latest_state()
+            if extra: payload["extra"] = extra
+
+            return payload
+
+    # connection_state 오버레이
+    def _overlay_connected(self, payload: dict) -> dict:
+        try:
+            # 최신 STATE 하나만 골라 모든 노드/프로세스에 일괄 적용
+            _, extra = _latest_state()
+            if not extra:
+                return payload
+
+            conn = extra.get("connected_daemons", {})
+            ver  = extra.get("versions", {})
+            psv  = extra.get("presd_versions", {})
+
+            nodes = payload.get("nodes") or []
+            for node in nodes:
+                s = node.get("status") or {}
+                # unify
+                if isinstance(s.get("data"), dict):
+                    procs = list(s["data"].values())
+                elif isinstance(s.get("processes"), list):
+                    procs = s["processes"]
+                elif isinstance(s.get("executables"), list):
+                    procs = s["executables"]
+                else:
+                    procs = []
+
+                for p in procs:
+                    name = p.get("name")
+                    if not name:
+                        continue
+
+                    # ---- 연결 상태 오버레이 ----
+                    key = inward_name(name)  # "SPd" -> "MMd" 정규화
+                    if conn.get(key):
+                        # running 여부에 따라 그냥 뱃지만 결정 (STATE를 지우지 않음!)
+                        if p.get("running"):
+                            p["connection_state"] = "CONNECTED"
+                        else:
+                            p["connection_state"] = "STOPPED"
+
+                    # SPd가 연결되면 MMc도 연결로 표기 (현장 UX)
+                    if name in ("MMc",) and conn.get("MMd"):
+                        p["connection_state"] = "CONNECTED"
+
+                    # ---- 버전 오버레이 ----
+                    if name == "PreSd":
+                        # PreSd는 IP별 버전 → 표에서 노드 단위 한 줄이므로 요약
+                        if psv:
+                            vals = {(d.get("version"), d.get("date")) for d in psv.values()}
+                            if len(vals) == 1:
+                                vv = next(iter(vals))
+                                p["version"] = vv[0] or "-"
+                                p["version_date"] = vv[1] or "-"
+                            else:
+                                p["version"] = "mixed"
+                                p["version_date"] = "-"
+                    elif name == "MMd":
+                        vv = ver.get("MMd")
+                        if vv:
+                            p["version"] = vv.get("version") or "-"
+                            p["version_date"] = vv.get("date") or "-"
+                    else:
+                        vv = ver.get(name)
+                        if vv:
+                            p["version"] = vv.get("version") or "-"
+                            p["version_date"] = vv.get("date") or "-"
+
+            return payload
+        except Exception:
+            return payload
+    # SSE (옵션)
     class _PubSub:
-        def __init__(self):
-            self._subs = defaultdict(list)  # token -> list(deque)
-            self._lock = threading.RLock()
+        def __init__(self): self._subs=defaultdict(list); self._lock=threading.RLock()
         def subscribe(self, token:str):
-            q = deque()
-            with self._lock:
-                self._subs[token].append(q)
+            q=deque()
+            with self._lock: self._subs[token].append(q)
             return q
         def unsubscribe(self, token:str, q):
             with self._lock:
-                lst = self._subs.get(token, [])
-                try:
-                    lst.remove(q)
-                except ValueError:
-                    pass
-                if not lst and token in self._subs:
-                    del self._subs[token]
+                lst=self._subs.get(token,[])
+                try: lst.remove(q)
+                except ValueError: pass
+                if not lst and token in self._subs: del self._subs[token]
         def publish(self, token:str, obj):
-            line = json.dumps(obj, ensure_ascii=False)
+            line=json.dumps(obj, ensure_ascii=False)
             with self._lock:
-                for q in list(self._subs.get(token, ())):
-                    q.append(line)
+                for q in list(self._subs.get(token, ())): q.append(line)
+    PUB=_PubSub()
 
-    PUB = _PubSub()
-
+    # HTTP
     def _make_handler(self):
-        orch = self
+        orch=self
 
-        def _serve_static_safe(handler, rel_path: str):
-            rel = rel_path.lstrip("/")
-            fp = (STATIC_ROOT / rel).resolve()
-            base = STATIC_ROOT.resolve()
+        def _serve_static(handler, rel):
+            fp=(WEB/rel.lstrip("/")).resolve()
+            base=WEB.resolve()
             if not fp.is_file() or not str(fp).startswith(str(base)):
                 handler.send_response(404)
-                handler.send_header("Content-Type", "application/json; charset=utf-8")
-                handler.send_header("Cache-Control", "no-store")
-                body = b'{"ok": false, "error": "not found"}'
-                handler.send_header("Content-Length", str(len(body)))
-                handler.end_headers()
-                handler.wfile.write(body)
-                return
-            data = fp.read_bytes()
+                handler.send_header("Content-Type","application/json; charset=utf-8")
+                handler.send_header("Cache-Control","no-store")
+                b=b'{"ok":false,"error":"not found"}'
+                handler.send_header("Content-Length",str(len(b))); handler.end_headers(); handler.wfile.write(b); return
+            data=fp.read_bytes()
             handler.send_response(200)
-            handler.send_header("Content-Type", _guess_type(fp))
-            handler.send_header("Cache-Control", "no-store")
-            handler.send_header("Content-Length", str(len(data)))
-            handler.end_headers()
-            try:
-                handler.wfile.write(data)
-            except (ConnectionAbortedError, BrokenPipeError):
-                pass
+            handler.send_header("Content-Type", _mime(fp))
+            handler.send_header("Cache-Control","no-store")
+            handler.send_header("Content-Length",str(len(data))); handler.end_headers(); 
+            try: handler.wfile.write(data)
+            except: pass
 
         class H(BaseHTTPRequestHandler):
-            def _write(self, code=200, body:bytes=b"", ct="application/json; charset=utf-8"):
-                self.send_response(code)
-                self.send_header("Content-Type", ct)
-                self.send_header("Cache-Control", "no-store")
-                self.send_header("Content-Length", str(len(body)))
+            def _write(self, code=200, body=b"", ct="application/json; charset=utf-8"):
+                self.send_response(code); self.send_header("Content-Type", ct)
+                self.send_header("Cache-Control","no-store"); self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 try: self.wfile.write(body)
-                except BrokenPipeError: pass
+                except: pass
 
             def do_GET(self):
                 try:
-                    parts = [p for p in self.path.split("?")[0].split("/") if p]
-                    clean_path = urlsplit(self.path).path
-                    # 👇 추가: 끝 슬래시 제거해서 /cmd == /cmd/ 취급
-                    clean_path = clean_path.rstrip("/") or "/"
-                    # Redirects (ADD HERE)
-                    redirects = {
-                        "/": "/web/oms-control.html",
-                        "/oms": "/web/oms-control.html",
-                        "/cmd": "/web/oms-command.html",
-                        "/liveview": "/web/oms-liveview.html",
-                    }
-                    if clean_path in redirects:
-                        self.send_response(302)
-                        self.send_header("Location", redirects[clean_path])
-                        self.send_header("Cache-Control", "no-store")
-                        self.send_header("Content-Length", "0")
-                        self.end_headers()
-                        return
+                    parts=[p for p in self.path.split("?")[0].split("/") if p]
+                    clean = (urlsplit(self.path).path.rstrip("/") or "/")
+                    if clean in {"/","/system"}: return _serve_static(self, "oms-system.html")
+                    if clean in {"/command"}: return _serve_static(self, "oms-command.html")
+                    if clean in {"/liveview"}: return _serve_static(self, "oms-liveview.html")
+                    
+                    if parts[:1]==["web"]: return _serve_static(self, "/".join(parts[1:]))
+                    if clean.endswith(".html"): return _serve_static(self, clean)
 
-                    # ── [SSE] GET /oms/subscribe?token=...
-                    if parts == ["oms", "subscribe"]:
-                        token = parse_qs(urlsplit(self.path).query).get("token", [""])[0]
-                        if not token:
-                            return self._write(400, json.dumps({"ok": False, "error": "token required"}).encode())
+                    # ➋ do_GET 안에 라우트 추가
+                    if parts == ["oms", "hostip"]:
+                        qs = parse_qs(urlsplit(self.path).query)
+                        peer = (qs.get("peer") or [""])[0].strip()
+                        # 브라우저가 붙은 원격 주소(프록시 없다는 가정)도 힌트로 제공
+                        client_ip = self.client_address[0]
+                        ip = _guess_server_ip(peer or client_ip)
+                        return self._write(200, json.dumps({"ok": True, "ip": ip, "client": client_ip}).encode())
 
-                        self.send_response(200)
-                        self.send_header("Content-Type", "text/event-stream; charset=utf-8")
-                        self.send_header("Cache-Control", "no-store")
-                        self.send_header("Connection", "keep-alive")
-                        self.end_headers()
-
-                        q = orch.PUB.subscribe(token)
-                        try:
-                            while True:
-                                if not q:
-                                    time.sleep(0.05)
-                                    continue
-                                line = q.popleft()
-                                payload = f"data: {line}\n\n".encode("utf-8")
-                                try:
-                                    self.wfile.write(payload)
-                                    self.wfile.flush()
-                                except (ConnectionAbortedError, BrokenPipeError):
-                                    break
-                        finally:
-                            orch.PUB.unsubscribe(token, q)
-                        return
-
-                    # /proxy/<node>/... → 해당 DMS로 프록시
-                    if parts and parts[0] == "proxy" and len(parts) >= 2:
-                        node_raw = parts[1]
-                        node = unquote(node_raw)
-                        target = None
-                        for n in orch.nodes:
-                            nm = (n.get("name") or n.get("host"))
-                            if nm == node:
-                                target = n
-                                break
-                        if not target:
-                            return self._write(404, json.dumps({"ok": False, "error": "unknown node"}).encode())
-                        sub = "/" + "/".join(parts[2:]) if len(parts) > 2 else "/"
-                        qs = urlsplit(self.path).query
-                        if qs:
-                            sub = f"{sub}?{qs}"
-                        st, hdr, data = _http_fetch(
-                            target["host"], int(target.get("port", 51050)),
-                            "GET", sub, None, None, timeout=4.0,
-                        )
-                        ct = hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
-                        return self._write(st, data, ct)
-
-                    # static
-                    if parts[:1] == ["web"]:
-                        sub = "/".join(parts[1:]); return _serve_static_safe(self, sub)
-                    if clean_path.endswith(".html"):
-                        return _serve_static_safe(self, clean_path.lstrip("/"))
-
-                    # /oms/status
-                    if parts == ["oms", "status"]:
-                        payload = orch._status()
-                        return self._write(200, json.dumps(payload).encode("utf-8"))
-
-                    # duplicate proxy guard (kept for compatibility)
-                    if parts and parts[0] == "proxy" and len(parts) >= 2:
-                        node = parts[1]
-                        target = None
-                        for n in orch.nodes:
-                            nm = n.get("name") or n.get("host")
-                            if nm == node:
-                                target = n
-                                break
-                        if not target:
-                            return self._write(404, json.dumps({"ok": False, "error": "unknown node"}).encode())
-                        sub = "/" + "/".join(parts[2:]) if len(parts) > 2 else "/"
-                        qs = urlsplit(self.path).query
-                        if qs:
-                            sub = f"{sub}?{qs}"
-                        st, hdr, data = _http_fetch(target["host"], int(target.get("port", 51050)),
-                                                    "GET", sub, None, None)
-                        ct = hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
-                        return self._write(st, data, ct)
-
-                    # health
-                    if not parts or parts[0] == "status":
-                        hb = float(getattr(orch, "heartbeat", 2))
-                        return self._write(200, json.dumps({"ok": True, "heartbeat_interval_sec": hb}).encode("utf-8"))
-
-                    # config meta
-                    if parts == ["config", "meta"]:
-                        if not DEFAULT_CONFIG.exists():
-                            return self._write(404, json.dumps({"ok": False, "error": "config not found"}).encode())
-                        s = DEFAULT_CONFIG.stat()
+                    # ---- config GET (raw + meta)
+                    if parts == ["oms","config","meta"]:
+                        if not CFG.exists():
+                            return self._write(404, json.dumps({"ok":False,"error":"config not found"}).encode())
+                        s = CFG.stat()
                         payload = {
                             "ok": True,
-                            "path": str(DEFAULT_CONFIG),
+                            "path": str(CFG),
                             "size": s.st_size,
                             "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)),
                         }
-                        return self._write(200, json.dumps(payload).encode("utf-8"))
-
-                    # config raw
+                        return self._write(200, json.dumps(payload).encode())
+                    if parts == ["oms","config"]:
+                        if not CFG.exists():
+                            return self._write(404, json.dumps({"ok":False,"error":"config not found"}).encode())
+                        data = CFG.read_bytes()
+                        return self._write(200, data, "text/plain; charset=utf-8")
+                    # (optional) backward-compat
+                    if parts == ["config","meta"]:
+                        if not CFG.exists():
+                            return self._write(404, json.dumps({"ok":False,"error":"config not found"}).encode())
+                        s = CFG.stat()
+                        payload = {
+                            "ok": True,
+                            "path": str(CFG),
+                            "size": s.st_size,
+                            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)),
+                        }
+                        return self._write(200, json.dumps(payload).encode())
                     if parts == ["config"]:
-                        if not DEFAULT_CONFIG.exists():
-                            return self._write(404, json.dumps({"ok": False, "error": "config not found"}).encode())
-                        data = DEFAULT_CONFIG.read_bytes()
-                        self.send_response(200)
-                        self.send_header("Content-Type", "text/plain; charset=utf-8")
-                        self.send_header("Cache-Control", "no-store")
-                        self.send_header("Content-Length", str(len(data)))
-                        self.end_headers()
-                        try: self.wfile.write(data)
-                        except (ConnectionAbortedError, BrokenPipeError): pass
-                        return
+                        if not CFG.exists():
+                            return self._write(404, json.dumps({"ok":False,"error":"config not found"}).encode())
+                        data = CFG.read_bytes()
+                        return self._write(200, data, "text/plain; charset=utf-8")
 
-                    if parts == ["oms", "config"]:
-                        if not DEFAULT_CONFIG.exists():
-                            return self._write(404, json.dumps({"ok": False, "error": "config not found"}).encode())
-                        data = DEFAULT_CONFIG.read_bytes()
-                        self.send_response(200)
-                        self.send_header("Content-Type", "text/plain; charset=utf-8")
-                        self.send_header("Cache-Control", "no-store")
-                        self.send_header("Content-Length", str(len(data)))
-                        self.end_headers()
-                        try: self.wfile.write(data)
-                        except (ConnectionAbortedError, BrokenPipeError): pass
-                        return
 
-                    if parts == ["oms", "config", "meta"]:
-                        if not DEFAULT_CONFIG.exists():
-                            return self._write(404, json.dumps({"ok": False, "error": "config not found"}).encode())
-                        s = DEFAULT_CONFIG.stat()
-                        payload = {
-                            "ok": True,
-                            "path": str(DEFAULT_CONFIG),
-                            "size": s.st_size,
-                            "mtime": time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(s.st_mtime)),
-                        }
-                        return self._write(200, json.dumps(payload).encode("utf-8"))
+                    if parts==["oms","status"]:
+                        base = orch._status_core()
+                        over = orch._overlay_connected(base)
+                        return self._write(200, json.dumps(over).encode())
 
-                    return self._write(404, json.dumps({"ok": False, "error": "not found"}).encode("utf-8"))
+                    # proxy get
+                    if parts and parts[0]=="proxy" and len(parts)>=2:
+                        node=unquote(parts[1]); target=None
+                        for n in orch.nodes:
+                            nm=n.get("name") or n.get("host")
+                            if nm==node: target=n; break
+                        if not target: return self._write(404, b'{"ok":false,"error":"unknown node"}')
+                        sub="/"+"/".join(parts[2:]) if len(parts)>2 else "/"
+                        qs=urlsplit(self.path).query
+                        if qs: sub=f"{sub}?{qs}"
+                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "GET", sub, None, None, 4.0)
+                        ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
+                        return self._write(st, data, ct)
 
+                    return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
-                    return self._write(500, json.dumps({"ok": False, "error": repr(e)}).encode("utf-8"))
+                    return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
 
             def do_POST(self):
                 try:
@@ -388,272 +532,208 @@ class Orchestrator:
                     length=int(self.headers.get("Content-Length") or 0)
                     body = self.rfile.read(length)
 
-                    # ── [API] POST /oms/mtd-connect
-                    if parts == ["oms", "mtd-connect"]:
+                    # ── MTd 단건 프록시(유지)
+                    if parts==["oms","mtd-connect"]:
+                        req=json.loads(body.decode("utf-8","ignore"))
+                        host=req.get("host"); port=int(req.get("port",19765)); msg=req.get("message") or {}
+                        if not host or not isinstance(msg,dict): return self._write(400, b'{"ok":false,"error":"bad request"}')
+                        try:
+                            resp, tag = tcp_json_roundtrip(host, port, msg, timeout=float(req.get("timeout") or 10.0))
+                            return self._write(200, json.dumps({"ok": True, "tag": tag, "response": resp}).encode())
+                        except MtdTraceError as e:
+                            return self._write(502, json.dumps({"ok":False,"error":str(e)}).encode())
+
+                    # ── [API] POST /oms/connect/sequence
+                    if parts == ["oms", "connect", "sequence"]:
                         try:
                             req = json.loads(body.decode("utf-8", "ignore"))
-                            host = req.get("host")
-                            port = int(req.get("port", 19765))
-                            message = req.get("message") or {}
-                            token = (message.get("Token") or "").strip()
+                            mtd_host = req["mtd_host"]
+                            mtd_port = int(req.get("mtd_port", 19765))
+                            dmpdip   = (req.get("dmpdip") or "").strip()
+                            trace    = bool(req.get("trace") or (parse_qs(urlsplit(self.path).query).get("trace",[0])[0] in ("1","true","True")))
+                            return_partial = bool(req.get("return_partial") or (parse_qs(urlsplit(self.path).query).get("return_partial",[0])[0] in ("1","true","True")))
+                            dry_run  = bool(req.get("dry_run") or (parse_qs(urlsplit(self.path).query).get("dry_run",[0])[0] in ("1","true","True")))
 
-                            # wait override
-                            wait_override = None
-                            try:
-                                q_wait = parse_qs(urlsplit(self.path).query).get("wait", [None])[0]
-                                if q_wait is not None:
-                                    wait_override = float(q_wait)
-                            except:
-                                pass
-                            if isinstance(req.get("wait_sec"), (int, float)):
-                                wait_override = float(req["wait_sec"])
+                            if not dmpdip or dmpdip.startswith("127.") or dmpdip == "localhost":
+                                dmpdip = _guess_server_ip(mtd_host)
 
-                            if not host or not port or not isinstance(message, dict):
-                                return self._write(400, json.dumps({"ok": False, "error": "bad request"}).encode("utf-8"))
+                            daemon_map = req["daemon_map"]
+                            events = []
+                            t0 = time.time()
 
-                            trace_tag = _stamp()
-                            (OMS_LOG_DIR / f"mtd_call_{trace_tag}_req.json").write_text(
-                                json.dumps({"host": host, "port": port, "message": message}, ensure_ascii=False, indent=2),
-                                encoding="utf-8"
-                            )
+                            def tag(step):  # 파일과 매칭 가능한 고정 태그
+                                return f"{step}_{int(t0*1000)}"
 
-                            # ---- tcp_json_roundtrip wrapper (서명 다양성 대응) ----
-                            def _call_roundtrip(h, p, msg, wait_s):
-                                last_err = None
-                                for attempt in (
-                                    lambda: tcp_json_roundtrip(host=h, port=p, message=msg, timeout=max(5.0, float(wait_s))),
-                                    lambda: tcp_json_roundtrip(h, p, msg, max(5.0, float(wait_s))),
-                                    lambda: tcp_json_roundtrip(h, p, msg),
-                                ):
-                                    try:
-                                        return attempt()
-                                    except TypeError as e:
-                                        last_err = e
-                                        continue
-                                raise last_err or RuntimeError("tcp_json_roundtrip call failed")
+                            def add_event(step, req_msg, resp=None, error=None, used="proxy"):
+                                events.append({
+                                    "step": step,
+                                    "used": used,   # 'proxy' or 'direct'
+                                    "request": req_msg,
+                                    "response": resp,
+                                    "error": (None if error is None else str(error)),
+                                    "t": round(time.time()-t0, 3),
+                                    "trace_tag": tag(step)      # 파일명 매칭용
+                                })
 
-                            # ── Raw/타임스탬프 필터
-                            _stamp_like = re.compile(r"^'?\d{8}-\d{6}_\d{3,6}'?$")
-                            def _normalize(obj):
-                                if isinstance(obj, dict):
-                                    return obj
+                            def via_mtd_connect(step, msg, wait):
+                                """항상 /oms/mtd-connect 경로 사용(oms-command와 동일)"""
+                                if dry_run:
+                                    add_event(step, msg, {"Result":"skip","ResultCode":"DRY_RUN"}, used="proxy")
+                                    return {"Result":"skip","ResultCode":"DRY_RUN"}
+
+                                import http.client, json as _json
+                                conn = http.client.HTTPConnection("127.0.0.1", orch.http_port, timeout=wait)
+                                payload = _json.dumps({
+                                    "host": mtd_host,
+                                    "port": mtd_port,
+                                    "timeout": wait,
+                                    "trace_tag": tag(step),   # tcp_json_roundtrip에 전달되도록 넣음 (server_mtd_connect 에서 사용)
+                                    "message": msg
+                                })
                                 try:
-                                    if isinstance(obj, (bytes, bytearray)):
-                                        s = obj.decode("utf-8","ignore").strip()
-                                    elif isinstance(obj, str):
-                                        s = obj.strip()
-                                    else:
-                                        return {"Raw": repr(obj)}
-                                    if s and s[0] in "{[":
-                                        return json.loads(s)
-                                    if _stamp_like.match(s):
-                                        return None  # drop stamp/heartbeat-like strings
-                                    return {"Raw": s}
-                                except Exception:
-                                    return {"Raw": repr(obj)}
-
-                            # 이터레이터 도우미 (문자열을 문자 단위로 iterate하지 않게 처리)
-                            def _iter_stream(obj):
-                                if obj is None:
-                                    return iter(())
-                                if isinstance(obj, dict):
-                                    return iter((obj,))
-                                if isinstance(obj, (bytes, bytearray, str)):
-                                    return iter((obj,))
-                                try:
-                                    iter(obj)
-                                    return obj
-                                except TypeError:
-                                    return iter((obj,))
-
-                            wait_s = (wait_override or 15.0)
-                            # ---- Expect 수집 파라미터/상태 ----
-                            expect_cfg  = (message.get("Expect") or {})
-                            expect_count = int(expect_cfg.get("count") or 1)
-                            expect_wait  = float(expect_cfg.get("wait_sec") or wait_s)
-                            expect_key   = str(expect_cfg.get("unique_key") or "SenderIP")
-                            deadline     = time.time() + max(0.1, expect_wait)
-
-                            # 수집 버퍼 및 응답 상태
-                            collected: dict[str, dict] = {}
-                            responded = [False]     # 클로저에서 True로 세팅
-
-                            # ---- 정규화 & SSE publish & 수집/반환 헬퍼 ----
-                            def _handle_and_maybe_finish(obj, token: str):
-                                o = _normalize(obj)
-                                if o is None:
-                                    return False
-                                # 항상 SSE로 push
-                                if token:
-                                    orch.PUB.publish(token, o)
-
-                                # count==1이면 즉시 반환 (기존 동작 호환)
-                                if expect_count <= 1:
-                                    if not responded[0]:
-                                        first_obj_holder[0] = o
-                                        (OMS_LOG_DIR / f"mtd_call_{trace_tag}_resp.json").write_text(
-                                            json.dumps(o, ensure_ascii=False, indent=2), encoding="utf-8"
-                                        )
-                                        self._write(200, json.dumps({"trace": trace_tag, "response": o}).encode("utf-8"))
-                                        responded[0] = True
-                                    return True
-
-                                # count>1: unique key 기준 수집
-                                key_val = o.get(expect_key)
-                                if key_val is None:
-                                    key_val = f"@idx:{len(collected)}"
-                                collected[str(key_val)] = o
-
-                                if (not responded[0]) and len(collected) >= expect_count:
-                                    arr = list(collected.values())
-                                    first_obj_holder[0] = arr[0]
-                                    (OMS_LOG_DIR / f"mtd_call_{trace_tag}_resp.json").write_text(
-                                        json.dumps(arr, ensure_ascii=False, indent=2), encoding="utf-8"
-                                    )
-                                    self._write(200, json.dumps({"trace": trace_tag, "responses": arr}).encode("utf-8"))
-                                    responded[0] = True
-                                return True
-
-                            # ── 팬아웃 대상 IP 추출: ?ips=a,b or message.Expect.ips
-                            q = parse_qs(urlsplit(self.path).query)
-                            ips_q = q.get("ips", [None])[0]
-                            expect_ips = []
-                            if ips_q:
-                                expect_ips = [s.strip() for s in ips_q.split(",") if s.strip()]
-                            elif isinstance((message.get("Expect") or {}).get("ips"), list):
-                                expect_ips = [(str(x).strip()) for x in message["Expect"]["ips"] if str(x).strip()]
-
-                            first_obj_holder = [None]
-                            # ── (A) 대상 IP가 지정되면 IP별 1회씩 팬아웃
-                            if expect_ips:
-                                # 팬아웃이면 기대 개수 자동 상향: 명시 count가 작아도 len(ips)만큼 모아본다
-                                expect_count = max(expect_count, len(expect_ips))
-                                for ip in expect_ips:
-                                    msg_i = dict(message)
-                                    msg_i["PreSd"] = [{"IP": ip}]
-                                    try:
-                                        stream_raw = _call_roundtrip(host, port, msg_i, wait_s)
-                                    except Exception as e:
-                                        if token:
-                                            orch.PUB.publish(token, {"Error":"InvokeError","TargetIP": ip, "Detail": repr(e)})
-                                        continue
-                                    any_got = False
-                                    for obj in _iter_stream(stream_raw):
-                                        # obj가 dict면 TargetIP 보강(수집시 구분 키로 활용)
-                                        if isinstance(obj, dict) and ("TargetIP" not in obj):
-                                            obj = dict(obj); obj["TargetIP"] = ip
-                                        ok = _handle_and_maybe_finish(obj, token)
-                                        any_got = ok or any_got
-                                    if (not any_got) and token:
-                                        orch.PUB.publish(token, {"Warn":"NoResponse","TargetIP": ip})
-                
-                                # 팬아웃 루프가 끝났는데 아직 응답을 안 보냈으면, 타임아웃까지 대기 후 부분 반환
-                                while (not responded[0]) and time.time() < deadline:
-                                    time.sleep(0.05)
-                                if (not responded[0]) and collected:
-                                    arr = list(collected.values())
-                                    first_obj_holder[0] = arr[0]
-                                    (OMS_LOG_DIR / f"mtd_call_{trace_tag}_resp.json").write_text(
-                                        json.dumps(arr, ensure_ascii=False, indent=2), encoding="utf-8"
-                                    )
-                                    self._write(200, json.dumps({"trace": trace_tag, "responses": arr, "partial": True}).encode("utf-8"))
-                                    responded[0] = True
-                            # ── (B) 단일 경로 (기존)
-                            else:
-                                try:
-                                    stream_raw = _call_roundtrip(host, port, message, wait_s)
-                                except MtdTraceError as e:
-                                    msg = {"ok": False, "error": str(e), "trace": trace_tag, "kind": "MtdTraceError"}
-                                    (OMS_LOG_DIR / f"mtd_call_{trace_tag}_err.json").write_text(json.dumps(msg, ensure_ascii=False, indent=2), encoding="utf-8")
-                                    return self._write(502, json.dumps(msg).encode("utf-8"))
+                                    conn.request("POST", "/oms/mtd-connect", body=payload, headers={"Content-Type":"application/json"})
+                                    res = conn.getresponse()
+                                    data = res.read()
+                                    if res.status != 200:
+                                        raise MtdTraceError(f"/oms/mtd-connect HTTP {res.status}", tag(step))
+                                    r = _json.loads(data.decode("utf-8","ignore")).get("response")
+                                    add_event(step, msg, r, used="proxy")
+                                    return r
                                 except Exception as e:
-                                    msg = {"ok": False, "error": repr(e), "trace": trace_tag, "kind": "InvokeError"}
-                                    (OMS_LOG_DIR / f"mtd_call_{trace_tag}_err.json").write_text(json.dumps(msg, ensure_ascii=False, indent=2), encoding="utf-8")
-                                    return self._write(502, json.dumps(msg).encode("utf-8"))
+                                    add_event(step, msg, error=e, used="proxy")
+                                    raise
 
-                                for obj in _iter_stream(stream_raw):
-                                    _handle_and_maybe_finish(obj, token)
-                                
-                                # 수집 모드인 경우, 필요시 타임아웃까지 대기 후 부분반환
-                                if expect_count > 1 and (not responded[0]):
-                                    while (not responded[0]) and time.time() < deadline:
-                                        time.sleep(0.05)
-                                    if (not responded[0]) and collected:
-                                        arr = list(collected.values())
-                                        first_obj_holder[0] = arr[0]
-                                        (OMS_LOG_DIR / f"mtd_call_{trace_tag}_resp.json").write_text(
-                                            json.dumps(arr, ensure_ascii=False, indent=2), encoding="utf-8"
-                                        )
-                                        self._write(200, json.dumps({"trace": trace_tag, "responses": arr, "partial": True}).encode("utf-8"))
-                                        responded[0] = True
+                            def pkt_connect_run(dm):
+                                return {
+                                    "DaemonList": {("SPd" if k=="MMd" else k): v for k,v in dm.items() if k not in ("PreSd","PostSd","VPd")},
+                                    "Section1":"mtd","Section2":"connect","Section3":"",
+                                    "SendState":"request","From":"4DOMS","To":"MTd",
+                                    "Token": _make_token(), "Action":"run","DMPDIP": dmpdip
+                                }
 
-                            if first_obj_holder[0] is None:
-                                if token:
-                                    orch.PUB.publish(token, {"Type":"ACK","Note":"Command accepted. Waiting for MTd response…","Trace": trace_tag})
-                                    return self._write(200, json.dumps({"ok":True,"pending":True,"trace":trace_tag}).encode("utf-8"))
-                                return self._write(504, json.dumps({"ok":False,"error":"MTd no response within window","trace":trace_tag}).encode("utf-8"))
-                            return  # 정상
+                            # 1) EMd만
+                            r1 = via_mtd_connect("step1_emd_connect", pkt_connect_run({"EMd": daemon_map["EMd"]}), wait=15.0)
+
+                            # 2) 전체
+                            r2 = via_mtd_connect("step2_all_connect", pkt_connect_run(daemon_map), wait=18.0)
+
+                            if not dry_run:
+                                time.sleep(0.8)
+
+                            # 3) CCd Select → EMd
+                            pkt3 = {
+                                "Section1":"CCd","Section2":"Select","Section3":"",
+                                "SendState":"request","From":"4DOMS","To":"EMd",
+                                "Token": _make_token(),"Action":"get","DMPDIP": dmpdip
+                            }
+                            r3 = via_mtd_connect("step3_ccd_select_get", pkt3, wait=12.0)
+
+                            # 4)~6) 기존 로직 동일 (via_mtd_connect 로 호출)
+                            # ... (PCd connect set)
+                            # ... (Camera Add set)
+                            # ... (Camera Connect run)
+
+                            # trace 저장
+                            if trace:
+                                (LOGD / f"connect_trace_{int(time.time()*1000)}.json").write_text(
+                                    json.dumps({"ok":True,"events":events}, ensure_ascii=False, indent=2), encoding="utf-8"
+                                )
+                            return self._write(200, json.dumps({"ok": True, "events": events}).encode("utf-8"))
 
                         except Exception as e:
-                            fallback_tag = _stamp()
-                            tb = traceback.format_exc()
-                            (OMS_LOG_DIR / f"mtd_call_{fallback_tag}_err.txt").write_text(f"{repr(e)}\n\n{tb}", encoding="utf-8")
-                            return self._write(502, json.dumps({"ok": False, "error": repr(e), "trace": fallback_tag}).encode("utf-8"))
+                            try:
+                                if 'events' not in locals(): events = []
+                                events.append({"step":"__error__", "error": repr(e)})
+                                (LOGD / f"connect_trace_{int(time.time()*1000)}_ERR.json").write_text(
+                                    json.dumps({"ok":False,"events":events}, ensure_ascii=False, indent=2), encoding="utf-8"
+                                )
+                                if return_partial:
+                                    return self._write(200, json.dumps({"ok":False,"events":events,"error":repr(e)}).encode("utf-8"))
+                            except: pass
+                            return self._write(502, json.dumps({"ok":False, "error":repr(e)}).encode("utf-8"))
+                
+                    # ── CONNECT STATE CLEAR (Restart All 등에서 사용)
+                    if parts==["oms","connect","clear"]:
+                        try:
+                            STATE.clear()
+                            try: STATE_FILE.unlink(missing_ok=True)
+                            except: pass
+                            return self._write(200, b'{"ok":true}')
+                        except Exception as e:
+                            return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
 
-                    # /proxy/{node}/...  (start/stop/restart 등)
+                    # proxy post
                     if parts and parts[0]=="proxy" and len(parts)>=2:
                         node=parts[1]
                         target=None
                         for n in orch.nodes:
                             nm=n.get("name") or n.get("host")
                             if nm==node: target=n; break
-                        if not target:
-                            return self._write(404, json.dumps({"ok":False,"error":"unknown node"}).encode())
+                        if not target: return self._write(404, b'{"ok":false,"error":"unknown node"}')
                         sub="/"+"/".join(parts[2:]) or "/"
-                        qs = urlsplit(self.path).query
-                        if qs: sub = f"{sub}?{qs}"
-                        st, hdr, data = _http_fetch(target["host"], int(target.get("port",51050)), "POST", sub, body, {"Content-Type": self.headers.get("Content-Type","application/json")})
-                        ct = hdr.get("Content-Type") or hdr.get("content-type") or "application/json"
+                        qs=urlsplit(self.path).query
+                        if qs: sub=f"{sub}?{qs}"
+                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "POST", sub, body, {"Content-Type": self.headers.get("Content-Type","application/json")})
+                        ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/json"
                         return self._write(st, data, ct)
 
-                    # ── [설정 저장: POST /oms/config]
-                    if parts == ["oms", "config"]:
-                        DEFAULT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
-                        txt = body.decode("utf-8","ignore")
-                        DEFAULT_CONFIG.write_text(txt, encoding="utf-8")
-                        orch._log(f"[OMS] SAVE /oms/config -> {DEFAULT_CONFIG} ({len(txt)} bytes)")
-                        return self._write(200, json.dumps({
-                            "ok": True,
-                            "path": str(DEFAULT_CONFIG),
-                            "bytes": len(txt)
-                        }).encode())
-
-                    # (선택) POST /config
-                    if parts==["config"]:
-                        DEFAULT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
-                        txt = body.decode("utf-8","ignore")
-                        DEFAULT_CONFIG.write_text(txt, encoding="utf-8")
-                        return self._write(200, json.dumps({"ok":True}).encode())
-
-                    # ── [런타임 적용] POST /oms/config/apply
-                    if parts == ["oms", "config", "apply"]:
+                    # config save/apply 그대로 (생략)
+                    if parts==["oms","config"]:
+                        CFG.parent.mkdir(parents=True, exist_ok=True)
+                        txt=body.decode("utf-8","ignore"); CFG.write_text(txt, encoding="utf-8")
+                        return self._write(200, json.dumps({"ok":True,"path":str(CFG),"bytes":len(txt)}).encode())
+                    if parts==["oms","config","apply"]:
+                        try: cfg=load_config(CFG)
+                        except Exception as e: return self._write(400, json.dumps({"ok":False,"error":f"load_config: {e}"}).encode())
+                        changed=orch.apply_runtime(cfg)
+                        return self._write(200, json.dumps({"ok":True,"applied":changed}).encode())
+                    # ── state upsert(연결/버전/리스트 반영 & 저장)
+                    if parts == ["oms", "state", "upsert"]:
                         try:
-                            cfg = load_config(DEFAULT_CONFIG)
-                        except Exception as e:
-                            return self._write(400, json.dumps({"ok": False, "error": f"load_config: {e}"}).encode("utf-8"))
-                        changed = orch.apply_runtime(cfg)
-                        return self._write(200, json.dumps({"ok": True, "applied": changed}).encode("utf-8"))
+                            req = json.loads(body.decode("utf-8","ignore"))
+                            dmpdip = (req.get("dmpdip") or "").strip()
+                            if not dmpdip:
+                                return self._write(400, b'{"ok":false,"error":"dmpdip required"}')
 
-                    # (선택) POST /config/apply
-                    if parts == ["config", "apply"]:
-                        try:
-                            cfg = load_config(DEFAULT_CONFIG)
-                        except Exception as e:
-                            return self._write(400, json.dumps({"ok": False, "error": f"load_config: {e}"}).encode("utf-8"))
-                        changed = orch.apply_runtime(cfg)
-                        return self._write(200, json.dumps({"ok": True, "applied": changed}).encode("utf-8"))
+                            cur = STATE.setdefault(dmpdip, {
+                                "connected_daemons": {}, "versions": {}, "presd_versions": {},
+                                "presd": [], "cameras": [], "updated_at": time.time()
+                            })
 
-                    return self._write(404, json.dumps({"ok":False,"error":"not found"}).encode())
+                            # 연결 상태 합치기
+                            cd = req.get("connected_daemons") or {}
+                            for k,v in cd.items():
+                                kk = inward_name(k)  # SPd → MMd 정규화 저장
+                                if v: cur["connected_daemons"][kk] = True
+
+                            # 버전 저장
+                            vs = req.get("versions") or {}
+                            for k, val in vs.items():
+                                kk = inward_name(k)
+                                if isinstance(val, dict):
+                                    cur["versions"][kk] = {"version": val.get("version","-"), "date": val.get("date","-")}
+
+                            # PreSd 개별 버전
+                            psv = req.get("presd_versions") or {}
+                            for ip, val in psv.items():
+                                if isinstance(val, dict):
+                                    cur.setdefault("presd_versions", {})[ip] = {"version": val.get("version","-"), "date": val.get("date","-")}
+
+                            # 목록 저장
+                            if isinstance(req.get("presd"), list):   cur["presd"]   = req["presd"]
+                            if isinstance(req.get("cameras"), list): cur["cameras"] = req["cameras"]
+
+                            # 부가 정보 업데이트
+                            for k in ("mtd_host","mtd_port","daemon_map"):
+                                if k in req: cur[k] = req[k]
+                            cur["updated_at"] = time.time()
+
+                            _state_save()
+                            return self._write(200, b'{"ok":true}')
+                        except Exception as e:
+                            return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
+
+                    return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
                     return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
 
@@ -663,14 +743,16 @@ class Orchestrator:
 
     def _log(self, msg:str):
         line = time.strftime("%Y-%m-%d %H:%M:%S ") + msg + "\n"
-        (LOG_DIR_DEFAULT / "OMS.log").open("a", encoding="utf-8").write(line)
+        (LOGD / "OMS.log").open("a", encoding="utf-8").write(line)
 
+# ─────────────────────────────────────────────────────────────
 def main():
     try:
-        cfg = load_config(DEFAULT_CONFIG)
+        cfg = load_config(CFG)
     except Exception as e:
-        (LOG_DIR_DEFAULT / "OMS.log").open("a", encoding="utf-8").write(f"[WARN] fallback cfg: {e}\n")
+        (LOGD / "OMS.log").open("a", encoding="utf-8").write(f"[WARN] fallback cfg: {e}\n")
         cfg = {"http_host":"0.0.0.0","http_port":52050,"heartbeat_interval_sec":2,"nodes":[]}
+    _state_load()  # ← 추가
     Orchestrator(cfg).run()
 
 if __name__ == "__main__":

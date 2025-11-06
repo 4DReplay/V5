@@ -1,7 +1,7 @@
 {
   "http_host": "0.0.0.0",
   "http_port": 52050,
-  "heartbeat_interval_sec": 3,
+  "heartbeat_interval_sec": 10,
   "nodes": [
     {
       "name": "DMS-1",

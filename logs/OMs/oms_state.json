@@ -1,0 +1,122 @@
+{
+  "10.82.104.210": {
+    "connected_daemons": {
+      "MTd": true,
+      "EMd": true,
+      "CCd": true,
+      "SCd": true,
+      "GCd": true,
+      "PCd": true,
+      "MMd": true,
+      "MMcs": true,
+      "PreSd": true
+    },
+    "versions": {
+      "EMd": {
+        "version": "4.3.0.3",
+        "date": "Jul 20 2023 - 10:53:26"
+      },
+      "MTd": {
+        "version": "5.0.0.0",
+        "date": "Oct 28 2025 - 15:57:48"
+      },
+      "CCd": {
+        "version": "4.3.0.8",
+        "date": "Dec 17 2024 - 17:59:29"
+      },
+      "SCd": {
+        "version": "4.2.0.1",
+        "date": "Aug 12 2024 - 13:48:56"
+      },
+      "PCd": {
+        "version": "4.2.0.2",
+        "date": "Aug 12 2024 - 13:48:12"
+      },
+      "GCd": {
+        "version": "4.2.0.3",
+        "date": "Aug 12 2024 - 13:47:54"
+      },
+      "MMd": {
+        "version": "4.2.0.9",
+        "date": "-"
+      }
+    },
+    "presd_versions": {
+      "10.82.104.211": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      },
+      "10.82.104.212": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      }
+    },
+    "presd": [
+      {
+        "IP": "10.82.104.211",
+        "Mode": "replay",
+        "Cameras": [
+          {
+            "Index": 1,
+            "IP": "10.82.104.11",
+            "CameraModel": "BGH1"
+          },
+          {
+            "Index": 2,
+            "IP": "10.82.104.12",
+            "CameraModel": "BGH1"
+          }
+        ]
+      },
+      {
+        "IP": "10.82.104.212",
+        "Mode": "replay",
+        "Cameras": [
+          {
+            "Index": 3,
+            "IP": "10.82.104.13",
+            "CameraModel": "BGH1"
+          },
+          {
+            "Index": 4,
+            "IP": "10.82.104.14",
+            "CameraModel": "BGH1"
+          }
+        ]
+      }
+    ],
+    "cameras": [
+      {
+        "Index": 1,
+        "IP": "10.82.104.11",
+        "CameraModel": "BGH1"
+      },
+      {
+        "Index": 2,
+        "IP": "10.82.104.12",
+        "CameraModel": "BGH1"
+      },
+      {
+        "Index": 3,
+        "IP": "10.82.104.13",
+        "CameraModel": "BGH1"
+      },
+      {
+        "Index": 4,
+        "IP": "10.82.104.14",
+        "CameraModel": "BGH1"
+      }
+    ],
+    "updated_at": 1762426064.5570734,
+    "mtd_host": "10.82.104.210",
+    "mtd_port": 19765,
+    "daemon_map": {
+      "EMd": "10.82.104.210",
+      "CCd": "10.82.104.210",
+      "SCd": "10.82.104.210",
+      "GCd": "10.82.104.210",
+      "PCd": "10.82.104.210",
+      "SPd": "10.82.104.213"
+    }
+  }
+}

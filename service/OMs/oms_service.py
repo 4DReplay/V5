@@ -52,7 +52,7 @@ class OMsService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         try:
-            cfg = agent.load_config(agent.DEFAULT_CONFIG)
+            cfg = agent.load_config(agent.CFG)
         except Exception as e:
             (LOG_ROOT / "OMS.log").open("a", encoding="utf-8").write(time.strftime("%F %T ") + f"[WARN] fallback cfg: {e}\n")
             cfg = {"http_host":"0.0.0.0","http_port":52050,"heartbeat_interval_sec":2,"nodes":[]}
