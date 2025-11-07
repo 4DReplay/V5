@@ -453,8 +453,23 @@ class Orchestrator:
                     clean = (urlsplit(self.path).path.rstrip("/") or "/")
                     if clean in {"/","/system"}: return _serve_static(self, "oms-system.html")
                     if clean in {"/command"}: return _serve_static(self, "oms-command.html")
+                    if clean in {"/camera"}: return _serve_static(self, "oms-camera.html")
                     if clean in {"/liveview"}: return _serve_static(self, "oms-liveview.html")
                     
+                    # proxy get
+                    if parts and parts[0]=="proxy" and len(parts)>=2:
+                        node=unquote(parts[1]); target=None
+                        for n in orch.nodes:
+                            nm=n.get("name") or n.get("host")
+                            if nm==node: target=n; break
+                        if not target: return self._write(404, b'{"ok":false,"error":"unknown node"}')
+                        sub="/"+"/".join(parts[2:]) if len(parts)>2 else "/"
+                        qs=urlsplit(self.path).query
+                        if qs: sub=f"{sub}?{qs}"
+                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "GET", sub, None, None, 4.0)
+                        ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
+                        return self._write(st, data, ct)
+
                     if parts[:1]==["web"]: return _serve_static(self, "/".join(parts[1:]))
                     if clean.endswith(".html"): return _serve_static(self, clean)
 
@@ -507,20 +522,6 @@ class Orchestrator:
                         base = orch._status_core()
                         over = orch._overlay_connected(base)
                         return self._write(200, json.dumps(over).encode())
-
-                    # proxy get
-                    if parts and parts[0]=="proxy" and len(parts)>=2:
-                        node=unquote(parts[1]); target=None
-                        for n in orch.nodes:
-                            nm=n.get("name") or n.get("host")
-                            if nm==node: target=n; break
-                        if not target: return self._write(404, b'{"ok":false,"error":"unknown node"}')
-                        sub="/"+"/".join(parts[2:]) if len(parts)>2 else "/"
-                        qs=urlsplit(self.path).query
-                        if qs: sub=f"{sub}?{qs}"
-                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "GET", sub, None, None, 4.0)
-                        ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
-                        return self._write(st, data, ct)
 
                     return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:

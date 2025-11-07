@@ -301,13 +301,13 @@
   </script>
 
   <!-- 시퀀스 러너 로딩 & 초기화 -->
-  <script src="/web/oms-sequence.js" defer></script>
+  <script src="/web/oms-system.js" defer></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
-      if (typeof window.initOmsSequence !== 'function') {
-        console.error('initOmsSequence not found'); return;
+      if (typeof window.initOmsSystem !== 'function') {
+        console.error('initOmsSystem not found'); return;
       }
-      window.initOmsSequence({});
+      window.initOmsSystem({});
     });
   </script>
 </body>

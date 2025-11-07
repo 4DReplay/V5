@@ -107,8 +107,8 @@
         "CameraModel": "BGH1"
       }
     ],
-    "updated_at": 1762426064.5570734,
-    "mtd_host": "10.82.104.210",
+    "updated_at": 1762430981.6068149,
+    "mtd_host": "127.0.0.1",
     "mtd_port": 19765,
     "daemon_map": {
       "EMd": "10.82.104.210",

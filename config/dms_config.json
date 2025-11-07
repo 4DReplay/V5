@@ -96,12 +96,20 @@
     },
     {
       "name": "AId",
-      "alias": "Artificial Intelligence",
-      "path": "daemon/AId/AId.exe",
+      "alias": "AI Daemon",
+      "type": "python",
+      "path": "V5/src/AId/aid_main.py",
+      "python": "C:/Python311/python.exe",
       "args": [],
+      "cwd": "D:/Project/v4_aid",
       "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
+      "env": {
+        "FD_SERVICE": "1",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "FD_NVENC_INIT_CONCURRENCY": "1",
+        "FD_NVENC_MAX_SLOTS": "2"
+      }
     },
     {
       "name": "AIc",
