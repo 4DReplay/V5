@@ -2,7 +2,7 @@
   "http_host": "0.0.0.0",
   "http_port": 51050,
   "log_dir": "logs/DMS",
-  "heartbeat_interval_sec": 1,
+  "heartbeat_interval_sec": 3,
   "executables": [
     {
       "name": "MTd",
@@ -41,15 +41,6 @@
       "start_on_boot": true
     },
     {
-      "name": "GCd",
-      "alias": "Gimbal Control",
-      "path": "daemon/GCd/GCd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
       "name": "PCd",
       "alias": "Processor Control",
       "path": "daemon/PCd/PCd.exe",
@@ -68,13 +59,44 @@
       "start_on_boot": true
     },
     {
-      "name": "PostSd",
-      "alias": "Post Storage [#n]",
-      "path": "daemon/PostSd/PostSd.exe",
-      "args": [],
-      "select": false,
+      "name": "AId",
+      "alias": "AI Daemon",
+      "path": "C:\\Program Files\\Python310\\python.exe",
+      "args": [
+        "-u",
+        "C:\\4DReplay\\V5\\src\\AId\\aid_main.py"
+      ],
+      "cwd": "C:\\4DReplay\\V5\\src\\AId",
+      "env": {
+        "FD_SERVICE": "1",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\log"
+      },
+      "select": true,
       "auto_restart": true,
-      "start_on_boot": true
+      "start_on_boot": true,
+      "shell": false
+    },
+    {
+      "name": "AIc",
+      "alias": "AI Client [#1]",
+      "path": "C:\\Program Files\\Python310\\python.exe",
+      "args": [
+        "-u",
+        "C:\\4DReplay\\V5\\src\\AId\\aic_main.py"
+      ],
+      "cwd": "C:\\4DReplay\\V5\\src\\AId",
+      "env": {
+        "FD_SERVICE": "1",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AIc\\log"
+      },
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true,
+      "shell": false
     },
     {
       "name": "MMd",
@@ -95,44 +117,13 @@
       "start_on_boot": true
     },
     {
-      "name": "AId",
-      "alias": "AI Daemon",
-      "path": "C:\\Program Files\\Python310\\python.exe",
-      "args": [
-        "-u",
-        "C:\\4DReplay\\V5\\src\\AId\\aid_main.py"
-      ],
-      "cwd": "C:\\4DReplay\\V5\\src\\AId",
-      "env": {
-        "FD_SERVICE": "1",
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONIOENCODING": "utf-8",
-        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\logs"
-      },
-      "select": true,
+      "name": "GCd",
+      "alias": "Gimbal Control",
+      "path": "daemon/GCd/GCd.exe",
+      "args": [],
+      "select": false,
       "auto_restart": true,
-      "start_on_boot": true,
-      "shell": false
-    },
-    {
-      "name": "AIc",
-      "alias": "AI Client [#1]",
-      "path": "C:\\Program Files\\Python310\\python.exe",
-      "args": [
-        "-u",
-        "C:\\4DReplay\\V5\\src\\AId\\aic_main.py"
-      ],
-      "cwd": "C:\\4DReplay\\V5\\src\\AId",
-      "env": {
-        "FD_SERVICE": "1",
-        "PYTHONUNBUFFERED": "1",
-        "PYTHONIOENCODING": "utf-8",
-        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AIc\\logs"
-      },
-      "select": true,
-      "auto_restart": true,
-      "start_on_boot": true,
-      "shell": false
+      "start_on_boot": true
     },
     {
       "name": "CMd",
@@ -147,6 +138,15 @@
       "name": "AMd",
       "alias": "Audio Manager",
       "path": "daemon/AMd/AMd.exe",
+      "args": [],
+      "select": false,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
+      "name": "PostSd",
+      "alias": "Post Storage [#n]",
+      "path": "daemon/PostSd/PostSd.exe",
       "args": [],
       "select": false,
       "auto_restart": true,

@@ -335,7 +335,14 @@ TBody.addEventListener("click", async (ev)=>{
   if (!btn) return;
   const act = btn.dataset.a, name = btn.dataset.n;
   if (act === "logs"){
-    window.open(`web/log-viewer.html?name=${encodeURIComponent(name)}&tail=50000`, "_blank");
+    // 현재 경로가 /proxy/<node>/ 인 경우 그 <node>를 추출해 넘겨줌
+    const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+    const node = m ? decodeURIComponent(m[1]) : "";
+    const nodeQ = node ? `node=${encodeURIComponent(node)}&` : "";
+    // 절대 경로로 OMS의 뷰어를 연다 (프록시 base 무시)
+    window.open(`/_/../web/log-viewer.html?${nodeQ}name=${encodeURIComponent(name)}&tail=50000`, "_blank");
+    // ↑ 만약 상위 경로 계산이 불편하면 그냥 아래처럼 절대 루트 사용
+    // window.open(`/web/log-viewer.html?${nodeQ}name=${encodeURIComponent(name)}&tail=50000`, "_blank");    
     return;
   }
   try{

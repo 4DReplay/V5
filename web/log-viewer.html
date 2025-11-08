@@ -96,13 +96,16 @@
   const logEl     = document.getElementById("log");
   let timer = null;
 
-  if (TAIL0) cbAuto.value = TAIL0;
+  if (TAIL0) selTail.value = TAIL0;
   if (AUTO0 === "0") cbAuto.checked = false;
   tbName.value = NAME0;
 
   function setTitle(){
     const nm = tbName.value.trim() || "(unknown)";
-    title.textContent = EFFECTIVE_NODE ? `Logs â€¢ ${nm} @ ${EFFECTIVE_NODE}` : `Logs â€¢ ${nm}`;
+    const bullet = "\u2022";
+    title.textContent = EFFECTIVE_NODE
+      ? `Logs ${bullet} ${nm} @ ${EFFECTIVE_NODE}`
+      : `Logs ${bullet} ${nm}`;
   }
   setTitle();
 
@@ -119,6 +122,10 @@
     return isJson ? r.json() : r.text();
   }
 
+  function baseFor(proc){
+    return `/daemon/${encodeURIComponent(proc)}/log`;
+  }
+
   /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Dates load â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function loadDates(){
     selDate.innerHTML = "";
@@ -130,11 +137,10 @@
       return;
     }
     try{
-      const url = `${BASE}/logs/list/${encodeURIComponent(name)}`;
-      const r = await jget(url);
-      const dates = (r && r.dates) || [];
+      const r = await jget(`${baseFor(name)}/list`);
+      const dates = Array.isArray(r?.dates) ? r.dates : (Array.isArray(r) ? r : []);
       if(dates.length === 0){
-        const opt = document.createElement("option");
+        const opt=document.createElement("option");
         opt.value=""; opt.textContent="(no logs)";
         selDate.appendChild(opt);
       }else{
@@ -165,16 +171,20 @@
     if(d) params.set("date", d);
     params.set("tail", selTail.value || "50000");
     try{
-      const url = `${BASE}/logs/${encodeURIComponent(name)}?${params.toString()}`;
-      const r = await jget(url);
-      if(r && r.ok){
-        logEl.textContent = r.text || "";
-        meta.textContent = `${r.path} â€¢ ${r.size} bytes â€¢ date ${r.date} â€¢ tail ${r.tail} bytes`;
-        logEl.scrollTop = logEl.scrollHeight; // stick bottom
-      }else{
-        logEl.textContent = (r && r.error) ? r.error : "(no content)";
-        meta.textContent = "-";
-      }
+     const url = `${baseFor(name)}?${params.toString()}`;
+     const r = await jget(url);
+     if (r && r.ok){
+       logEl.textContent = r.text || "";
+       const bullet = "\u2022";
+       meta.textContent =
+         `${r.path || url} ${bullet} ${r.size ?? '-'} bytes `
+         + `${bullet} date ${r.date ?? (selDate.value || '-')} `
+         + `${bullet} tail ${r.tail ?? selTail.value} bytes`;
+       logEl.scrollTop = logEl.scrollHeight;
+     } else {
+       logEl.textContent = (r && r.error) ? r.error : "(no content)";
+       meta.textContent = "-";
+     }
     }catch(e){
       logEl.textContent = String(e.message || e);
       meta.textContent = "-";

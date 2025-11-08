@@ -21,7 +21,7 @@ SERVICE_MODE = os.getenv("FD_SERVICE", "0") == "1"
 os.environ.setdefault("PYTHONUNBUFFERED", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["AID_DAEMON_NAME"] = r"AId"
-os.environ.setdefault("FD_LOG_DIR", r"C:\4DReplay\V5\daemon\AId\logs")
+os.environ.setdefault("FD_LOG_DIR", r"C:\4DReplay\V5\daemon\AId\log")
 
 # ── sys.path ─────────────────────────────────────────────────────────────────
 cur_path = os.path.abspath(os.path.dirname(__file__))
@@ -146,13 +146,13 @@ class AId:
     # ─────────────────────────────────────────────────────────────────────────
     # def on_msg
     # ─────────────────────────────────────────────────────────────────────────
-    def on_msg(self, raw: str) -> None:
-        """TCPServer가 수신한 문자열 메시지를 큐로 넘긴다."""
+    def on_msg(self, text: str):
         try:
-            data = json.loads(raw) if isinstance(raw, str) else raw
-            self.put_data(data)
+            data = json.loads(text)
         except Exception as e:
-            fd_log.error(f"[{self.name}] on_msg decode failed: {e}")
+            fd_log.error(f"[{self.name}] on_msg JSON parse error: {e}; text={text[:256]}")
+            return
+        self.put_data(data)  # 큐에 넣고 worker가 처리
 
     # ─────────────────────────────────────────────────────────────────────────
     # 안전한 종료(멱등)
@@ -763,7 +763,7 @@ if __name__ == '__main__':
                 time.sleep(3600)
         except KeyboardInterrupt:
             pass
-        
+
     # 서비스 모드에선 입력 대기 금지
     if not SERVICE_MODE and get("_test_mode", True):
         while True:

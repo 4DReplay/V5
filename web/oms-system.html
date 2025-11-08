@@ -281,9 +281,12 @@
       if (Array.isArray(status.executables)) return status.executables;
       return [];
     }
-    function nodeCellHtml(n,i,total){
+    // 노드 셀: 프로세스 기준 인덱스/총계 표기로 변경 (예: 10.82.104.201:51050 (1/9))
+    function nodeCellHtml(n, procIndex, procTotal){
       const href = `/proxy/${encodeURIComponent(n.name)}/dms-system.html`;
-      return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${total?` (${i+1}/${total})`:""}</span>`;
+      const suffix = (typeof procIndex === "number" && typeof procTotal === "number" && procTotal>0)
+        ? ` (${procIndex+1}/${procTotal})` : "";
+      return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${suffix}</span>`;
     }
 
     function applyOverlays(data){
@@ -347,7 +350,14 @@
       }
 
       const nodes = Array.isArray(data.nodes)? data.nodes : [];
-      META.textContent = `nodes: ${nodes.length}`;
+      // 전체 선택된 프로세스 개수 계산
+      let procTotal = 0;
+      for (const _n of nodes){
+        const _all = toProcList(_n.status);
+        procTotal += _all.filter(p=>p && p.select===true).length;
+      }
+      const bullet = "\u2022";
+      META.textContent = `nodes: ${nodes.length} ${bullet} processes: ${procTotal}`;
       TBody.innerHTML="";
       if (nodes.length===0){
         TBody.innerHTML = `<tr class="other"><td colspan="5" class="muted">no nodes</td></tr>`; return;
@@ -357,12 +367,13 @@
         const all=toProcList(n.status);
         const shown = all.filter(p=>p && p.select===true);
         if (!n.status || all.length===0){
-          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,i,nodes.length)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
+          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,0,0)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
         }
         if (shown.length===0){
-          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,i,nodes.length)}</td><td colspan="4" class="muted">no selected processes</td></tr>`); continue;
+          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,0,0)}</td><td colspan="4" class="muted">no selected processes</td></tr>`); continue;
         }
-        for(const p of shown){
+        for(let j=0;j<shown.length;j++){
+          const p = shown[j];
           const running=!!p.running;
           const conn=(p.connection_state||"").toUpperCase();
           const badge = conn==="CONNECTED" ? `<span class="pill badge-ok">CONNECTED</span>` :
@@ -383,7 +394,7 @@
 
           TBody.insertAdjacentHTML("beforeend", `
             <tr class="${running?'running':'other'}">
-              <td>${nodeCellHtml(n,i,nodes.length)}</td>
+              <td>${nodeCellHtml(n, j, shown.length)}</td>
               <td>${p.name||"-"}${aliasHtml}</td>
               <td>${verHtml}</td>
               <td>${badge}</td>
@@ -558,7 +569,7 @@
       RA_SEEN_RUNNING = false;
       stopPolling();
       clearErr(); setBusy(true);
-      raWrite("Restarting… preparing", 3);
+      raWrite("Restarting… preparing", 1);
       window.__raStartTs = performance.now();
       try{
         await api("/oms/restart/all", {method:"POST"});
@@ -568,6 +579,12 @@
           startRaLiveProgressLoop();
           startSSE();
           startRaProgressPolling();
+          // 만약 SSE가 조용하면(메시지 미수신) 폴백 상태 폴링을 자동 시작
+          setTimeout(() => {
+            if (mySession !== RA_SESSION_ID || RA_FINAL) return;
+            // 아직 SSE 갱신(우선순위 3)이 들어오지 않았다면 폴백 폴링 가동
+            if (RA_MSG_PRIORITY < 3) startStatePolling();
+          }, 1200);
         }, 250);
       }catch(e){
         showErr(e.message||e);

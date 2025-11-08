@@ -16,7 +16,7 @@ import sys, traceback
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Dict, Optional, List
-from urllib.parse import urlsplit, parse_qs
+import urllib.parse as _uparse
 
 # ── paths ────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve()
@@ -63,6 +63,8 @@ def ensure_dir(p: Path) -> None:
 
 def now_ms() -> int:
     return int(time.time() * 1000)
+
+
 
 # ── Windows helpers (no psutil) ─────────────────────────────────────────────
 def _taskkill_pid(pid: int, force: bool = True) -> None:
@@ -506,14 +508,36 @@ class DmsSupervisor:
         return {"ok": True, "name": name, "exe": str(st.spec.path), "dirs": info}
 
     def _status_payload(self, use_snapshot: bool) -> dict:
+        """
+        호환 스키마 동시 제공:
+          - data: {name: {...}}
+          - executables: [{...}, ...]
+        """
         snap = self._proc_snapshot() if use_snapshot else self._psnap
-        def row(st: ProcState):
+        data = {}
+        executables = []
+        for name, st in self.states.items():
             running = st.is_running_fast(snap) if use_snapshot else bool(st.proc and st.proc.poll() is None)
             d = st.to_dict()
             d["running"] = running
             d["pid"] = st.pid
-            return d
-        return {"ok": True, "data": {k: row(v) for k, v in self.states.items()}}
+            data[name] = d
+            # 배열 항목(프론트 호환용)
+            executables.append({
+                "name": d["name"],
+                "alias": d.get("alias",""),
+                "exe": d.get("exe") or d.get("path"),
+                "path": d.get("path"),
+                "args": d.get("args", []),
+                "select": bool(d.get("select", True)),
+                "auto_restart": bool(d.get("auto_restart", True)),
+                "start_on_boot": bool(d.get("start_on_boot", False)),
+                "running": bool(d.get("running", False)),
+                "pid": d.get("pid"),
+                "last_rc": d.get("last_rc"),
+                "last_exit_code": d.get("last_exit_code"),
+            })
+        return {"ok": True, "data": data, "executables": executables}
 
     def status_cached(self) -> dict:
         now = time.time()
@@ -828,11 +852,11 @@ class DmsSupervisor:
             def do_GET(self):
                 try:
                     # 정규화(// → /, /web/web/… → /web/…)
-                    clean_path = urlsplit(self.path).path
+                    clean_path = _uparse.urlsplit(self.path).path
                     clean_path = re.sub(r'/+', '/', clean_path)
                     norm_path  = re.sub(r'^/(?:web/)+', '/web/', clean_path)
                     if norm_path != clean_path:
-                        qs = urlsplit(self.path).query
+                        qs = _uparse.urlsplit(self.path).query
                         loc = norm_path + (('?' + qs) if qs else '')
                         self.send_response(302)
                         self.send_header("Location", loc)
@@ -840,6 +864,22 @@ class DmsSupervisor:
                         self.send_header("Content-Length", "0")
                         self.end_headers()
                         return
+                    
+                    # ── 간단 별칭: /system, /web/system, /config-ui, /log-viewer 등
+                    if clean_path in ("/", "/dms", "/system", "/web/system"):           return _serve_static_safe(self, "dms-system.html")
+                    if clean_path in ("/configi", "/dms-config", "/web/dms-config"):    return _serve_static_safe(self, "dms-config.html")
+                    if clean_path in ("/log", "/web/log-viewer"):                       return _serve_static_safe(self, "log-viewer.html")
+                    
+                    if clean_path == "/__diag":
+                        info = {
+                            "file": str(HERE),
+                            "module_file": __file__,
+                            "urlsplit_source": getattr(_uparse.urlsplit, "__module__", None),
+                            "py_version": sys.version,
+                            "cwd": os.getcwd(),
+                            "mtime_here": os.path.getmtime(HERE),
+                        }
+                        return self._ok(200, {"ok": True, **info})
 
                     parts = [p for p in norm_path.split('/') if p]
 
@@ -865,7 +905,7 @@ class DmsSupervisor:
 
                         if len(parts) >= 2:
                             name = parts[1]
-                            q = parse_qs(urlsplit(self.path).query or "")
+                            q = _uparse.parse_qs(_uparse.urlsplit(self.path).query or "")
                             date_q = q.get("date", [None])[0]
                             tail_q = q.get("tail", [None])[0]
                             tail_bytes = 50000
@@ -916,21 +956,57 @@ class DmsSupervisor:
                     # 상태
                     if parts == ["status-lite"]:
                         hb = getattr(sup, "heartbeat_interval", 5)
-                        lite = sup._status_payload(use_snapshot=False)
-                        out = {"ok": True, "heartbeat_interval_sec": hb}
-                        out.update(lite)
-                        return self._ok(200, out)
+                        full = sup._status_payload(use_snapshot=False)
+                        # 최소 필드만 추려서도 제공(기존 UI가 이 경량 목록을 사용)
+                        lite_execs = [
+                            {
+                                "name": e["name"],
+                                "alias": e.get("alias",""),
+                                "running": bool(e.get("running")),
+                                "select": bool(e.get("select", True)),
+                                "pid": e.get("pid"),
+                            } for e in full.get("executables", [])
+                        ]
+                        return self._ok(200, {
+                            "ok": True,
+                            "heartbeat_interval_sec": hb,
+                            "executables": lite_execs,
+                            # 필요 시 data도 같이 (문제 없으면 유지)
+                            "data": full.get("data", {})
+                        })
 
                     if parts == ["status"]:
                         hb = getattr(sup, "heartbeat_interval", 5)
                         st = sup.status_cached()
-                        out = {"ok": True, "heartbeat_interval_sec": hb}
-                        out.update(st)
-                        return self._ok(200, out)
+                        return self._ok(200, {
+                            "ok": True,
+                            "heartbeat_interval_sec": hb,
+                            **st  # data + executables 둘 다 포함
+                        })
 
                     if parts and parts[0] == "status" and len(parts) > 1:
                         name = parts[1]
-                        return self._ok(200, sup.status(name))
+                        one = sup.status(name)
+                        # 단건 조회에도 호환용 executables 배열(길이1) 포함
+                        execs = []
+                        if one.get("ok") and "data" in one:
+                            d = one["data"]
+                            execs = [{
+                                "name": d.get("name"),
+                                "alias": d.get("alias",""),
+                                "exe": d.get("exe") or d.get("path"),
+                                "path": d.get("path"),
+                                "args": d.get("args", []),
+                                "select": bool(d.get("select", True)),
+                                "auto_restart": bool(d.get("auto_restart", True)),
+                                "start_on_boot": bool(d.get("start_on_boot", False)),
+                                "running": bool(d.get("running", False)),
+                                "pid": d.get("pid"),
+                                "last_rc": d.get("last_rc"),
+                                "last_exit_code": d.get("last_exit_code"),
+                            }]
+                        one["executables"] = execs
+                        return self._ok(200, one)
 
                     # 설정 메타/본문
                     if parts == ["config", "meta"]:
