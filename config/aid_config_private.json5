@@ -9,7 +9,7 @@
   // 릴리즈 정보, aid_release.md 파일로 부터 최신의 정보로 update
   //────────────────────────────────────────────────────────
   "Information": {
-    "_product": "AId",
+    "_product": "AId",    
     "_version": "",
     "_release_date": ""    
   },
@@ -105,10 +105,10 @@
   // Network 
   //────────────────────────────────────────────────────────
   "Network": {
-    "_daemon_port": 19737,
     // RTSP Streaming
-    "RTSP": {
-      "_rtsp_viewers": {}
+    "Port": {
+      "_aid_daemon_port": 19737,
+      "_aic_daemon_port": 19738,
     },
     "WebSocket": {                        // ← single source
       "_websocket_url": "ws://localhost",

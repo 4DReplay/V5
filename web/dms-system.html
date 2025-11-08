@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -11,12 +11,14 @@
       --ok:#16a34a; --bad:#ef4444; --off:#52525b;
       --btn:#1e40af; --btn2:#334155;
     }
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,
+      "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Noto Emoji","EmojiOne Color","Twemoji Mozilla",sans-serif;margin:24px}
     h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
     h2 small{font-size:14px;opacity:.8}
     .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
     .toolbar small{opacity:.8;margin-left:8px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease;}
+    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease;
+      font-family:inherit;}
     button.btn-secondary{background:var(--btn2)}
     button:hover{filter:brightness(1.15)}
     button[disabled]{opacity:.6;cursor:not-allowed}
@@ -46,7 +48,6 @@
     <button id="btnStartAll">▶ Start All</button>
     <button id="btnStopAll"  class="btn-secondary">■ Stop All</button>
     <button id="btnRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <!-- ✅ Reload 버튼 추가 -->
     <button id="btnReload" class="btn-secondary">🔄 Reload</button>
     <small id="busyMsg"></small>
   </div>
@@ -116,19 +117,7 @@ const BEAT  = document.getElementById("beat");
 const BUSY  = document.getElementById("busyMsg");
 if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
 
-document.getElementById("btnConfig").onclick    = ()=>location.href="dms-config.html";
-document.getElementById("btnStartAll").onclick   = ()=>{ if(!IS_BUSY) bulk("start");   };
-document.getElementById("btnStopAll").onclick    = ()=>{ if(!IS_BUSY) bulk("stop");    };
-document.getElementById("btnRestartAll").onclick = ()=>{ if(!IS_BUSY) bulk("restart"); };
-// ✅ Reload 클릭 핸들러
-document.getElementById("btnReload").onclick = async ()=>{
-  if (IS_BUSY) return;
-  try { setBusy(true, "RELOAD..."); clearErr(); await tick(); }
-  catch(e){ showErr("Reload failed: " + (e.message||e)); }
-  finally { setBusy(false); }
-};
-
-/* ───────────────── 상태 ───────────────── */
+/* ───────────────── 상태 UI ───────────────── */
 let CFG = null;    // /config-format 결과(JSON)
 let STATUS = null; // /status 결과(JSON)
 
@@ -138,7 +127,6 @@ function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
 let IS_BUSY = false;
 function setBusy(flag,msg=""){
   IS_BUSY = !!flag;
-  // ✅ Reload 버튼도 비활성화 대상에 포함
   for (const id of ["btnStartAll","btnStopAll","btnRestartAll","btnConfig","btnReload"]) {
     const b = document.getElementById(id);
     if (b) b.disabled = IS_BUSY;
@@ -146,7 +134,7 @@ function setBusy(flag,msg=""){
   BUSY.textContent = msg || "";
 }
 
-/* helpers */
+/* ───────────────── 렌더링 ───────────────── */
 function toList(status){
   if (!status) return [];
   if (status.data && typeof status.data === "object") return Object.values(status.data);
@@ -209,10 +197,129 @@ function render(){
   }
 }
 
-/* 행/체크·개별 버튼 */
+/* ───────────────── 이벤트 바인딩 ───────────────── */
+document.getElementById("btnConfig").onclick = ()=>location.href="dms-config.html";
+
+document.getElementById("btnStartAll").onclick = async ()=>{
+  if (IS_BUSY) return;
+  try{
+    setBusy(true, "START-ALL...");
+    await api("/start-all", {method:"POST"});
+    await tick();
+  }catch(e){ showErr("Start-All failed: " + (e.message||e)); }
+  finally{ setBusy(false); }
+};
+
+document.getElementById("btnStopAll").onclick = async ()=>{
+  if (IS_BUSY) return;
+  try{
+    setBusy(true, "STOP-ALL...");
+    await api("/stop-all", {method:"POST"});
+    await tick();
+  }catch(e){ showErr("Stop-All failed: " + (e.message||e)); }
+  finally{ setBusy(false); }
+};
+
+document.getElementById("btnRestartAll").onclick = async ()=>{
+  if (IS_BUSY) return;
+    const startedAt = Date.now();
+    const fmt = (ms)=>`${Math.round(ms/1000)}s`;
+    const selectedNames = () => {
+      const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+      return cfgExecs.filter(e => e.select === true).map(e => e.name);
+    };
+    const progressLine = () => {
+      // STATUS 기반 진행 카운트
+      const names = selectedNames();
+      const stMap = {}; for (const s of toList(STATUS)) stMap[s.name] = s;
+      let run=0, stop=0, unknown=0;
+      for (const n of names){
+        const s = stMap[n];
+        if (!s) { unknown++; continue; }
+        if (s.running) run++; else stop++;
+      }
+      return { total:names.length, run, stop, unknown };
+    };
+    const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
+    const withTimeout = (p, ms)=>Promise.race([
+      p.then(v=>({ok:true, v})).catch(e=>({ok:false, e})),
+      new Promise(r=>setTimeout(()=>r({ok:false, timeout:true}), ms))
+    ]);
+    try{
+      setBusy(true, "RESTART-ALL...");
+      clearErr();
+
+      // 1) 서버에 재시작 요청을 발사 (대기는 나중에)
+      const req = api("/restart-all", {method:"POST"});
+
+      // 2) 진행 상태 폴링
+      let allRunningSeenAt = 0;
+      const hardDeadline = Date.now() + 30_000; // 30s 상한
+      while (Date.now() < hardDeadline) {
+        await tick();
+        const p = progressLine();
+        BUSY.textContent = `RESTART-ALL... (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${fmt(Date.now()-startedAt)})`;
+        const allRunning = (p.total>0 && p.run === p.total);
+        if (allRunning) {
+          if (!allRunningSeenAt) allRunningSeenAt = Date.now();
+          // all-running 되면 잠깐(800ms) 더 보며 안정화 시간을 준다
+          if (Date.now() - allRunningSeenAt > 800) break;
+        }
+        await sleep(500);
+      }
+
+      // 3) 서버 응답을 최대 5초까지만 기다린다. 안 오면 임시 요약 확정.
+      const got = await withTimeout(req, 5000);
+
+      // 4) 최종 요약(성공/실패 개수) 출력      
+      const sum = (bag) => {
+        // bag = {"results": {"name": {"ok":true|false, ...}, ...}}
+        if (!bag || !bag.results) return {ok:0, fail:0, fails:[]};
+        let ok=0, fail=0, fails=[];
+        for (const [n, r] of Object.entries(bag.results)){
+          if (r && r.ok) ok++; else { fail++; fails.push(n); }
+        }
+        return {ok, fail, fails};
+      };
+
+      let finalMsg;
+      if (got.ok && !got.timeout) {
+        // 정확 요약 (서버 응답 사용)
+        const resp = got.v;
+        const stopSum  = sum(resp.stop);
+        const startSum = sum(resp.start);
+        const took = fmt(Date.now()-startedAt);
+        const fallback = resp && resp.fallback ? " (fallback mode)" : "";
+        finalMsg = `Restart-All done${fallback}: stop ok ${stopSum.ok}, fail ${stopSum.fail}; start ok ${startSum.ok}, fail ${startSum.fail}; elapsed ${took}`;
+        // 실패 항목 에러 박스
+        const failList = [...stopSum.fails, ...startSum.fails];
+        if (failList.length){ showErr("Restart-All partial failures: " + failList.join(", ")); }
+      } else {
+        // 임시 요약(STATUS 기반) – 응답 지연/미수신 시
+        const p = progressLine();
+        const took = fmt(Date.now()-startedAt);
+        const fails = Math.max(0, p.total - p.run);
+        finalMsg = `Restart-All done (live): start ok ${p.run}, fail ${fails}; elapsed ${took}`;
+      }
+    }catch(e){
+      showErr("Restart-All failed: " + (e.message||e));
+    }finally{
+      setBusy(false);
+    }
+};
+
+document.getElementById("btnReload").onclick = async ()=>{
+  if (IS_BUSY) return;
+  try { setBusy(true, "RELOAD..."); clearErr(); await tick(); }
+  catch(e){ showErr("Reload failed: " + (e.message||e)); }
+  finally { setBusy(false); }
+};
+
+/* 테이블 내 액션: select 토글, 개별 start/stop/restart/logs */
 TBody.addEventListener("click", async (ev)=>{
   const btn = ev.target.closest("button");
   const chk = ev.target.closest('input[type="checkbox"][data-a="toggle"]');
+
   if (chk){
     try{
       const name = chk.dataset.n;
@@ -224,6 +331,7 @@ TBody.addEventListener("click", async (ev)=>{
     }catch(e){ showErr("Update select failed: "+(e.message||e)); }
     return;
   }
+
   if (!btn) return;
   const act = btn.dataset.a, name = btn.dataset.n;
   if (act === "logs"){
@@ -231,80 +339,15 @@ TBody.addEventListener("click", async (ev)=>{
     return;
   }
   try{
+    setBusy(true, `${act.toUpperCase()} ${name}...`);
     await api(`/${act}/${encodeURIComponent(name)}`, {method:"POST"});
-    await waitForRunning(name, act === "stop" ? false : true, ACTION_TIMEOUTS[act] || 120_000);
+    // 서버가 일괄 관리 → 클라이언트는 곧바로 갱신만
     await tick();
   }catch(e){ showErr(`${act.toUpperCase()} failed: `+(e.message||e)); }
+  finally{ setBusy(false); }
 });
 
-/* ───────── 병렬 Bulk (Start/Stop/Restart) ───────── */
-const ACTION_TIMEOUTS = { start: 180_000, stop: 150_000, restart: 240_000 };
-
-function listFromStatus(st){
-  return (st && st.data && typeof st.data === "object") ? Object.values(st.data)
-       : (Array.isArray(st.processes)   ? st.processes
-       :  Array.isArray(st.executables) ? st.executables : []);
-}
-async function readProc(name){
-  try{
-    const st = await api("/status");
-    const arr = listFromStatus(st);
-    return arr.find(x => x && x.name === name);
-  }catch{ return null; }
-}
-async function waitForRunning(name, wantRunning, totalTimeoutMs, pollEveryMs=1200){
-  const t0 = Date.now();
-  while (Date.now() - t0 < totalTimeoutMs){
-    const p = await readProc(name);
-    if (p && !!p.running === !!wantRunning) return { ok:true };
-    await new Promise(r=>setTimeout(r,pollEveryMs));
-  }
-  return { ok:false, msg:"timeout" };
-}
-
-async function bulk(action){
-  if (!CFG || !Array.isArray(CFG.executables)) return;
-  const targets = CFG.executables.filter(e=>e.select===true).map(e=>e.name);
-  if (!targets.length){ showErr("No selected processes."); return; }
-
-  const label  = action.toUpperCase();
-  const want   = (action !== "stop");
-  const budget = ACTION_TIMEOUTS[action] || 180_000;
-
-  setBusy(true, `${label}... (0/${targets.length})`);
-
-  let done = 0;
-  const results = await Promise.all(
-    targets.map((name) =>
-      (async () => {
-        try { await api(`/${action}/${encodeURIComponent(name)}`, { method:"POST" }); }
-        catch(_) {}
-        const waited = await waitForRunning(name, want, budget);
-        if (!waited.ok) throw new Error(waited.msg || "timeout");
-        return { ok:true };
-      })()
-      .then(
-        () => { done++; setBusy(true, `${label}... (${done}/${targets.length})`); return { ok:true }; },
-        (e)  => { done++; setBusy(true, `${label}... (${done}/${targets.length})`); return { ok:false, msg:`${name}: ${e.message||e}` }; }
-      )
-    )
-  );
-
-  const okCount   = results.filter(r => r.ok).length;
-  const failItems = results.filter(r => !r.ok);
-
-  setBusy(false, `${label} done: ${okCount} ok, ${failItems.length} failed`);
-
-  if (failItems.length){
-    showErr(`${label} failures:\n` + failItems.map(f => f.msg).join("\n"));
-  } else {
-    clearErr();
-  }
-
-  await tick();
-}
-
-/* ───────── 표시용 Host 추출 & 주기 폴링 ───────── */
+/* ───────────────── 주기 폴링 & 초기 로드 ───────────────── */
 function pickDisplayHost(st){
   const pick = (o)=> {
     if (!o || typeof o !== "object") return "";
@@ -327,9 +370,11 @@ async function tick(){
     if (hostHint) TITLE.textContent = `(${hostHint})`;
     const hb = Number(STATUS.heartbeat_interval_sec||2);
     BEAT.textContent = `ON (${hb}s)`;
+
     if (!CFG){
-      const raw = await api("/config","GET"); // 기존 로직 유지
-      const fm  = await api("/config-format",{method:"POST", body: raw});
+      // BUGFIX: 올바른 GET 사용
+      const raw = await api("/config");
+      const fm  = await api("/config-format", {method:"POST", body: raw});
       CFG = JSON.parse(fm.text);
     }
     render();

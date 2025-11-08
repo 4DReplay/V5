@@ -45,7 +45,7 @@
       "alias": "Gimbal Control",
       "path": "daemon/GCd/GCd.exe",
       "args": [],
-      "select": true,
+      "select": false,
       "auto_restart": true,
       "start_on_boot": true
     },
@@ -81,7 +81,7 @@
       "alias": "Multimedia Maker",
       "path": "daemon/MMd/MMdServer.exe",
       "args": [],
-      "select": false,
+      "select": true,
       "auto_restart": true,
       "start_on_boot": true
     },
@@ -97,28 +97,42 @@
     {
       "name": "AId",
       "alias": "AI Daemon",
-      "type": "python",
-      "path": "V5/src/AId/aid_main.py",
-      "python": "C:/Python311/python.exe",
-      "args": [],
-      "cwd": "D:/Project/v4_aid",
-      "select": false,
+      "path": "C:\\Program Files\\Python310\\python.exe",
+      "args": [
+        "-u",
+        "C:\\4DReplay\\V5\\src\\AId\\aid_main.py"
+      ],
+      "cwd": "C:\\4DReplay\\V5\\src\\AId",
       "env": {
         "FD_SERVICE": "1",
         "PYTHONUNBUFFERED": "1",
         "PYTHONIOENCODING": "utf-8",
-        "FD_NVENC_INIT_CONCURRENCY": "1",
-        "FD_NVENC_MAX_SLOTS": "2"
-      }
+        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\logs"
+      },
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true,
+      "shell": false
     },
     {
       "name": "AIc",
-      "alias": "Artificial Intelligence Client [#n]",
-      "path": "daemon/AId/AIc.exe",
-      "args": [],
-      "select": false,
+      "alias": "AI Client [#1]",
+      "path": "C:\\Program Files\\Python310\\python.exe",
+      "args": [
+        "-u",
+        "C:\\4DReplay\\V5\\src\\AId\\aic_main.py"
+      ],
+      "cwd": "C:\\4DReplay\\V5\\src\\AId",
+      "env": {
+        "FD_SERVICE": "1",
+        "PYTHONUNBUFFERED": "1",
+        "PYTHONIOENCODING": "utf-8",
+        "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AIc\\logs"
+      },
+      "select": true,
       "auto_restart": true,
-      "start_on_boot": true
+      "start_on_boot": true,
+      "shell": false
     },
     {
       "name": "CMd",

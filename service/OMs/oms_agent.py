@@ -6,10 +6,31 @@ from pathlib import Path
 from urllib.parse import urlsplit, parse_qs, unquote
 import http.client, sys
 from collections import defaultdict, deque
+from copy import deepcopy
 
 # ➊ 파일 상단에 유틸 추가 (import 아래 아무 곳)
 import socket
 import os
+
+# ▼▼▼ [NEW] 기본 프로세스 Alias 테이블 (oms_config.json의 process_alias로 덮어쓸 수 있음)
+PROCESS_ALIAS_DEFAULT = {
+    "MTd":  "Message Transport",
+    "EMd":  "Enterprise Manager",
+    "CCd":  "Camera Control",
+    "SCd":  "Switch Control",
+    "PCd":  "Processor Control",
+    "GCd":  "Gimbal Control",
+    "MMd":  "Multimedia Maker",
+    "MMc":  "Multimedia Maker Client",    
+    "AId":  "AI Daemon",
+    "AIc":  "AI Client",
+    "PreSd":"Pre Storage",
+    "PostSd":"Post Storage",
+    "VPd":"Vision Processor",
+    "AMd":  "Audio Manager",
+    "CMd":  "Compute Multimedia",
+}
+# ▲▲▲
 
 # --- Paths ---------------------------------------------------
 # V5 루트:  C:\4DReplay\V5  (기본)  — 필요시 OMS_ROOT/OMS_LOG_DIR로 오버라이드 가능
@@ -267,10 +288,55 @@ class Orchestrator:
         self.http_port = int(cfg.get("http_port",52050))
         self.heartbeat = float(cfg.get("heartbeat_interval_sec",2))
         self.nodes = list(cfg.get("nodes",[]))
+        # ▼▼▼ [NEW] process_alias 로드(기본값 + 설정 덮어쓰기)
+        try:
+            user_alias = cfg.get("process_alias") or {}
+            if not isinstance(user_alias, dict): user_alias = {}
+        except Exception:
+            user_alias = {}
+        self.process_alias = {**PROCESS_ALIAS_DEFAULT, **user_alias}
+        # ▲▲▲
         self._stop = threading.Event()
         self._lock = threading.RLock()
         self._cache = {}
         self._cache_ts = {}
+        # DMS /config 에서 뽑아온 per-node alias 맵 캐시
+        self._cache_alias = {}   # { node_name: { "PreSd": "Pre Storage [#1]", ... } }
+        # ── Restart progress (single source of truth)
+        self._restart = {
+            "state": "idle",      # idle | running | done | error
+            "total": 0,
+            "sent": 0,            
+            "done": 0,
+            "fails": [],
+            "message": "",
+            "started_at": 0.0,
+            "updated_at": 0.0,
+        }
+        self._restart_lock = threading.RLock()
+        # 재가동 대기 파라미터
+        self._restart_ready_timeout = 45.0   # 프로세스 1개당 최대 대기(초)
+        self._restart_poll_interval = 0.5    # 상태 폴링 간격(초)
+        self._restart_seq = 0
+
+    # ── restart state helpers
+    def _restart_get(self):
+        with self._restart_lock:
+            snap = deepcopy(self._restart)
+            snap["seq"] = getattr(self, "_restart_seq", 0)
+            return snap
+    def _restart_set(self, **kw):
+        with self._restart_lock:
+            self._restart.update(kw)
+            self._restart["updated_at"] = time.time()
+            self._restart_seq += 1
+            snap = deepcopy(self._restart)
+            snap["seq"] = self._restart_seq
+        # PUB으로 브로드캐스트 (SSE 소비)
+        try:
+            self.PUB.publish("__restart__", snap)
+        except Exception:
+            pass
 
     def run(self):
         threading.Thread(target=self._loop, daemon=True).start()
@@ -294,6 +360,11 @@ class Orchestrator:
             hb=float(cfg.get("heartbeat_interval_sec", self.heartbeat))
             if hb>0 and hb!=self.heartbeat: self.heartbeat=hb; ch.append("heartbeat_interval_sec")
             if isinstance(cfg.get("nodes"), list): self.nodes=list(cfg["nodes"]); ch.append("nodes")
+            # ▼▼▼ [NEW] process_alias 핫리로드
+            if isinstance(cfg.get("process_alias"), dict):
+                self.process_alias = {**PROCESS_ALIAS_DEFAULT, **cfg["process_alias"]}
+                ch.append("process_alias")
+            # ▲▲▲
         return ch
 
     def _poll_once(self):
@@ -304,8 +375,25 @@ class Orchestrator:
                 payload = json.loads(data.decode("utf-8","ignore")) if st==200 else {"ok":False,"error":f"http {st}"}
             except Exception as e:
                 payload = {"ok":False,"error":repr(e)}
+            # ▼ DMS /config에서 실행 항목(alias)도 끌어옴
+            alias_map = {}
+            try:
+                st2, hdr2, dat2 = _http_fetch(n["host"], int(n.get("port",51050)), "GET", "/config", None, None, timeout=2.5)
+                if st2 == 200:
+                    txt = dat2.decode("utf-8","ignore")
+                    cfg = json.loads(_strip_json5(txt))
+                    for ex in (cfg.get("executables") or []):
+                        nm = (ex or {}).get("name")
+                        al = (ex or {}).get("alias")
+                        if nm and al:
+                            alias_map[nm] = al
+            except Exception:
+                alias_map = {}
+
             with self._lock:
-                self._cache[name]=payload; self._cache_ts[name]=time.time()
+                self._cache[name] = payload
+                self._cache_ts[name] = time.time()
+                self._cache_alias[name] = alias_map
 
     def _loop(self):
         while not self._stop.is_set():
@@ -326,7 +414,10 @@ class Orchestrator:
 
             # ▼ 추가: 최신 STATE 스냅샷을 extra로 싣기 (프론트 오버레이에서 사용)
             _, extra = _latest_state()
-            if extra: payload["extra"] = extra
+            # extra에 alias_map 주입 (DMS 화면에서 끌어다 쓰도록)
+            if not extra: extra = {}
+            extra["alias_map"] = getattr(self, "process_alias", {})
+            payload["extra"] = extra
 
             return payload
 
@@ -336,7 +427,7 @@ class Orchestrator:
             # 최신 STATE 하나만 골라 모든 노드/프로세스에 일괄 적용
             _, extra = _latest_state()
             if not extra:
-                return payload
+                extra = {}
 
             conn = extra.get("connected_daemons", {})
             ver  = extra.get("versions", {})
@@ -344,6 +435,10 @@ class Orchestrator:
 
             nodes = payload.get("nodes") or []
             for node in nodes:
+                # 이 노드에 해당하는 DMS-config 기반 alias 맵
+                node_name = node.get("name") or node.get("host")
+                per_node_alias = self._cache_alias.get(node_name, {})  # {"PreSd": "Pre Storage [#1]", ...}
+
                 s = node.get("status") or {}
                 # unify
                 if isinstance(s.get("data"), dict):
@@ -359,6 +454,15 @@ class Orchestrator:
                     name = p.get("name")
                     if not name:
                         continue
+
+                    # ▼▼▼ [NEW] alias 주입(없을 때만)
+                    # ▼▼▼ [NEW] alias 주입 우선순위:
+                    # 1) 해당 노드 DMS /config의 alias
+                    # 2) 서버 기본 PROCESS_ALIAS_DEFAULT / process_alias
+                    alias = per_node_alias.get(name) or self.process_alias.get(name)
+                    if alias and not p.get("alias"):
+                        p["alias"] = alias
+                    # ▲▲▲
 
                     # ---- 연결 상태 오버레이 ----
                     key = inward_name(name)  # "SPd" -> "MMd" 정규화
@@ -441,8 +545,15 @@ class Orchestrator:
 
         class H(BaseHTTPRequestHandler):
             def _write(self, code=200, body=b"", ct="application/json; charset=utf-8"):
-                self.send_response(code); self.send_header("Content-Type", ct)
-                self.send_header("Cache-Control","no-store"); self.send_header("Content-Length", str(len(body)))
+                self.send_response(code)
+                self.send_header("Content-Type", ct)
+                # 일반 응답도 캐시/변환 방지
+                self.send_header("Cache-Control","no-cache, no-transform")
+                # CORS (외부 페이지에서 진행 상황을 읽을 수 있도록)
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                self.send_header("Access-Control-Allow-Headers", "Content-Type")
+                self.send_header("Content-Length", str(len(body)))                
                 self.end_headers()
                 try: self.wfile.write(body)
                 except: pass
@@ -522,6 +633,67 @@ class Orchestrator:
                         base = orch._status_core()
                         over = orch._overlay_connected(base)
                         return self._write(200, json.dumps(over).encode())
+
+                    # ── Restart progress (state)
+                    if parts==["oms","restart","state"]:
+                        s = orch._restart_get()
+                        return self._write(200, json.dumps(s, ensure_ascii=False).encode("utf-8","ignore"))
+
+                    # ── Restart progress stream (SSE)
+                    if parts==["oms","restart","stream"]:
+                        self.send_response(200)
+                        self.send_header("Content-Type","text/event-stream; charset=utf-8")
+                        # SSE는 캐시/변환/버퍼링 금지
+                        self.send_header("Cache-Control","no-cache, no-transform")
+                        self.send_header("Connection","keep-alive")
+                        # Nginx 등 프록시 버퍼링 차단
+                        self.send_header("X-Accel-Buffering","no")
+                        # CORS 허용
+                        self.send_header("Access-Control-Allow-Origin", "*")
+                        self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+                        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+                        self.end_headers()
+                        # 구독
+                        token="__restart__"
+                        q = orch.PUB.subscribe(token)
+                        # 최초 스냅샷
+                        first = json.dumps(orch._restart_get(), ensure_ascii=False).encode("utf-8","ignore")
+                        try:
+                            try:
+                                # 재연결 대기 시간 단축(3s 그대로 두되 keep-alive를 촘촘히)
+                                self.wfile.write(b"retry: 3000\r\n")
+                                self.wfile.write(b"event: progress\r\n")
+                                self.wfile.write(b"data: "); self.wfile.write(first); self.wfile.write(b"\r\n\r\n")
+                                try: self.wfile.flush(); 
+                                except: pass
+                            except: pass
+                            # 푸시 루프
+                            last_ka = time.time()
+                            ka_interval = 2.0  # 10s -> 2s (프록시 버퍼링/idle timeout 회피)
+                            while True:
+                                # 새 메시지 있으면 모두 방출
+                                while q:
+                                    line = q.popleft().encode("utf-8","ignore")
+                                    self.wfile.write(b"event: progress\r\n")
+                                    self.wfile.write(b"data: "); self.wfile.write(line); self.wfile.write(b"\r\n\r\n")
+                                    try: self.wfile.flush()
+                                    except: pass                               
+                                # keep-alive
+                                if time.time() - last_ka > ka_interval:
+                                    # SSE 주석(클라이언트는 무시하지만 프록시 버퍼를 비움)
+                                    self.wfile.write(b":ka\r\n\r\n")
+                                    last_ka = time.time()
+                                    try: self.wfile.flush()
+                                    except: pass
+                                time.sleep(0.25)
+                        except Exception:
+                            # 클라이언트 끊김
+                            try: self.wfile.flush()
+                            except: pass
+                        finally:
+                            try: orch.PUB.unsubscribe(token, q)
+                            except: pass
+                        return
 
                     return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
@@ -662,6 +834,127 @@ class Orchestrator:
                             return self._write(200, b'{"ok":true}')
                         except Exception as e:
                             return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
+
+                    # ── Restart progress clear (최종 메시지 수동 초기화용)
+                    if parts==["oms","restart","clear"]:
+                        orch._restart_set(state="idle", total=0, sent=0, done=0, fails=[], message="", started_at=0.0)
+                        return self._write(200, b'{"ok":true}')
+
+                    # ── Restart All Orchestrator (server-driven)
+                    if parts==["oms","restart","all"]:
+                        # 이미 수행 중이면 409
+                        cur = orch._restart_get()
+                        if cur.get("state") == "running":
+                            return self._write(409, json.dumps({"ok":False,"error":"already_running"}).encode())
+
+                        # 워커 스레드
+                        def _worker():
+                            try:
+                                # 현재 캐시에서 'select==true'인 프로세스 수집
+                                with orch._lock:
+                                    nodes = []
+                                    for n in orch.nodes:
+                                        nm = n.get("name") or n.get("host")
+                                        nodes.append({
+                                            "name": nm,
+                                            "host": n["host"],
+                                            "port": int(n.get("port",51050)),
+                                            "status": deepcopy(orch._cache.get(nm) or {})
+                                        })
+                                jobs=[]
+                                for nd in nodes:
+                                    st = nd.get("status") or {}
+                                    if isinstance(st.get("data"), dict):
+                                        procs = list(st["data"].values())
+                                    elif isinstance(st.get("processes"), list):
+                                        procs = st["processes"]
+                                    elif isinstance(st.get("executables"), list):
+                                        procs = st["executables"]
+                                    else:
+                                        procs = []
+                                    for p in procs:
+                                        if p and p.get("select") is True and p.get("name"):
+                                            jobs.append((nd["host"], nd["port"], nd["name"], p["name"]))
+
+                                total = len(jobs)
+                                orch._restart_set(state="running", total=total, sent=0, done=0,
+                                                  fails=[], message=f"Preparing…", started_at=time.time())
+
+                                def _fetch_proc_running(h, p, proc_name)->bool:
+                                    """노드 상태에서 해당 프로세스가 running인지 확인"""
+                                    try:
+                                        st,_,dat = _http_fetch(h, p, "GET", "/status", None, None, timeout=4.0)
+                                        if st != 200: return False
+                                        js = json.loads(dat.decode("utf-8","ignore"))
+                                        if isinstance(js.get("data"), dict):
+                                            procs = list(js["data"].values())
+                                        elif isinstance(js.get("processes"), list):
+                                            procs = js["processes"]
+                                        elif isinstance(js.get("executables"), list):
+                                            procs = js["executables"]
+                                        else:
+                                            procs = []
+                                        for q in procs:
+                                            if (q or {}).get("name") == proc_name:
+                                                return bool(q.get("running"))
+                                        return False
+                                    except Exception:
+                                        return False
+
+                                sent = 0
+                                done = 0
+                                fails = []
+
+                                # 1) 각 프로세스 재시작 POST
+                                for host,port,node_name,proc in jobs:
+                                    try:
+                                        st,_,_ = _http_fetch(host, port, "POST",
+                                                             f"/restart/{proc}",
+                                                             b"{}",
+                                                             {"Content-Type":"application/json"},
+                                                             timeout=8.0)
+                                        if st>=400:
+                                            raise RuntimeError(f"http {st}")
+                                        sent += 1
+                                        orch._restart_set(sent=sent, message=f"Sent {sent}/{total}… waiting for RUNNING")
+                                    except Exception as e:
+                                        fails.append(f"{node_name}/{proc}: {e}")
+                                        orch._restart_set(sent=sent, fails=fails,
+                                                          message=f"Sent {sent}/{total} (fail {len(fails)})… waiting")
+
+                                # 2) RUNNING 복귀 대기(프로세스별 타임아웃)
+                                #    이미 실패로 분류된 항목은 건너뜀
+                                pending = [(h,pt,nn,pr) for (h,pt,nn,pr) in jobs
+                                           if not any(pr in f for f in fails)]
+                                for host,port,node_name,proc in pending:
+                                    t0 = time.time()
+                                    while True:
+                                        if _fetch_proc_running(host, port, proc):
+                                            done += 1
+                                            orch._restart_set(done=done,
+                                                message=f"Running back {done}/{total} (fail {len(fails)})")
+                                            break
+                                        if time.time() - t0 > orch._restart_ready_timeout:
+                                            fails.append(f"{node_name}/{proc}: timeout")
+                                            orch._restart_set(fails=fails,
+                                                message=f"Running back {done}/{total} (fail {len(fails)})")
+                                            break
+                                        time.sleep(orch._restart_poll_interval)
+
+                                # 3) 최종 요약 메시지 고정(사라지지 않음)
+                                if fails:
+                                    orch._restart_set(state="done",
+                                        message=f"Restart finished: ok {done}/{total}, fail {len(fails)}",
+                                        fails=fails)
+                                else:
+                                    orch._restart_set(state="done",
+                                        message=f"Restart finished: ok {done}/{total}, fail 0")
+                            except Exception as e:
+                                orch._restart_set(state="error", message=f"Restart error: {e}")
+
+                        orch._restart_set(state="running", total=0, done=0, fails=[], message="Preparing…", started_at=time.time())
+                        threading.Thread(target=_worker, daemon=True).start()
+                        return self._write(200, json.dumps({"ok":True}).encode())
 
                     # proxy post
                     if parts and parts[0]=="proxy" and len(parts)>=2:

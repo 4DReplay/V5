@@ -16,7 +16,7 @@
     h2 small{font-size:14px;opacity:.8}
     .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px}
     .toolbar .note{color:var(--muted);font-size:13px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
+    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:filter .2s ease}
     button:hover{filter:brightness(1.15)}
     button[disabled]{opacity:.55;cursor:not-allowed}
     .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
@@ -39,6 +39,9 @@
     .global-settings{margin:14px 0;padding:10px;background:#0c121b;border:1px solid var(--line2);border-radius:8px;max-width:600px}
     .global-settings label{display:flex;align-items:center;gap:8px;margin-bottom:8px}
     .global-settings input{flex:1}
+    /* icon */
+    .ico{width:16px;height:16px;display:inline-block;vertical-align:-2px;fill:currentColor}
+ 
   </style>
 </head>
 <body>
@@ -48,11 +51,31 @@
   </h2>
 
   <div class="toolbar">
-    <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS Control">🧭 OMS Control</button>
-    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
-    <button id="btnFormat" class="btn-ghost">🧹Format</button>
-    <button id="btnAdd" class="btn-ghost">➕ Add</button>
-    <button id="btnSave">💾 Save</button>
+    <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS System">
+      <!-- compass -->
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm4.6 4.6-3.2 7.2-7.2 3.2 3.2-7.2 7.2-3.2Zm-6.4 6.4 1.6-3.6 3.6-1.6-1.6 3.6-3.6 1.6Z"/></svg>
+      <span>OMS System</span>
+    </button>
+    <button id="btnReload" class="btn-secondary">
+      <!-- refresh -->
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-6.65Z"/></svg>
+      <span>Reload</span>
+    </button>
+    <button id="btnFormat" class="btn-ghost">
+      <!-- magic/format -->
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21 14 10l1 1L4 22H3v-1Zm11-9 2-2 5 5-2 2-5-5Zm3-9 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg>
+      <span>Format</span>
+    </button>
+    <button id="btnAdd" class="btn-ghost">
+      <!-- plus -->
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>
+      <span>Add</span>
+    </button>
+    <button id="btnSave">
+      <!-- save -->
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm0 2.5L19.5 8H17V5.5ZM7 5h7v6H7V5Zm0 8h10v6H7v-6Z"/></svg>
+      <span>Save</span>
+    </button>
     <span id="saveState" class="pill">Idle</span>
     <span class="right note">
       File: <span id="metaPath">-</span> (<span id="metaSize">-</span> bytes, mtime <span id="metaMtime">-</span>)

@@ -14,7 +14,8 @@
       --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
     }
     html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
+    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,
+      "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Noto Emoji",sans-serif;margin:24px}
     h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
     h2 small{font-size:14px;color:var(--muted)}
     .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
@@ -23,14 +24,25 @@
     th{background:var(--th);text-align:left}
     tr.running td{ background:var(--row-run); }
     tr.other   td{ background:var(--row-stop); }
-    .pill{display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;line-height:1;font-weight:500;letter-spacing:.3px;background:transparent}
+    .pill{
+      /* 부모 폰트 상속 → 이모지 폰트 사용 */
+      font-family: inherit;
+      display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;
+      line-height:1;font-weight:500;letter-spacing:.3px;background:transparent
+    }
     .badge-ok { color:#22c55e;border-color:var(--badge-ok); }
     .badge-bad{ color:#f87171;border-color:var(--badge-bad); }
     .pill-ok{ color:#22c55e;border-color:var(--ok); }
     .pill-bad{ color:#f87171;border-color:var(--bad); }
     .pill-warn{ color:#fbbf24;border-color:var(--warn); }
     .muted{color:var(--muted)}
-    button{background:var(--btn);color:#fff;border:0;border-radius:14px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
+    button{
+      /* 버튼도 상속 → 이모지 정상 표시 */
+      font-family: inherit;
+      background:var(--btn);color:#fff;border:0;border-radius:14px;
+      padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
+      transition:filter .2s ease
+    }
     .btn-secondary{ background:var(--btn2); }
     button:hover{ filter:brightness(1.08) }
     .toolbar button{ border-radius:12px; padding:10px 16px }
@@ -38,7 +50,15 @@
     a.node:hover{text-decoration:underline}
     .spacer{flex:1}
     .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
-    #busyMsg{margin-left:8px;opacity:.9}
+    /* 진행칩: 항상 자리를 유지(레이아웃 고정) */
+    #progressChip{
+      min-width: 180px;
+      justify-content: center;
+      white-space: nowrap;   /* 줄바꿈 금지 */
+      flex: 0 0 auto;        /* 수축 금지 */
+      visibility: hidden;    /* 초기에는 숨김(자리 유지) */
+    }
+    /* 툴바는 wrap 허용이지만 진행칩은 줄바꿈 되지 않음(위 flex 설정으로 보호) */#busyMsg{margin-left:8px;opacity:.9}
     #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
 
     /* sequence panel */
@@ -59,9 +79,10 @@
     <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
     <button id="btnReload" class="btn-secondary">🔄 Reload</button>
     <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <small id="busyMsg"></small>
+    <!-- 진행 상황 전용 칩 (SSE/폴링으로만 갱신; 다른 코드에서 건들지 않음) -->
+    <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
-    <label class="chip"><input type="checkbox" id="cbOnlySelected" checked> only selected</label>
+    <!-- 폴링 상태(읽기 전용) -->
     <span class="chip" id="hb">poll -</span>
   </div>
 
@@ -137,13 +158,29 @@
     const TBody=document.querySelector("#grid tbody");
     const HB=document.getElementById("hb");
     const META=document.getElementById("meta");
-    const BUSY=document.getElementById("busyMsg");
-    const ERR=document.getElementById("err");
-    const CB_ONLY=document.getElementById("cbOnlySelected");
+    const PROG=document.getElementById("progressChip");
+    const ERR=document.getElementById("err");    
     const BTN_RELOAD=document.getElementById("btnReload");
     const BTN_CONFIG=document.getElementById("btnConfig");
     const BTN_RA=document.getElementById("omsRestartAll");
     let lastData=null;
+    let OMS_ALIAS_MAP = {};
+    // 폴링/락 상태
+    let POLLER = null;
+    let RA_LOCK = false; // Restart All 진행 중
+    let POLL_MS = 3000;  // 기본값(3s), 상태에 따라 동적으로 교체
+
+    function startPolling(ms){
+      if (typeof ms === "number" && isFinite(ms) && ms > 0) {
+        POLL_MS = ms;
+      }
+      stopPolling();
+      POLLER = setInterval(()=>{ if(!RA_LOCK) reloadNow().catch(()=>{}); }, POLL_MS);
+      if (DEBUG) console.debug("[OMS] poll started:", POLL_MS, "ms");
+    }
+    function stopPolling(){
+      if (POLLER){ clearInterval(POLLER); POLLER=null; }
+    }
 
     async function api(path, init={}) {
       const res = await fetch(path, { cache:"no-store", ...init });
@@ -155,7 +192,44 @@
     }
     function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
     function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
-    function setBusy(on,msg=""){ BUSY.textContent=msg||""; BTN_RELOAD.disabled=on; BTN_CONFIG.disabled=on; BTN_RA.disabled=on; }
+    // 폴링/버튼 상태만 제어(메시지는 건드리지 않음)
+    function setBusy(on){
+      BTN_RELOAD.disabled = on || RA_LOCK;
+      BTN_CONFIG.disabled  = on || RA_LOCK;
+      BTN_RA.disabled      = on || RA_LOCK;
+    }
+
+    // ── 진행칩: 단일 쓰기 경로 (SSE/폴링/스토리지 이벤트만 변경 가능)
+    const PROG_LS_KEY = "oms_ra_progress";
+    function raWrite(text){
+      PROG.style.visibility = "visible";
+      const msg = (text && String(text).trim()) ? text : (PROG.textContent.trim() || "Working…");
+      if (PROG.textContent !== msg) PROG.textContent = msg;
+      // 로컬 캐시(다른 탭/페이지 동기화)
+      try { localStorage.setItem(PROG_LS_KEY, msg); } catch {}
+    }
+    function raClear(){
+      // 완료 후에도 지우지 말고 마지막 메시지 유지 요구 → 숨기지 않음
+      // 필요 시 수동으로만 초기화
+    }
+    // 외부 스크립트가 칩을 비우면 즉시 복구
+    new MutationObserver(()=>{
+      if (!PROG.textContent || !PROG.textContent.trim()){
+        const cached = localStorage.getItem(PROG_LS_KEY);
+        if (cached && cached.trim()) PROG.textContent = cached;
+        else PROG.textContent = "Working…";
+      }
+    }).observe(PROG, {characterData:true, childList:true, subtree:true});
+    // 다른 탭/페이지에서 갱신되면 동기 반영(같은 오리진)
+    window.addEventListener("storage", (e)=>{
+      if (e.key === PROG_LS_KEY && typeof e.newValue === "string"){
+        PROG.style.visibility = "visible";
+        if (e.newValue.trim()) PROG.textContent = e.newValue;
+      }
+    });
+    // 초기 복원
+    (function(){ const cached = localStorage.getItem(PROG_LS_KEY); if (cached) { PROG.style.visibility="visible"; PROG.textContent=cached; }})();
+
 
     function toProcList(status){
       if (!status) return [];
@@ -165,7 +239,7 @@
       return [];
     }
     function nodeCellHtml(n,i,total){
-      const href = `/proxy/${encodeURIComponent(n.name)}/dms-control.html`;
+      const href = `/proxy/${encodeURIComponent(n.name)}/dms-system.html`;
       return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${total?` (${i+1}/${total})`:""}</span>`;
     }
 
@@ -233,7 +307,23 @@
     function render(data){
       // ▼ 추가: 서버가 보관 중인 버전/연결 정보를 프로세스 리스트에 주입
       applyOverlays(data);
-      lastData=data; HB.textContent = `poll ${data.heartbeat_interval_sec||"-"}s`;
+      OMS_ALIAS_MAP = (data && data.extra && data.extra.alias_map) || {};
+      lastData=data;
+
+      // ---- Heartbeat 기반 폴링 주기 동적 반영 ----
+      const hbSecRaw = Number(data && data.heartbeat_interval_sec);
+      if (!Number.isNaN(hbSecRaw) && hbSecRaw > 0) {
+        // 최소/최대 가드(0.8s ~ 10s 정도로 안전 범위)
+        const nextMs = Math.max(800, Math.min(10000, Math.floor(hbSecRaw * 1000)));
+        // Restart All 중에는 폴링 주기를 바꾸지 않음(깜빡임 방지)
+        if (!RA_LOCK && nextMs !== POLL_MS) {
+          startPolling(nextMs);
+        }
+        HB.textContent = `poll ${hbSecRaw}s`;
+      } else {
+        HB.textContent = "poll -";
+      }
+      
       const nodes = Array.isArray(data.nodes)? data.nodes : [];
       META.textContent = `nodes: ${nodes.length}`;
       TBody.innerHTML="";
@@ -243,7 +333,7 @@
       for(let i=0;i<nodes.length;i++){
         const n=nodes[i];
         const all=toProcList(n.status);
-        const shown = CB_ONLY.checked ? all.filter(p=>p&&p.select===true) : all;
+        const shown = all.filter(p=>p && p.select===true);
         if (!n.status || all.length===0){
           TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,i,nodes.length)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
         }
@@ -262,10 +352,22 @@
             ? `${(p.version||"-")}<br><span class="muted">${(p.version_date||"-")}</span>`
             : `<span class="muted">-<br>-</span>`;
 
+          // ▼ Alias 병합: DMS(status)의 alias 우선, 없으면 OMS(extra.alias_map) 사용
+          const dmsAlias = (p.alias || "").trim();
+          const omsAlias = (OMS_ALIAS_MAP[p.name] || "").trim();
+          let aliasHtml = "";
+          if (dmsAlias && omsAlias && dmsAlias !== omsAlias) {
+            // DMS 우선 표기, OMS와 다르면 title로 보조 노출
+            aliasHtml = `<br><span class="muted" title="OMS alias: ${omsAlias}">${dmsAlias}</span>`;
+          } else {
+            const a = dmsAlias || omsAlias;
+            aliasHtml = a ? `<br><span class="muted">${a}</span>` : "";
+          }
+
           TBody.insertAdjacentHTML("beforeend", `
             <tr class="${running?'running':'other'}">
               <td>${nodeCellHtml(n,i,nodes.length)}</td>
-              <td>${p.name||"-"}${p.alias?`<br><span class="muted">${p.alias}</span>`:""}</td>
+              <td>${p.name||"-"}${aliasHtml}</td>
               <td>${verHtml}</td>
               <td>${badge}</td>
               <td>
@@ -277,17 +379,35 @@
     }
 
     async function reloadNow(){
-      try{ setBusy(true,"RELOAD..."); clearErr(); render(await api("/oms/status")); }
-      catch(e){ showErr(e.message||e); }
-      finally{ setBusy(false); }
+      try{
+        if (!RA_LOCK) setBusy(true);   // 메시지 변경 없음(깜빡임 제거)
+        clearErr();
+        render(await api("/oms/status"));
+      }catch(e){
+        showErr(e.message||e);
+      }finally{
+        if (!RA_LOCK) setBusy(false);
+      }
     }
+
     BTN_RELOAD.onclick = reloadNow;
     BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
+    // Restart All: 서버 오케스트레이터 호출 → SSE 구독 시작
     BTN_RA.onclick = async ()=>{
-      try{ setBusy(true,"RESTART-ALL..."); await api("/oms/connect/clear", {method:"POST"}); await reloadNow(); }
-      catch(e){ showErr(e.message||e); }
-      finally{ setBusy(false); }
+      RA_LOCK = true;
+      stopPolling();
+      clearErr(); setBusy(true);
+      raWrite("Restarting… preparing");
+      try{
+        await api("/oms/restart/all", {method:"POST"});
+        // SSE 구독 시작(있으면 재시작)
+        startSSE();
+      }catch(e){
+        showErr(e.message||e);
+        RA_LOCK=false; setBusy(false); startPolling(POLL_MS);
+      }
     };
+
     document.querySelector("#grid tbody").addEventListener("click", ev=>{
       const b=ev.target.closest("button"); if(!b) return;
       if (b.dataset.a==="logs"){
@@ -296,8 +416,50 @@
       }
     });
 
+    // ── SSE & 폴백 폴링
+    let evtSrc=null, sseTimer=null, statePoller=null;
+    function closeSSE(){ if(evtSrc){evtSrc.close(); evtSrc=null;} if(sseTimer){clearInterval(sseTimer); sseTimer=null;} }
+    function onProgressState(s){
+      if (!s) return;
+      if (s.message) raWrite(s.message);
+      if (s.state==="done" || s.state==="error" || s.state==="idle"){
+        RA_LOCK = false; setBusy(false);
+        // 마지막 메시지 남기고 폴링 재개
+        startPolling(POLL_MS);
+        closeSSE();
+        if (statePoller){ clearInterval(statePoller); statePoller=null; }
+        // 최신 표로 1회 반영
+        reloadNow().catch(()=>{});
+      }
+    }
+    function startSSE(){
+      closeSSE();
+      if ("EventSource" in window){
+        evtSrc = new EventSource("/oms/restart/stream");
+        evtSrc.onmessage = (e)=>{ try{ onProgressState(JSON.parse(e.data)); }catch{} };
+        evtSrc.onerror = ()=>{ /* 네트워크 hiccup → 폴백 폴링 */ startStatePolling(); };
+        // SSE keepalive가 있다면 setInterval 필요 없음
+      } else {
+        startStatePolling();
+      }
+    }
+    function startStatePolling(){
+      if (statePoller) return;
+      statePoller = setInterval(async ()=>{
+        try{ const s = await api("/oms/restart/state"); onProgressState(s); }catch{}
+      }, 750);
+    }
+
     // 페이지 초기화
-    reloadNow(); setInterval(()=>reloadNow().catch(()=>{}), 3000);
+    (async function(){
+      // 기존 재시작이 서버에서 이미 돌고 있다면 바로 구독
+      try{
+        const s = await api("/oms/restart/state");
+        if (s && s.state === "running"){ RA_LOCK=true; setBusy(true); raWrite(s.message || "Working…"); startSSE(); }
+      }catch{}
+      await reloadNow();
+      startPolling(POLL_MS);
+    })();
   </script>
 
   <!-- 시퀀스 러너 로딩 & 초기화 -->

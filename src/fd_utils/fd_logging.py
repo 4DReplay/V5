@@ -6,26 +6,19 @@
 
 import logging, os, re, sys, tempfile, glob, time
 from datetime import datetime
+from pathlib import Path
 
 # =========================
-# 스위치(환경변수)
+# Environment Variables
 # =========================
-# 고정 로그( aid_main.out.log )에 직접 쓰기 여부
-# 기본 0(비활성) → 고정 로그는 에이전트가 stdout을 리다이렉션해서 채움(중복 방지)
-USE_FIXED_DIRECT = os.environ.get("AID_LOG_TO_FIXED", "0") == "1"
-
-# 시작 시 고정 로그를 truncate 할지(직접 쓰는 경우에만 의미 있음)
-RESET_ON_START   = os.environ.get("AID_LOG_RESET", "0") == "1"
-
-# fd_log.print 의 원시 텍스트를 고정 파일로도 tee 할지(권장: 0)
-TEE_FIXED_RAW    = os.environ.get("AID_TEE_RAW_FIXED", "0") == "1"
-
-# 오래된 런 로그 보관 기간(일)
-RETENTION_DAYS   = int(os.environ.get("AID_LOG_RETENTION_DAYS", "60"))
-
+USE_FIXED_DIRECT    = os.environ.get("AID_LOG_TO_FIXED", "0") == "1"
+RESET_ON_START      = os.environ.get("AID_LOG_RESET", "0") == "1"
+TEE_FIXED_RAW       = os.environ.get("AID_TEE_RAW_FIXED", "0") == "1"
+RETENTION_DAYS      = int(os.environ.get("AID_LOG_RETENTION_DAYS", "60"))
+FD_DAEMON_NAME      = os.environ.get("AID_DAEMON_NAME", r"AId")
 
 # =========================
-# 유틸
+# Utilities
 # =========================
 def _first_writable_dir(candidates):
     for path in candidates:
@@ -52,40 +45,61 @@ def _ts():
 # =========================
 # 경로 결정을 위한 후보
 # =========================
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_programdata = os.environ.get("ProgramData", r"C:\ProgramData")
-_env_dir     = (os.environ.get("AID_LOG_DIR") or "").strip()
-
-_candidates = []
-if _env_dir:
-    _candidates.append(_env_dir)
-_candidates.extend([
-    os.path.join(_programdata, "4DReplay", "AId", "logs"),
-    os.path.join(BASE_DIR, "logs"),
-    os.path.join(tempfile.gettempdir(), "AId", "logs"),
-])
-
-LOG_DIR = _first_writable_dir(_candidates)
-
-# =========================
-# 파일명
-# =========================
-START_TS       = datetime.now().strftime("%Y%m%d_%H%M%S")
-FIXED_LOG_FILE = os.path.join(LOG_DIR, "aid_main.out.log")           # 웹에서 보는 고정 파일
-RUN_LOG_FILE   = os.path.join(LOG_DIR, f"aid_main_{START_TS}.log")   # 런(히스토리) 파일
-
-# 오래된 런 로그 정리
-_cutoff = time.time() - RETENTION_DAYS * 24 * 3600
-for p in glob.glob(os.path.join(LOG_DIR, "aid_main_*.log")):
+def _ensure_writable_dir(path_str: str) -> str:
+    p = Path(path_str)
+    p.mkdir(parents=True, exist_ok=True)
+    # 간단한 쓰기 테스트
+    t = p / ".touch"
+    with open(t, "w", encoding="utf-8") as f:
+        f.write("ok")
     try:
-        if os.path.getmtime(p) < _cutoff:
-            os.remove(p)
+        t.unlink(missing_ok=True)
     except Exception:
         pass
+    return str(p)
 
+_THIS = Path(__file__).resolve()
+# utils/.. = src
+SRC_DIR = _THIS.parent.parent
+PROJECT_ROOT = SRC_DIR.parent
+
+
+# ✅ Priority: FD_LOG_DIR → AID_LOG_DIR → (if not set) V5\daemon\AId\logs
+_env_dir = (os.environ.get("FD_LOG_DIR") or os.environ.get("AID_LOG_DIR") or "").strip()
+if FD_DAEMON_NAME == "AId":
+    DEFAULT_LOG_DIR = str(PROJECT_ROOT / "daemon" / "AId" / "logs")
+elif FD_DAEMON_NAME == "AIc":
+    DEFAULT_LOG_DIR = str(PROJECT_ROOT / "daemon" / "AIc" / "logs")
+LOG_DIR = _ensure_writable_dir(_env_dir if _env_dir else DEFAULT_LOG_DIR)
 
 # =========================
-# 핸들러
+# File Paths
+# =========================
+_cutoff = time.time() - RETENTION_DAYS * 24 * 3600
+
+START_TS       = datetime.now().strftime("%Y%m%d_%H%M%S")
+if FD_DAEMON_NAME == "AId":
+    FIXED_LOG_FILE = os.path.join(LOG_DIR, "aid_main.out.log")           # 웹에서 보는 고정 파일
+    RUN_LOG_FILE   = os.path.join(LOG_DIR, f"aid_main_{START_TS}.log")   # 런(히스토리) 파일
+    for p in glob.glob(os.path.join(LOG_DIR, "aid_main_*.log")):
+        try:
+            if os.path.getmtime(p) < _cutoff:
+                os.remove(p)
+        except Exception:
+            pass
+
+elif FD_DAEMON_NAME == "AIc":
+    FIXED_LOG_FILE = os.path.join(LOG_DIR, "aic_main.out.log")           # 웹에서 보는 고정 파일
+    RUN_LOG_FILE   = os.path.join(LOG_DIR, f"aic_main_{START_TS}.log")   # 런(히스토리) 파일
+    for p in glob.glob(os.path.join(LOG_DIR, "aic_main_*.log")):
+        try:
+            if os.path.getmtime(p) < _cutoff:
+                os.remove(p)
+        except Exception:
+            pass
+
+# =========================
+# handler
 # =========================
 class CleanFileHandler(logging.FileHandler):
     def emit(self, record):
@@ -96,7 +110,9 @@ class CleanFileHandler(logging.FileHandler):
         except Exception:
             pass
 
-
+# =========================
+# Logger Singleton
+# =========================
 class FDLogger:
     _instance = None
 
@@ -114,12 +130,12 @@ class FDLogger:
         fmt = logging.Formatter('%(asctime)s [%(levelname)s] %(message)s')
 
         if not self.logger.handlers:
-            # 1) 콘솔 핸들러(웹 고정 로그는 stdout 리다이렉션으로 채움)
+            # 1) Console handler (web fixed log is filled via stdout redirection)
             ch = logging.StreamHandler(stream=sys.stdout or sys.__stdout__)
             ch.setFormatter(fmt)
             self.logger.addHandler(ch)
 
-            # 2) 고정 파일 직접 쓰기(기본 OFF) - 중복 방지 목적
+            # 2) Direct write to fixed log file (default OFF) - to prevent duplication
             if USE_FIXED_DIRECT:
                 mode = 'w' if RESET_ON_START else 'a'
                 try:
@@ -133,7 +149,7 @@ class FDLogger:
                 fh.setFormatter(fmt)
                 self.logger.addHandler(fh)
 
-            # 3) 런(히스토리) 파일 핸들러(항상 ON)
+            # 3) Run (history) file handler (always ON)
             try:
                 rh = CleanFileHandler(RUN_LOG_FILE, mode='a', encoding='utf-8', delay=False)
             except PermissionError:

@@ -1,4 +1,4 @@
-// /web/oms-camera.js — Connect (6~9) and unified summary table
+﻿// /web/oms-camera.js â€” Connect (6~9) and unified summary table
 (function(){
   // ---------- DOM ----------
   const IN_HOST = document.getElementById("camHost");
@@ -248,7 +248,7 @@
     const dmpdip = sanitizeMgmt(IN_MGMT.value, host);
 
     const ips = getSelectedIPs();
-    if (!ips.length){ alert("카메라를 선택하세요."); return; }
+    if (!ips.length){ alert("ì¹´ë©”ë¼ë¥¼ ì„ íƒí•˜ì„¸ìš”."); return; }
 
     LAST_STATUS = statusMapInit(ips);
     renderConns(LAST_STATUS); clearUnified();
@@ -340,3 +340,4 @@
     BTN_REFRESH.click();
   })();
 })();
+

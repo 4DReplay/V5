@@ -21,6 +21,7 @@ import builtins as _bi  # ← 내장 set() 충돌 방지용
 
 from datetime import datetime
 from typing import Any, Dict, List, Tuple, Optional
+from pathlib import Path
 
 __all__ = [
     "FDConfigManager",
@@ -142,6 +143,49 @@ def _last_key_of(path: Tuple[str, ...]) -> str:
         if not seg.startswith("["):
             return seg
     return "".join(path)
+
+def _resolve_config_path(hint: Optional[str]) -> str:
+    # 0) 힌트가 절대경로이거나 실제 존재하면 그대로
+    if hint:
+        p = Path(hint)
+        if p.exists():
+            return str(p.resolve())
+        if not p.is_absolute():
+            # 상대경로라면 몇 군데를 순서대로 탐색
+            # (1) 현재 프로세스 CWD
+            c1 = (Path.cwd() / p)
+            if c1.exists():
+                return str(c1.resolve())
+            # (2) 이 모듈 기준의 프로젝트 루트(V5) 추정 후 결합
+            here = Path(__file__).resolve()
+            v5 = next((par for par in here.parents if par.name.lower() == "v5"), here.parent.parent)
+            c2 = (v5 / p)
+            if c2.exists():
+                return str(c2.resolve())
+
+    # 1) 환경변수로 직접 지정 가능
+    env = os.environ.get("AID_CONFIG")
+    if env and Path(env).exists():
+        return str(Path(env).resolve())
+
+    # 2) 표준 후보들 (V5/config 우선)
+    here = Path(__file__).resolve()
+    v5 = next((par for par in here.parents if par.name.lower() == "v5"), here.parent.parent)
+    candidates = [
+        v5 / "config" / "aid_config_private.json5",
+        Path.cwd() / "config" / "aid_config_private.json5",
+        v5 / "src" / "config" / "aid_config_private.json5",   # 레거시 호환
+        Path.cwd() / "src" / "config" / "aid_config_private.json5",
+    ]
+    for c in candidates:
+        if c.exists():
+            return str(c.resolve())
+
+    tried = "\n - " + "\n - ".join(str(c) for c in candidates)
+    raise FileNotFoundError(
+        "aid_config_private.json5 not found. Tried:" + tried +
+        "\n(Set AID_CONFIG env var or pass an absolute config_private_path to setup())"
+    )
 
 # ------------------------------
 # Public namespace bag
@@ -543,9 +587,14 @@ def setup(
         if _conf_ready:
             return conf
 
-        cfg_private = config_private_path
-        cfg_public  = config_public_path
-        _manager.init(cfg_private, config_public_path=cfg_public, rebase_paths=rebase_paths, force=True)
+        cfg_private = _resolve_config_path(config_private_path or "config/aid_config_private.json5")
+        if config_public_path is None:
+            pp = Path(cfg_private).with_name("aid_config_public.json5")
+            cfg_public = str(pp) if pp.exists() else None
+        else:
+            cfg_public = str(Path(config_public_path).resolve())
+        _manager.init(cfg_private, config_public_path=cfg_public,
+                      rebase_paths=rebase_paths, force=True)
         
         import types
         if not hasattr(conf, "_runtime_namespace"):
@@ -569,7 +618,7 @@ def read_latest_release_from_md(md_path: str):
         (version: str, date: str)
     """
     try:
-        with open(md_path, "r", encoding="utf-8") as f:
+        with open(md_path, "r", encoding="utf-8-sig") as f:
             text = f.read()
         match = re.search(r"\[\s*([\d.]+)\s*\]\s*-\s*([0-9]{4}-[0-9]{2}-[0-9]{2})", text)
         if match:

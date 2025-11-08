@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html>
 <head>
   <meta charset="utf-8" />
@@ -44,19 +44,19 @@
 
 <script>
 (function(){
-  /* ───────── Proxy 지원: /proxy/<node>/ 자동감지 + fetch 패치 ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Proxy ì§€ì›: /proxy/<node>/ ìžë™ê°ì§€ + fetch íŒ¨ì¹˜ â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const PROXY_NODE = (() => {
     const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
     return m ? decodeURIComponent(m[1]) : "";
   })();
 
   if (PROXY_NODE) {
-    // <base> 주입: 상대경로를 /proxy/<node>/ 기준으로 해석
+    // <base> ì£¼ìž…: ìƒëŒ€ê²½ë¡œë¥¼ /proxy/<node>/ ê¸°ì¤€ìœ¼ë¡œ í•´ì„
     const base = document.createElement("base");
     base.href = `/proxy/${encodeURIComponent(PROXY_NODE)}/`;
     document.head.prepend(base);
 
-    // fetch 패치: 절대경로("/...") 앞에 /proxy/<node> 자동부착
+    // fetch íŒ¨ì¹˜: ì ˆëŒ€ê²½ë¡œ("/...") ì•žì— /proxy/<node> ìžë™ë¶€ì°©
     const orig = window.fetch;
     window.fetch = function(input, init){
       let url = (typeof input === "string") ? input : (input && input.url) || "";
@@ -70,22 +70,22 @@
     };
   }
 
-  /* ───────── Query Params ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Query Params â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const qs = new URLSearchParams(location.search);
-  const NODE_Q = qs.get("node") || "";            // 쿼리의 node (없어도 됨)
+  const NODE_Q = qs.get("node") || "";            // ì¿¼ë¦¬ì˜ node (ì—†ì–´ë„ ë¨)
   const NAME0  = qs.get("name") || "";
   const DATE0  = qs.get("date") || "";
   const TAIL0  = qs.get("tail") || "";
   const AUTO0  = qs.get("auto");                  // "1"|"0"|null
 
-  /* ───────── Mode / Base URL ─────────
-     우선순위: ① URL이 /proxy/<node>/로 열렸으면 그 노드 사용
-               ② 쿼리에 node= 있으면 그 노드 사용
-               ③ 그 외에는 로컬(DMS 직접 접근) */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Mode / Base URL â”€â”€â”€â”€â”€â”€â”€â”€â”€
+     ìš°ì„ ìˆœìœ„: â‘  URLì´ /proxy/<node>/ë¡œ ì—´ë ¸ìœ¼ë©´ ê·¸ ë…¸ë“œ ì‚¬ìš©
+               â‘¡ ì¿¼ë¦¬ì— node= ìžˆìœ¼ë©´ ê·¸ ë…¸ë“œ ì‚¬ìš©
+               â‘¢ ê·¸ ì™¸ì—ëŠ” ë¡œì»¬(DMS ì§ì ‘ ì ‘ê·¼) */
   const EFFECTIVE_NODE = PROXY_NODE || NODE_Q;
   const BASE = EFFECTIVE_NODE ? `/proxy/${encodeURIComponent(EFFECTIVE_NODE)}` : "";
 
-  /* ───────── DOM ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ DOM â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   const title     = document.getElementById("title");
   const tbName    = document.getElementById("tbName");
   const selDate   = document.getElementById("selDate");
@@ -102,11 +102,11 @@
 
   function setTitle(){
     const nm = tbName.value.trim() || "(unknown)";
-    title.textContent = EFFECTIVE_NODE ? `Logs • ${nm} @ ${EFFECTIVE_NODE}` : `Logs • ${nm}`;
+    title.textContent = EFFECTIVE_NODE ? `Logs â€¢ ${nm} @ ${EFFECTIVE_NODE}` : `Logs â€¢ ${nm}`;
   }
   setTitle();
 
-  /* ───────── Fetch helper ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Fetch helper â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function jget(path){
     const r = await fetch(path, {cache:"no-store"});
     const ct = r.headers.get("content-type") || "";
@@ -119,7 +119,7 @@
     return isJson ? r.json() : r.text();
   }
 
-  /* ───────── Dates load ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Dates load â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function loadDates(){
     selDate.innerHTML = "";
     const name = tbName.value.trim();
@@ -152,7 +152,7 @@
     }
   }
 
-  /* ───────── Log refresh ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Log refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   async function refresh(){
     const name = tbName.value.trim();
     if(!name){
@@ -169,7 +169,7 @@
       const r = await jget(url);
       if(r && r.ok){
         logEl.textContent = r.text || "";
-        meta.textContent = `${r.path} • ${r.size} bytes • date ${r.date} • tail ${r.tail} bytes`;
+        meta.textContent = `${r.path} â€¢ ${r.size} bytes â€¢ date ${r.date} â€¢ tail ${r.tail} bytes`;
         logEl.scrollTop = logEl.scrollHeight; // stick bottom
       }else{
         logEl.textContent = (r && r.error) ? r.error : "(no content)";
@@ -181,7 +181,7 @@
     }
   }
 
-  /* ───────── Auto refresh ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Auto refresh â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   function startAuto(){
     stopAuto();
     if(cbAuto.checked){
@@ -192,7 +192,7 @@
     if(timer){ clearInterval(timer); timer=null; }
   }
 
-  /* ───────── Events ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Events â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   btnRefresh.addEventListener("click", refresh);
   cbAuto.addEventListener("change", startAuto);
   selTail.addEventListener("change", refresh);
@@ -211,7 +211,7 @@
     }
   });
 
-  /* ───────── Init ───────── */
+  /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Init â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
   (async function init(){
     await loadDates();
     await refresh();
@@ -222,3 +222,4 @@
 </script>
 </body>
 </html>
+

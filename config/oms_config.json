@@ -1,7 +1,7 @@
 {
   "http_host": "0.0.0.0",
   "http_port": 52050,
-  "heartbeat_interval_sec": 10,
+  "heartbeat_interval_sec": 5,
   "nodes": [
     {
       "name": "DMS-1",
@@ -19,12 +19,6 @@
       "name": "DMS-3",
       "alias": "DMS PC #3",
       "host": "10.82.104.212",
-      "port": 51050
-    },
-    {
-      "name": "DMS-4",
-      "alias": "DMS PC #4",
-      "host": "10.82.104.213",
       "port": 51050
     }
   ]

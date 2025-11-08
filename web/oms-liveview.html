@@ -1,10 +1,10 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <title>OMS LiveView (CCd + MediaMTX WebRTC/HLS, no npm)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- 외부 의존성: React/Hls.js (순수 UMD) -->
+  <!-- ì™¸ë¶€ ì˜ì¡´ì„±: React/Hls.js (ìˆœìˆ˜ UMD) -->
   <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
@@ -46,9 +46,9 @@
   <div id="root"></div>
 
 <script>
-/* ────────────────────────────────────────────────────────────────────────────
-   Proxy prefix (OMS가 /proxy/<node>/web-liveview.html 로 서비스될 때 절대경로 보정)
-──────────────────────────────────────────────────────────────────────────── */
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+   Proxy prefix (OMSê°€ /proxy/<node>/web-liveview.html ë¡œ ì„œë¹„ìŠ¤ë  ë•Œ ì ˆëŒ€ê²½ë¡œ ë³´ì •)
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const API_PREFIX = (() => {
   const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
   return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
@@ -79,9 +79,9 @@ function withPrefix(path){
   };
 })();
 
-/* ────────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    Tiny helpers
-──────────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const pad = n => (n<10?`0${n}`:`${n}`);
 const ts = () => { const d=new Date(); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+"_"+pad(d.getHours())+pad(d.getMinutes()); };
 const randTok = () => `live_${ts()}_${Math.random().toString(36).slice(2,5)}`;
@@ -90,12 +90,12 @@ const buildPathName = (camIp, pathTpl) => {
   const ip_ = ipToKey(camIp);
   return (pathTpl && pathTpl.includes("{ip_}")) ? pathTpl.replaceAll("{ip_}", ip_).replace(/^\//,"") : `cam_${ip_}`;
 };
-// MediaMTX URL 빌더 (HLS/WebRTC)
+// MediaMTX URL ë¹Œë” (HLS/WebRTC)
 const buildWebrtcUrl = ({ gwHost, webrtcPort, pathName }) => `http://${gwHost}:${webrtcPort}/${pathName}`;
 const buildHlsUrl    = ({ gwHost, hlsPort, pathName, useHlsPrefix=false }) =>
   `http://${gwHost}:${hlsPort}/${useHlsPrefix? "hls/": ""}${pathName}/index.m3u8`;
 
-// 공통 fetch 래퍼
+// ê³µí†µ fetch ëž˜í¼
 async function api(path, init={}){
   const res = await fetch(withPrefix(path), { cache:"no-store", mode:"cors", credentials:"include", ...init });
   const ct = res.headers.get("content-type") || "";
@@ -108,7 +108,7 @@ async function api(path, init={}){
   return ct.includes("application/json") ? res.json() : res.text();
 }
 
-// MTd 중계 (OMS -> MTd -> CCd)
+// MTd ì¤‘ê³„ (OMS -> MTd -> CCd)
 function esOpen(url, opts={withCredentials:true}){ return new EventSource(withPrefix(url), opts); }
 async function mtdConnect({ host, port, message, wait=15, onSseLine }){
   const payload = { host, port, message, wait_sec: wait };
@@ -132,13 +132,13 @@ async function mtdConnect({ host, port, message, wait=15, onSseLine }){
   return r?.response ?? r;
 }
 
-/* ────────────────────────────────────────────────────────────────────────────
+/* â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
    React App
-──────────────────────────────────────────────────────────────────────────── */
+â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 const { useEffect, useMemo, useRef, useState } = React;
 
 function App(){
-  // CCd / MediaMTX 게이트웨이 설정
+  // CCd / MediaMTX ê²Œì´íŠ¸ì›¨ì´ ì„¤ì •
   const [ccdHost, setCcdHost] = useState("10.82.104.210");
   const [ccdPort, setCcdPort] = useState(19765);
   const [dmpdip,  setDmpdip ] = useState("10.82.104.210");
@@ -147,15 +147,15 @@ function App(){
   const [hlsPort, setHlsPort]     = useState(8888);
   const [webrtcPort, setWPort]    = useState(8889);
   const [pathTpl, setPathTpl]     = useState("cam_{ip_}"); // MediaMTX path name
-  const [useHlsPrefix, setUseHlsPrefix] = useState(false); // /hls/ 경로 쓰는 커스텀 프록시 환경일 때만 체크
+  const [useHlsPrefix, setUseHlsPrefix] = useState(false); // /hls/ ê²½ë¡œ ì“°ëŠ” ì»¤ìŠ¤í…€ í”„ë¡ì‹œ í™˜ê²½ì¼ ë•Œë§Œ ì²´í¬
 
-  // 모드/플레이어
+  // ëª¨ë“œ/í”Œë ˆì´ì–´
   const [opMode, setOpMode] = useState("Live");   // Live | Run
   const [player, setPlayer] = useState("WebRTC"); // WebRTC | HLS
   const [msg, setMsg] = useState("");
   const [status, setStatus] = useState("idle");   // idle / connecting / live / error / warn
 
-  // 카메라
+  // ì¹´ë©”ë¼
   const [cameraIp, setCameraIp] = useState("");
   const [activeList, setActiveList] = useState("10.1.1.107,10.1.1.108");
   const [inactiveList, setInactiveList] = useState("10.1.1.109,10.1.1.110");
@@ -164,12 +164,12 @@ function App(){
   const [synclimit, setSynclimit] = useState(10);
   const [syncskip, setSyncskip] = useState(false);
 
-  // 재생 URL 및 항목
+  // ìž¬ìƒ URL ë° í•­ëª©
   const [playUrl, setPlayUrl] = useState("");
   const videoRef = useRef(null);
   const hlsRef = useRef(null);
 
-  // HLS 초기화/해제
+  // HLS ì´ˆê¸°í™”/í•´ì œ
   useEffect(()=>{
     if (player!=="HLS"){ if (hlsRef.current){ hlsRef.current.destroy(); hlsRef.current=null; } return; }
     const video = videoRef.current;
@@ -185,7 +185,7 @@ function App(){
         setStatus("warn"); setMsg(`HLS: ${data?.details || data?.type || "unknown"}`);
       });
     }else{
-      // Safari일 경우 natively m3u8 가능
+      // Safariì¼ ê²½ìš° natively m3u8 ê°€ëŠ¥
       video.src = playUrl;
       video.play().catch(()=>{});
     }
@@ -198,9 +198,9 @@ function App(){
 
   const setLiveUrl = () => {
     if (player==="WebRTC"){
-      setPlayUrl(computedWebrtc); // iframe에서 사용
+      setPlayUrl(computedWebrtc); // iframeì—ì„œ ì‚¬ìš©
     }else{
-      setPlayUrl(computedHls);    // video(HLS.js)에서 사용
+      setPlayUrl(computedHls);    // video(HLS.js)ì—ì„œ ì‚¬ìš©
     }
   };
 
@@ -213,10 +213,10 @@ function App(){
 
   async function handleLiveStart(){
     try{
-      setStatus("connecting"); setMsg("Live 시작 요청…");
-      if (!cameraIp){ setStatus("error"); setMsg("Camera IP를 입력하세요."); return; }
+      setStatus("connecting"); setMsg("Live ì‹œìž‘ ìš”ì²­â€¦");
+      if (!cameraIp){ setStatus("error"); setMsg("Camera IPë¥¼ ìž…ë ¥í•˜ì„¸ìš”."); return; }
 
-      // 1) 모든 카메라 Run 상태 확보 (Action: run)
+      // 1) ëª¨ë“  ì¹´ë©”ë¼ Run ìƒíƒœ í™•ë³´ (Action: run)
       const tkRun = `1104_${Date.now()}_run`;
       const reqRun = {
         Section1:"Camera", Section2:"Operation", Section3:"Live",
@@ -226,9 +226,9 @@ function App(){
       appendLog("REQ Live(run, all)", reqRun);
       const respRun = await mtdConnect({ host: ccdHost, port: ccdPort, message: reqRun, wait: 12 });
       appendLog("RESP Live(run, all)", respRun);
-      if ((respRun?.ResultCode??0) !== 1000){ throw new Error(respRun?.ErrorMsg || `Live(run) 실패 (${respRun?.ResultCode})`); }
+      if ((respRun?.ResultCode??0) !== 1000){ throw new Error(respRun?.ErrorMsg || `Live(run) ì‹¤íŒ¨ (${respRun?.ResultCode})`); }
 
-      // 2) 특정 카메라 Run (Action: set), Cameras=[IP]
+      // 2) íŠ¹ì • ì¹´ë©”ë¼ Run (Action: set), Cameras=[IP]
       const tkSet = randTok();
       const reqSet = {
         Section1:"Camera", Section2:"Operation", Section3:"Live",
@@ -238,22 +238,22 @@ function App(){
       appendLog("REQ Live(set, single)", reqSet);
       const respSet = await mtdConnect({ host: ccdHost, port: ccdPort, message: reqSet, wait: 12 });
       appendLog("RESP Live(set, single)", respSet);
-      if ((respSet?.ResultCode??0) !== 1000){ throw new Error(respSet?.ErrorMsg || `Live(set) 실패 (${respSet?.ResultCode})`); }
+      if ((respSet?.ResultCode??0) !== 1000){ throw new Error(respSet?.ErrorMsg || `Live(set) ì‹¤íŒ¨ (${respSet?.ResultCode})`); }
 
-      // 3) 플레이 URL 확정
+      // 3) í”Œë ˆì´ URL í™•ì •
       setLiveUrl();
-      setStatus("live"); setMsg(player==="WebRTC" ? "WebRTC 연결" : "HLS 연결");
+      setStatus("live"); setMsg(player==="WebRTC" ? "WebRTC ì—°ê²°" : "HLS ì—°ê²°");
     }catch(e){
-      setStatus("error"); setMsg(e?.message || "Live 시작 실패");
+      setStatus("error"); setMsg(e?.message || "Live ì‹œìž‘ ì‹¤íŒ¨");
     }
   }
 
   async function handleRunStart(){
     try{
-      setStatus("connecting"); setMsg("Run 시작 요청…");
+      setStatus("connecting"); setMsg("Run ì‹œìž‘ ìš”ì²­â€¦");
       const parse = s => s.split(",").map(x=>x.trim()).filter(Boolean);
       const act = parse(activeList); const inact = parse(inactiveList);
-      if (act.length===0){ setStatus("error"); setMsg("active 리스트에 1개 이상 필요"); return; }
+      if (act.length===0){ setStatus("error"); setMsg("active ë¦¬ìŠ¤íŠ¸ì— 1ê°œ ì´ìƒ í•„ìš”"); return; }
       const tk = randTok();
       const req = {
         Section1:"Camera", Section2:"Operation", Section3:"Run",
@@ -265,19 +265,19 @@ function App(){
       appendLog("REQ Run", req);
       const resp = await mtdConnect({ host: ccdHost, port: ccdPort, message: req, wait: 15 });
       appendLog("RESP Run", resp);
-      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Run 실패 (${resp?.ResultCode})`); }
-      // 미리보기: 첫 active 카메라
+      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Run ì‹¤íŒ¨ (${resp?.ResultCode})`); }
+      // ë¯¸ë¦¬ë³´ê¸°: ì²« active ì¹´ë©”ë¼
       if (!cameraIp && act.length) setCameraIp(act[0]);
       setLiveUrl();
-      setStatus("live"); setMsg("Run 성공");
+      setStatus("live"); setMsg("Run ì„±ê³µ");
     }catch(e){
-      setStatus("error"); setMsg(e?.message || "Run 시작 실패");
+      setStatus("error"); setMsg(e?.message || "Run ì‹œìž‘ ì‹¤íŒ¨");
     }
   }
 
   async function handleStop(){
     try{
-      setMsg("Stop 요청…");
+      setMsg("Stop ìš”ì²­â€¦");
       const tk = `stop_${Date.now()}`;
       const cams = (opMode==="Live" && cameraIp) ? [cameraIp] : [];
       const req = {
@@ -288,24 +288,24 @@ function App(){
       appendLog("REQ Stop", req);
       const resp = await mtdConnect({ host: ccdHost, port: ccdPort, message: req, wait: 8 });
       appendLog("RESP Stop", resp);
-      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Stop 실패 (${resp?.ResultCode})`); }
-      setPlayUrl(""); setStatus("idle"); setMsg("종료");
+      if ((resp?.ResultCode??0) !== 1000){ throw new Error(resp?.ErrorMsg || `Stop ì‹¤íŒ¨ (${resp?.ResultCode})`); }
+      setPlayUrl(""); setStatus("idle"); setMsg("ì¢…ë£Œ");
     }catch(e){
-      setStatus("error"); setMsg(e?.message || "Stop 실패");
+      setStatus("error"); setMsg(e?.message || "Stop ì‹¤íŒ¨");
     }
   }
 
-  // 플레이어 탭 바꾸면 URL 재계산
+  // í”Œë ˆì´ì–´ íƒ­ ë°”ê¾¸ë©´ URL ìž¬ê³„ì‚°
   useEffect(()=>{ if (status==="live"){ setLiveUrl(); } }, [player, pathName, gwHost, hlsPort, webrtcPort, useHlsPrefix]);
 
   return (
     React.createElement(React.Fragment, null,
       React.createElement("div",{className:"row",style:{justifyContent:"space-between"}},
-        React.createElement("h2",null,"🎥 OMS LiveView"),
+        React.createElement("h2",null,"ðŸŽ¥ OMS LiveView"),
         React.createElement("span",{className:`status ${status}`}, status.toUpperCase())
       ),
 
-      /* ─ CCd / MediaMTX 설정 ─ */
+      /* â”€ CCd / MediaMTX ì„¤ì • â”€ */
       React.createElement("div",{className:"card"},
         React.createElement("div",{className:"grid"},
           React.createElement("div",null,
@@ -329,15 +329,15 @@ function App(){
           )
         ),
         React.createElement("div",{className:"help",style:{marginTop:6}},
-          "Live → From=4DOMS/Action=set · Run → From=4DPD/Action=run"
+          "Live â†’ From=4DOMS/Action=set Â· Run â†’ From=4DPD/Action=run"
         )
       ),
 
-      /* ─ 플레이어 선택 ─ */
+      /* â”€ í”Œë ˆì´ì–´ ì„ íƒ â”€ */
       React.createElement("div",{className:"card"},
         React.createElement("div",{className:"tabbar"},
-          React.createElement("div",{className:`tab ${player==="WebRTC"?"active":""}`,onClick:()=>setPlayer("WebRTC")},"WebRTC (저지연, :8889)"),
-          React.createElement("div",{className:`tab ${player==="HLS"?"active":""}`,onClick:()=>setPlayer("HLS")},"HLS (호환, :8888)"),
+          React.createElement("div",{className:`tab ${player==="WebRTC"?"active":""}`,onClick:()=>setPlayer("WebRTC")},"WebRTC (ì €ì§€ì—°, :8889)"),
+          React.createElement("div",{className:`tab ${player==="HLS"?"active":""}`,onClick:()=>setPlayer("HLS")},"HLS (í˜¸í™˜, :8888)"),
           React.createElement("span",{className:"right help"}, msg)
         ),
         React.createElement("div",{className:"row",style:{alignItems:"end"}},
@@ -358,13 +358,13 @@ function App(){
           React.createElement("div",{style:{minWidth:"260px",flex:1}},
             React.createElement("label",null,"Path Template"),
             React.createElement("input",{value:pathTpl,onChange:e=>setPathTpl(e.target.value)}),
-            React.createElement("div",{className:"help"},"예) cam_{ip_}  →  10.82.104.11 ⟶ cam_10_82_104_11")
+            React.createElement("div",{className:"help"},"ì˜ˆ) cam_{ip_}  â†’  10.82.104.11 âŸ¶ cam_10_82_104_11")
           ),
           player==="HLS" && React.createElement("label", {style:{marginBottom:0}},
             React.createElement("input",{type:"checkbox",checked:useHlsPrefix,onChange:e=>setUseHlsPrefix(e.target.checked)}),
-            "  경로에 ",
+            "  ê²½ë¡œì— ",
             React.createElement("code",null,"/hls/"),
-            " 접두 사용"
+            " ì ‘ë‘ ì‚¬ìš©"
           )
         ),
         React.createElement("div",{className:"urlbar",style:{marginTop:"8px"}},
@@ -372,7 +372,7 @@ function App(){
             "URL: ",
             player==="WebRTC" ? computedWebrtc : computedHls
           ),
-          React.createElement("a",{className:"link",href:(player==="WebRTC"?computedWebrtc:computedHls),target:"_blank",rel:"noreferrer"},"새 탭 열기")
+          React.createElement("a",{className:"link",href:(player==="WebRTC"?computedWebrtc:computedHls),target:"_blank",rel:"noreferrer"},"ìƒˆ íƒ­ ì—´ê¸°")
         ),
         React.createElement("div",{className:"aspect",style:{marginTop:8}},
           player==="WebRTC"
@@ -381,7 +381,7 @@ function App(){
         )
       ),
 
-      /* ─ Live / Run 컨트롤 ─ */
+      /* â”€ Live / Run ì»¨íŠ¸ë¡¤ â”€ */
       React.createElement("div",{className:"card"},
         opMode==="Live"
           ? React.createElement(React.Fragment,null,
@@ -397,7 +397,7 @@ function App(){
           : React.createElement(React.Fragment,null,
               React.createElement("div",{className:"row"},
                 React.createElement("div",{style:{flex:1}},
-                  React.createElement("label",null,"Active IPs (,로 구분)"),
+                  React.createElement("label",null,"Active IPs (,ë¡œ êµ¬ë¶„)"),
                   React.createElement("input",{value:activeList,onChange:e=>setActiveList(e.target.value)})
                 ),
                 React.createElement("div",{style:{flex:1}},
@@ -417,12 +417,12 @@ function App(){
                 React.createElement("button",{className:"secondary",onClick:handleStop},"Stop")
               )
             ),
-        React.createElement("div",{className:"help",style:{marginTop:6}}, "상태: ", msg||"-")
+        React.createElement("div",{className:"help",style:{marginTop:6}}, "ìƒíƒœ: ", msg||"-")
       ),
 
-      /* ─ 로그 ─ */
+      /* â”€ ë¡œê·¸ â”€ */
       React.createElement("div",{className:"card"},
-        React.createElement("div",{className:"muted"},"Raw Logs (요청/응답)"),
+        React.createElement("div",{className:"muted"},"Raw Logs (ìš”ì²­/ì‘ë‹µ)"),
         React.createElement("textarea",{id:"rawlog",readOnly:true})
       )
     )
@@ -433,3 +433,4 @@ ReactDOM.createRoot(document.getElementById("root")).render(React.createElement(
 </script>
 </body>
 </html>
+

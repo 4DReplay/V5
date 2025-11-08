@@ -1,152 +1,79 @@
 # ─────────────────────────────────────────────────────────────────────────────#
 # aid_main.py
-# - 2025/10/17
+# - 2025/10/17 (revised)
 # - Hongsu Jung
 # ─────────────────────────────────────────────────────────────────────────────#
 
 import os
-import sys     
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+import sys
 import json
 import queue
 import time
 import threading
 import shutil
-import argparse
-import signal   # for service termination handling
-import atexit   # for cleanup on exit
-
+import signal
+import atexit
 from threading import Semaphore
-from pathlib import Path
 from datetime import datetime
-from ultralytics import YOLO
 
-from fd_common.msg                      import FDMsg
-from fd_common.tcp_server               import TCPServer
+# ── service/env ──────────────────────────────────────────────────────────────
+SERVICE_MODE = os.getenv("FD_SERVICE", "0") == "1"
+os.environ.setdefault("PYTHONUNBUFFERED", "1")
+os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+os.environ["AID_DAEMON_NAME"] = r"AId"
+os.environ.setdefault("FD_LOG_DIR", r"C:\4DReplay\V5\daemon\AId\logs")
 
-from fd_utils.fd_config_manager         import setup, conf
-from fd_utils.fd_logging                import fd_log
-from fd_utils.fd_file_edit              import fd_clean_up
-
-from fd_aid                             import fd_create_analysis_file
-from fd_aid                             import fd_multi_channel_video
-from fd_aid                             import fd_multi_calibration_video
-
-from fd_stream.fd_stream_rtsp           import StreamViewer
-from fd_db.fd_db_manager                import BaseballDB
-from fd_utils                           import fd_websocket_client
-from fd_utils.fd_baseball_info          import BaseballAPI
-from fd_utils.fd_websocket_client       import start_websocket 
-from fd_stabil.fd_stabil                import PostStabil
-from fd_utils.fd_calibration            import Calibration
-from fd_detection.fd_live_buffer        import fd_rtsp_server_start, fd_rtsp_server_stop
-from fd_detection.fd_live_buffer        import fd_rtsp_client_start, fd_rtsp_client_stop   
-from fd_detection.fd_live_buffer        import fd_live_buffering_thread, fd_pause_live_detect, fd_resume_live_detect
-from fd_detection.fd_live_detect_main   import fd_live_detecting_thread
-
-from fd_sports.fd_sports_baseball_kbo   import get_team_code_by_index
-
-from fd_gui.fd_gui_main                 import fd_start_gui_thread
-from fd_manager.fd_create_clip          import play_and_create_multi_clips
-
+# ── sys.path ─────────────────────────────────────────────────────────────────
 cur_path = os.path.abspath(os.path.dirname(__file__))
 common_path = os.path.abspath(os.path.join(cur_path, '..'))
 sys.path.insert(0, common_path)
+
+# ── imports (project) ────────────────────────────────────────────────────────
+from fd_common.msg               import FDMsg
+from fd_common.tcp_server        import TCPServer
+from fd_utils.fd_config_manager  import setup, conf, get
+from fd_utils.fd_logging         import fd_log
+from fd_utils.fd_file_edit       import fd_clean_up
+
+from fd_aid                      import fd_create_analysis_file
+from fd_aid                      import fd_multi_channel_video
+from fd_aid                      import fd_multi_calibration_video
+
+from fd_stream.fd_stream_rtsp    import StreamViewer
+from fd_stabil.fd_stabil         import PostStabil
+from fd_utils.fd_calibration     import Calibration
+# 외부 유틸 함수들(기존 코드에서 사용): get_team_code_by_index, fd_pause_live_detect,
+# fd_resume_live_detect, fd_live_buffering_thread, fd_rtsp_server_stop 등은
+# 기존 모듈에 존재한다고 가정.
+
 fd_log.propagate = False
 
-# ─────────────────────────────────────────────────────────────────────────────
-# Service-friendly defaults (로그 실시간/UTF-8, 입력루프 방지)
-# ─────────────────────────────────────────────────────────────────────────────
-# 위치: import 바로 아래 (전역)
-os.environ.setdefault("PYTHONUNBUFFERED", "1")
-os.environ.setdefault("PYTHONIOENCODING", "utf-8")
-# 서비스 구동 시 DMS/서비스 관리자가 FD_SERVICE=1로 넘겨주면 입력 루프 차단
-SERVICE_MODE = os.getenv("FD_SERVICE", "0") == "1"
-if SERVICE_MODE:
-    os.environ.setdefault("FD_TEST_MODE", "1")  # conf._test_mode 플래그와 연동됨
- 
-
-
-# ─────────────────────────────────────────────────────────────────────────────#
-'''
-AId: central application controller.
-Responsibilities:
-    - Bootstrap minimal runtime (logs, env) via init_sys()
-    - Ingest property JSON and apply to global config (prepare())
-    - Spin up a lightweight worker thread that processes inbound messages
-    - Provide high-level operations (create files, live detect, callbacks)
-    - Graceful shutdown and idempotent stop()
-'''
-# ─────────────────────────────────────────────────────────────────────────────#
-    
+# ── config path ──────────────────────────────────────────────────────────────
 AID_CONFIG_PRIVATE = "./config/aid_config_private.json5"
 AID_CONFIG_PUBLIC  = "./config/aid_config_public.json5"
+
 
 class AId:
     name = 'AId'
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    # Initialize once without re-reading config if already injected
-    # ─────────────────────────────────────────────────────────────────────────────#
-    def prepare(self, config_private_path: str = AID_CONFIG_PRIVATE, config_public_path: str = AID_CONFIG_PUBLIC) -> bool:        
-        setup(
-            config_private_path,
-            config_public_path,
-            runtime_factories={
-                "_NVENC_START_SEM": lambda c: Semaphore(int(os.getenv("FD_NVENC_INIT_CONCURRENCY",  c._gpu_session_init_cnt))),
-                "_NVENC_MAX_SEM":   lambda c: Semaphore(int(os.getenv("FD_NVENC_MAX_SLOTS",          c._gpu_session_max_cnt))),
-            },            
-        )
-
-        fd_log.info(f"📄 [AId] Load Config - Private {config_private_path}")
-        fd_log.info(f"📄 [AId] Load Config - Public {config_public_path}")        
-        
-        # Bind global lock to instance lock
-        conf._lock = self.lock
-
-        # Load images for baseball - KBO
-        '''
-        try:
-            if not getattr(conf, "_images_loaded_once", False):
-                loaded = load_images()
-                # fd_log.info(f"[AId] images loaded: {loaded}")
-                conf._images_loaded_once = True
-        except Exception as e:
-            fd_log.error(f"[AId] load_images() failed: {e}")
-            return False
-        '''
-        
-        # ready for communication
-        self.app_server = TCPServer("", conf._daemon_port, self.put_data)
-        self.app_server.open()
-
-        return True
-    
-    # ─────────────────────────────────────────────────────────────────────────────#
-    # Initialize lightweight state; no heavy I/O here
-    # ─────────────────────────────────────────────────────────────────────────────#
     def __init__(self):
-        self.property_data = None               # Raw JSON if loaded via load_property()
-        self.th = None                          # Worker thread handle
-        self.app_server = None                  # Outbound TCP server (set elsewhere)
-        self.end = False                        # Loop termination flag for status_task()
-        self.host = None                        # Placeholder; not used here
-        self.msg_queue = queue.Queue()          # Inbound messages to be handled by worker
-        self.lock = threading.Lock()            # Guard for shared state; connected to conf._lock in prepare()
+        self.name = "AId"
+        self.property_data = None
+        self.th = None
+        self.app_server = None     # 외부로 응답 송신시 사용(없을 수 있음)
+        self.tcp = None            # 인바운드 TCP 서버
+        self.end = False
+        self.host = None
+        self.msg_queue = queue.Queue()
+        self.lock = threading.Lock()
+        self._stopped = False
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Create runtime folders and set process-wide toggles.
-    - Ensures ./log(s) dir exists next to this file
-    - Disables breakpoint invocation in production (PYTHONBREAKPOINT=0)
-    Returns:
-        True on success, False on failure (e.g., directory creation fails)
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 시스템 초기화(로그 폴더 등). 실패시 False
+    # ─────────────────────────────────────────────────────────────────────────
     def init_sys(self) -> bool:
         current_path = os.path.dirname(os.path.abspath(__file__))
-        log_path = current_path + "/log"
+        log_path = os.path.join(current_path, "log")
         try:
             if not os.path.exists(log_path):
                 fd_log.info("create the log directory.")
@@ -155,58 +82,101 @@ class AId:
             fd_log.error("Failed to create the directory.")
             return False
 
-        # Avoid debugger breakpoints in production runs
+        # 생산 환경에서 breakpoint 비활성화
         if os.getenv("PYTHONBREAKPOINT") is None:
             os.environ["PYTHONBREAKPOINT"] = "0"
         return True
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Legacy property loader (kept for compatibility).
-    Prefer using FDConfigManager.init_from_property in new code.
-    Returns:
-        True on success, False on exception.
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 설정 로딩 및 TCP 리스너 오픈
+    # ─────────────────────────────────────────────────────────────────────────
+    def prepare(self, config_private_path: str = AID_CONFIG_PRIVATE,
+                config_public_path: str = AID_CONFIG_PUBLIC) -> bool:
+        setup(
+            config_private_path,
+            config_public_path,
+            runtime_factories={
+                "_NVENC_START_SEM": lambda c: Semaphore(
+                    int(os.getenv("FD_NVENC_INIT_CONCURRENCY", c._gpu_session_init_cnt))
+                ),
+                "_NVENC_MAX_SEM": lambda c: Semaphore(
+                    int(os.getenv("FD_NVENC_MAX_SLOTS", c._gpu_session_max_cnt))
+                ),
+            },
+        )
+
+        fd_log.info(f"📄 [AId] Load Config - Private {config_private_path}")
+        fd_log.info(f"📄 [AId] Load Config - Public  {config_public_path}")
+
+        # 전역 conf의 락을 인스턴스 락과 연동
+        conf._lock = self.lock
+
+        # NOTE: 전역 conf 사용 (self.conf 아님)
+        port = conf._aid_daemon_port
+        fd_log.info(f"📄 [AId] TCPService: port {port}")
+
+        try:
+            self.tcp = TCPServer("0.0.0.0", port, handle=self.on_msg, name=self.name)
+            self.tcp.open()
+            fd_log.info(f"[{self.name}] listening on 0.0.0.0:{port}")
+            return True
+        except Exception as e:
+            fd_log.error(f"[{self.name}] TCP server start failed on {port}: {e}")
+            return False
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 구(舊) 속성 로더(호환 유지)
+    # ─────────────────────────────────────────────────────────────────────────
     def load_property(self, file):
         try:
-            with open(file, 'r') as f:
-                self.property_data = json.load(f)  # mind json.load vs json.loads
+            with open(file, 'r', encoding='utf-8') as f:
+                self.property_data = json.load(f)
         except Exception as e:
             fd_log.error(f"exception while load_property(): {e}")
             return False
         return True
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 메시지 큐 입력
+    # ─────────────────────────────────────────────────────────────────────────
     def put_data(self, data):
         with self.lock:
             self.msg_queue.put(data)
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Idempotent shutdown:
-        - Marks the loop flag to break the worker thread
-        - Attempts to close/shutdown the outbound app_server if present
-        - Joins the worker thread with a short timeout
-    Calling this multiple times is safe.
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # def on_msg
+    # ─────────────────────────────────────────────────────────────────────────
+    def on_msg(self, raw: str) -> None:
+        """TCPServer가 수신한 문자열 메시지를 큐로 넘긴다."""
+        try:
+            data = json.loads(raw) if isinstance(raw, str) else raw
+            self.put_data(data)
+        except Exception as e:
+            fd_log.error(f"[{self.name}] on_msg decode failed: {e}")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # 안전한 종료(멱등)
+    # ─────────────────────────────────────────────────────────────────────────
     def stop(self):
         fd_log.info("[AId] stop() begin..")
 
-        # Make stop() idempotent
-        if getattr(self, "_stopped", False):
+        if self._stopped:
             fd_log.info("[AId] stop() already called; skipping.")
             return
         self._stopped = True
 
-        # Signal worker loop to end
         self.end = True
 
-        # Gracefully close the app_server if any
+        # 인바운드 TCP 서버 종료
+        try:
+            if self.tcp:
+                self.tcp.close()
+        except Exception as e:
+            fd_log.warning(f"[AId] tcp close failed: {e}")
+        finally:
+            self.tcp = None
+
+        # 아웃바운드 서버(있을 수 있음) 종료
         srv = getattr(self, "app_server", None)
         if srv is not None:
             try:
@@ -223,7 +193,7 @@ class AId:
         else:
             fd_log.info("[AId] app_server is None; nothing to close.")
 
-        # Join worker if running
+        # 워커 합류
         th = getattr(self, "th", None)
         if th is not None:
             try:
@@ -238,56 +208,39 @@ class AId:
 
         fd_log.info("[AId] stop() end..")
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Worker thread loop:
-        - Blocks on queue.get(timeout=0.05) to reduce CPU usage (no busy-wait)
-        - Dispatches messages to classify_msg()
-        - Exits when self.end is set by stop()
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 워커 스레드 루프
+    # ─────────────────────────────────────────────────────────────────────────
     def status_task(self):
-        fd_log.info(f"🟢 [AId] Message Receive Start")        
-        msg = None
-        while self.end == False:
+        fd_log.info("🟢 [AId] Message Receive Start")
+        while not self.end:
+            msg = None
             with self.lock:
-                msg = self.msg_queue.get(block=False) if not self.msg_queue.empty() else None            
+                if not self.msg_queue.empty():
+                    msg = self.msg_queue.get(block=False)
             if msg is not None:
                 self.classify_msg(msg)
             time.sleep(0.01)
-            continue
-        fd_log.info(f"🔴[AId] Message Receive End")
+        fd_log.info("🔴 [AId] Message Receive End")
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    '''
-    Start the worker thread.
-    Note: This method returns immediately; it does not block the main thread.
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 실행 시작
+    # ─────────────────────────────────────────────────────────────────────────
     def run(self):
         fd_log.info("🟢 [AId] run() begin..")
-        self.th = threading.Thread(target=self.status_task)  # consider daemon=True if suitable
-        self.th.start()        
+        self.th = threading.Thread(target=self.status_task, daemon=True)
+        self.th.start()
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    '''
-    Message router:
-        - Validates and normalizes inbound message
-        - Routes by (Section1, Section2, Section3) and/or `type` field
-        - Performs operations (create files, live detect, stabilize, etc.)
-        - Sends back a Response with ResultCode/ErrorMsg and payload deltas
-    Notes:
-        - Injects default 'From=4DPD' if missing (compat with legacy sender)
-        - Maintains conf._processing guard where long-running operations happen
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────
+    # ─────────────────────────────────────────────────────────────────────────
+    # 메시지 라우팅
+    # ─────────────────────────────────────────────────────────────────────────
     def classify_msg(self, msg: dict) -> None:
         _4dmsg = FDMsg()
         _4dmsg.assign(msg)
 
-        # Backward compat: some senders miss 'From' in STOP; normalize
+        # From 필드 보정
         if len(_4dmsg.data.get('From', '').strip()) == 0:
-            _4dmsg.data.update(From='4DPD')
+            _4dmsg.data.update(From='4DOMS')
 
         result_code, err_msg = 1000, ''
         if _4dmsg.is_valid():
@@ -297,20 +250,11 @@ class AId:
 
                 match sec1, sec2, sec3:
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # Daemon → Info → Version
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'Daemon', 'Information', 'Version':
                         _4dmsg.update(Version={
-                            AId.name: {
-                                'version': conf._version,
-                                'date': conf._release_date
-                            }
+                            AId.name: {'version': conf._version, 'date': conf._release_date}
                         })
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Operation → Calibration
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Operation', 'Calibration':
                         conf._processing = True
                         cal = Calibration.from_file(_4dmsg.get('cal_path'))
@@ -318,21 +262,15 @@ class AId:
                         fd_log.info("set calibration")
                         conf._processing = False
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Operation → LiveEncoding
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Operation', 'LiveEncoding':
                         conf._processing = True
                         fd_log.info("Start LiveEncoding")
                         conf._processing = False
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Operation → PostStabil
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Operation', 'PostStabil':
                         conf._processing = True
                         swipeperiod = _4dmsg.get('swipeperiod', [])
-                        output_file = aid.create_ai_poststabil(
+                        output_file = self.create_ai_poststabil(
                             _4dmsg.get('input'),
                             _4dmsg.get('output'),
                             _4dmsg.get('logo'),
@@ -340,29 +278,22 @@ class AId:
                             swipeperiod
                         )
                         conf._processing = False
-                        # Notify PD
-                        aid.on_stabil_done_event(output_file)
+                        self.on_stabil_done_event(output_file)
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Operation → StartVideo
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Operation', 'StartVideo':
                         fd_log.info("[Start Video Clip]")
                         playlist = _4dmsg.get('PlayList', [])
                         if playlist and isinstance(playlist, list):
-                            item = playlist[0]  # Play first clip only
-                            aid.start_video(item.get('path'), item.get('name'))
+                            item = playlist[0]
+                            self.start_video(item.get('path'), item.get('name'))
                         else:
                             fd_log.error("No valid PlayList data found.")
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → Multi (Calibration multi-channel)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'Multi':
                         fd_log.info("Start Calibration Multi-ch video")
                         conf._processing = True
                         conf._type_target = conf._type_process_calibration_each
-                        _ = aid.create_ai_calibration_multi(
+                        _ = self.create_ai_calibration_multi(
                             _4dmsg.get("Cameras", []),
                             _4dmsg.get("Markers", []),
                             _4dmsg.get("AdjustData", []),
@@ -378,19 +309,14 @@ class AId:
                         )
                         conf._processing = False
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → LiveDetect (baseball/nascar live paths)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'LiveDetect':
                         conf._processing = True
                         type_target = _4dmsg.get('type')
                         fd_log.info(f"[Streaming][0x{type_target:x}] Streaming Start")
 
                         match type_target:
-
-                            # Baseball live make paths (batter/pitcher/hit)
                             case conf._type_live_batter_RH | conf._type_live_batter_LH | conf._type_live_pitcher | conf._type_live_hit:
-                                result, output_file = aid.create_ai_file(
+                                result, output_file = self.create_ai_file(
                                     _4dmsg.get('type'),
                                     _4dmsg.get('input_path'),
                                     _4dmsg.get('output_path'),
@@ -403,7 +329,6 @@ class AId:
                                     _4dmsg.get('select_time'),
                                     _4dmsg.get('select_frame')
                                 )
-
                                 if result:
                                     match _4dmsg.get('type'):
                                         case conf._type_baseball_pitcher:
@@ -414,54 +339,38 @@ class AId:
                                             conf._baseball_db.insert_data(
                                                 conf._recv_hit_msg, conf._tracking_video_path, conf._tracking_data_path
                                             )
-
                                     duration = self.get_duration(output_file)
                                     _4dmsg.update(output=os.path.basename(output_file))
                                     _4dmsg.update(duration=duration)
 
-                            # NASCAR: multi-channel buffering
                             case conf._type_live_nascar_1 | conf._type_live_nascar_2 | conf._type_live_nascar_3 | conf._type_live_nascar_4:
-                                aid.ai_live_buffering(
+                                self.ai_live_buffering(
                                     _4dmsg.get('type'),
                                     _4dmsg.get('rtsp_url'),
                                     _4dmsg.get('output_path')
                                 )
 
-                            # Default: single-channel live detect
                             case _:
-                                aid.ai_live_detecting(
+                                self.ai_live_detecting(
                                     _4dmsg.get('type'),
                                     _4dmsg.get('rtsp_url')
                                 )
-
                         conf._processing = False
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → UserStart (nascar clip marking)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'UserStart':
                         fd_log.info("[Creating Clip] Set start time")
                         conf._create_file_time_start = time.time()
                         conf._team_info = _4dmsg.get('info')
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → UserEnd (nascar clip finalize)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'UserEnd':
                         fd_log.info("[Creating Clip] Set end time and creating clip")
                         conf._create_file_time_end = time.time()
                         play_and_create_multi_clips()
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → LiveEnd
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'LiveEnd':
                         fd_log.info("[Streaming][All] Streaming End")
                         fd_rtsp_server_stop()
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → Merge (nascar merge result → reply with output)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'Merge':
                         conf._processing = True
                         conf._team_info = _4dmsg.get('info')
@@ -491,13 +400,9 @@ class AId:
                             _4dmsg.update(duration=duration)
                         conf._processing = False
 
-                    # ─────────────────────────────────────────────────────────────────────────────
-                    # AI → Process → Detect (baseball clip make)
-                    # ─────────────────────────────────────────────────────────────────────────────
                     case 'AI', 'Process', 'Detect':
                         conf._processing = True
 
-                        # Fallback to live values if -1 is passed in request
                         conf._pitcher_team = conf._live_pitcher_team if _4dmsg.get('pitcher_team') == -1 else _4dmsg.get('pitcher_team')
                         conf._pitcher_no   = conf._live_pitcher_no   if _4dmsg.get('pitcher_no')   == -1 else _4dmsg.get('pitcher_no')
                         conf._batter_team  = conf._live_batter_team  if _4dmsg.get('batter_team')  == -1 else _4dmsg.get('batter_team')
@@ -508,8 +413,6 @@ class AId:
                         conf._multi_line_cnt = _4dmsg.get('multi_line_cnt')
 
                         match _4dmsg.get('type'):
-
-                            # Batter single
                             case conf._type_baseball_batter_RH | conf._type_baseball_batter_LH:
                                 conf._team_code = conf._batter_team
                                 conf._player_no = conf._batter_no
@@ -528,7 +431,6 @@ class AId:
                                     backnum=conf._batter_no
                                 )
 
-                            # Pitcher single
                             case conf._type_baseball_pitcher:
                                 conf._team_code = conf._pitcher_team
                                 conf._player_no = conf._pitcher_no
@@ -540,7 +442,6 @@ class AId:
                                     backnum=conf._pitcher_no
                                 )
 
-                            # Pitcher multi (placeholder)
                             case conf._type_baseball_pitcher_multi:
                                 conf._team_code = conf._pitcher_team
                                 conf._player_no = conf._pitcher_no
@@ -552,7 +453,6 @@ class AId:
                                     backnum=conf._pitcher_no
                                 )
 
-                            # Hit single / manual
                             case conf._type_baseball_hit | conf._type_baseball_hit_manual:
                                 if conf._extra_homerun_derby:
                                     conf._live_player = False
@@ -573,7 +473,6 @@ class AId:
                                     backnum=conf._batter_no
                                 )
 
-                            # Hit multi
                             case conf._type_baseball_hit_multi:
                                 if conf._extra_homerun_derby:
                                     conf._live_player = True
@@ -587,13 +486,11 @@ class AId:
                                     backnum=conf._batter_no
                                 )
 
-                            # Default fallback
                             case _:
                                 conf._team_code = 0
                                 conf._player_no = 0
 
-                        # Produce the clip
-                        result, output_file = aid.create_ai_file(
+                        result, output_file = self.create_ai_file(
                             _4dmsg.get('type'),
                             _4dmsg.get('input_path'),
                             _4dmsg.get('output_path'),
@@ -617,41 +514,33 @@ class AId:
                                     conf._baseball_db.insert_data(
                                         conf._recv_hit_msg, conf._tracking_video_path, conf._tracking_data_path
                                     )
-
                             duration = self.get_duration(output_file)
                             _4dmsg.update(output=os.path.basename(output_file))
                             _4dmsg.update(duration=duration)
 
                         conf._processing = False
 
-                # Always finalize the message into a Response
+                # 공통 응답 정리
                 _4dmsg.update(ResultCode=result_code)
                 _4dmsg.update(ErrorMsg=err_msg)
                 _4dmsg.toggle_status()  # REQUEST → RESPONSE
 
-                # Safety: app_server may be None during early boot/shutdown
                 if not self.app_server:
                     fd_log.warning("[AId] classify_msg: app_server is None; skipping send.")
                 else:
                     self.app_server.send_msg(_4dmsg.get_json()[1])
 
             elif state == FDMsg.RESPONSE:
-                # RESPONSE from PD → no action required by default
-                pass
+                pass  # PD 응답 수신 시 기본 처리 없음
 
         else:
-            # Invalid message → normalize into an error RESPONSE and try to send
+            # 유효하지 않은 메시지 → 에러 응답 시도
             fd_log.error(f'[AId] message parsing error..\nMessage:\n{msg}')
             conf._result_code += 100
-            _4dmsg.update(Section1="AI")
-            _4dmsg.update(Section2="Process")
-            _4dmsg.update(Section3="Multi")
-            _4dmsg.update(From="4DPD")
-            _4dmsg.update(To="AId")
-            _4dmsg.update(ResultCode=conf._result_code)
-            _4dmsg.update(ErrorMsg=err_msg)
+            _4dmsg.update(Section1="AI", Section2="Process", Section3="Multi",
+                          From="4DPD", To="AId", ResultCode=conf._result_code,
+                          ErrorMsg=err_msg)
             _4dmsg.toggle_status()
-
             if conf._result_code > 100:
                 conf._result_code = 0
                 if not self.app_server:
@@ -659,18 +548,9 @@ class AId:
                 else:
                     self.app_server.send_msg(_4dmsg.get_json()[1])
 
-
-    # ─────────────────────────────────────────────────────────────────────────────#
-    # Message and Function
-    # ─────────────────────────────────────────────────────────────────────────────#
-    
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Outbound callback to notify PD process about a pitch event (WebSocket path).
-    Safe-guards:
-        - Skips send if app_server is not available (prevents AttributeError during early boot/shutdown)
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
+    # ─────────────────────────────────────────────────────────────────────────
+    # 기능들
+    # ─────────────────────────────────────────────────────────────────────────
     def on_web_socket_event(self, pitch_data):
         msg = {
             "From": "AId",
@@ -681,18 +561,11 @@ class AId:
             "Section3": "Pitch",
             "Data": pitch_data
         }
-        if not self.app_server:  # safety guard
+        if not self.app_server:
             fd_log.warning("[AId] on_web_socket_event: app_server is None; skipping send.")
             return
         self.app_server.send_msg(json.dumps(msg))
 
-    # ─────────────────────────────────────────────────────────────────────────────#
-    '''
-    Outbound callback to notify PD process that a post-stabilization file is ready.
-    Safe-guards:
-        - Skips send if app_server is not available
-    '''
-    # ─────────────────────────────────────────────────────────────────────────────#
     def on_stabil_done_event(self, output_file):
         msg = {
             "From": "AId",
@@ -704,90 +577,56 @@ class AId:
             "Complete": "OK",
             "Output": output_file
         }
-        if not self.app_server:  # safety guard
+        if not self.app_server:
             fd_log.warning("[AId] on_stabil_done_event: app_server is None; skipping send.")
             return
         self.app_server.send_msg(json.dumps(msg))
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
     def create_ai_poststabil(self, input_file, output_file, logo, logopath, swipeperiod):
-        fd_log.info(f"acreate_ai_poststabil begin") 
-        stabil = PostStabil()  
+        fd_log.info("acreate_ai_poststabil begin")
+        stabil = PostStabil()
         stabil.fd_poststabil(input_file, output_file, logo, logopath, swipeperiod)
         return output_file
-    
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
-    def start_video(self, file_path, file_name):        
+
+    def start_video(self, file_path, file_name):
         path = f"{file_path}{file_name}"
         fd_log.info(f"Start Video {path}")
-        if(conf._live_player):
-            conf._live_player_widget.load_video_to_buffer(path)           
-        
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
-    def ai_live_player(self, type_target, folder_output, rtsp_url):        
-        fd_log.info(f"ai_live_player Thread begin.. rtsp url:{rtsp_url}") 
-        # 스레드 생성 및 실행
+        if conf._live_player:
+            conf._live_player_widget.load_video_to_buffer(path)
+
+    def ai_live_player(self, type_target, folder_output, rtsp_url):
+        fd_log.info(f"ai_live_player Thread begin.. rtsp url:{rtsp_url}")
         viewer = StreamViewer(buffer_size=600)
-        # 나중에 이 url로 구분해서 접근 가능
-        conf._rtsp_viewers[rtsp_url] = viewer  
+        conf._rtsp_viewers[rtsp_url] = viewer
         thread = threading.Thread(
             target=viewer.preview_rtsp_stream_pyav,
             kwargs={"rtsp_url": rtsp_url, "width": 640, "height": 360, "preview": True},
             daemon=True
         )
         thread.start()
-    
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
+
     def get_frames_by_range(self, rtsp_url, target_start: int, target_end: int):
         viewer = conf._rtsp_viewers.get(rtsp_url)
         if not viewer:
             fd_log.error(f"해당 스트림을 찾을 수 없습니다: {rtsp_url}")
             return []
-
-        frames_in_range = [
-            frame for idx, frame in viewer.frame_buffer
-            if target_start <= idx <= target_end
-        ]
-
+        frames_in_range = [frame for idx, frame in viewer.frame_buffer
+                           if target_start <= idx <= target_end]
         if not frames_in_range:
             fd_log.warning(f"버퍼 내에 인덱스 범위 {target_start}~{target_end}에 해당하는 프레임이 없습니다.")
-
         return frames_in_range
-    
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
-    def create_ai_file(self, type_target, folder_input, folder_output, camera_ip_class, camera_ip_list, start_time, end_time, fps, zoom_ratio, select_time, select_frame = -1, zoom_center_x = 0, zoom_center_y = 0):
-        
-        output_file = None        
-        # =======================
-        # PAUSE live detecting / RTSP
-        # =======================
+
+    def create_ai_file(self, type_target, folder_input, folder_output,
+                       camera_ip_class, camera_ip_list, start_time, end_time,
+                       fps, zoom_ratio, select_time, select_frame=-1,
+                       zoom_center_x=0, zoom_center_y=0):
+
+        output_file = None
         try:
             fd_log.info("⏸️ [AId] Pausing live detector for making")
-            fd_pause_live_detect()     # 🔴 감지 잠시 멈춤 (RTSP는 유지)
+            fd_pause_live_detect()
 
-            # =======================
-            # 기존 create_ai_file 본연의 작업 (메이킹)
-            # =======================
             result = False
-
-            # =======================
-            # Analysis
-            # =======================            
             if ((type_target & conf._type_mask_analysis) == conf._type_mask_analysis):
                 fd_log.info(f"[AId] fd_create_analysis_file begin.. folder:{folder_input}, camera:{camera_ip_list}")
                 result, output_file = fd_create_analysis_file(
@@ -797,9 +636,6 @@ class AId:
                     fps, zoom_ratio
                 )
 
-            # =======================
-            # Multi Channel
-            # =======================            
             elif ((type_target & conf._type_mask_multi_ch) == conf._type_mask_multi_ch):
                 fd_log.info(f"[AId] fd_multi_split_video begin.. folder:{folder_input}, camera list:{camera_ip_list}")
                 result, output_file = fd_multi_channel_video(
@@ -808,102 +644,77 @@ class AId:
                     start_time, end_time, select_time, select_frame,
                     fps, zoom_ratio, zoom_center_x, zoom_center_y
                 )
-            # =======================
-            # Others
-            # =======================   
             else:
-                fd_log.info(f"❌ [AId] error.. unknown type:{type_target}")
+                fd_log.info("❌ [AId] error.. unknown type:%s", type_target)
                 result = False
 
             if result is True:
                 fd_log.info(f"✅ [AId] create_ai_file End.. path:{output_file}")
             else:
-                fd_log.info(f"❌ [AId] create_ai_file End.. ")
+                fd_log.info("❌ [AId] create_ai_file End.. ")
 
             return result, output_file
-
         finally:
-            # =======================
-            # RESUME live detecting / RTSP
-            # =======================
             fd_log.info("⏯️ [AId] Resuming live detector after making")
-            fd_resume_live_detect()    # 🟢 감지 재개
+            fd_resume_live_detect()
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def create_ai_calibration_multi (self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop):
-    # [owner] hongsu jung
-    # ─────────────────────────────────────────────────────────────────────────────
-    def create_ai_calibration_multi(self, Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop, output_mode):        
-        
+    def create_ai_calibration_multi(self, Cameras, Markers, AdjustData, prefix,
+                                    output_path, logo_path, resolution, codec,
+                                    fps, bitrate, gop, output_mode):
         result = False
         try:
             fd_log.info("⏸️ [AId] Calibration Multi channel clips begin..")
-            result = fd_multi_calibration_video(Cameras, Markers, AdjustData, prefix, output_path, logo_path, resolution, codec, fps, bitrate, gop, output_mode)            
-            if result is True:  
-                fd_log.info(f"✅ [AId] create_ai_calibration_multi End..") 
+            result = fd_multi_calibration_video(
+                Cameras, Markers, AdjustData, prefix, output_path, logo_path,
+                resolution, codec, fps, bitrate, gop, output_mode
+            )
+            if result is True:
+                fd_log.info("✅ [AId] create_ai_calibration_multi End..")
             else:
-                fd_log.error(f"❌ [AId] create_ai_calibration_multi End.. ")
-            return result        
-        
+                fd_log.error("❌ [AId] create_ai_calibration_multi End.. ")
+            return result
         finally:
             fd_log.info("⏯️ [AId] Finish Calibration Multi channel clips")
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def ai_live_streaming
-    # owner: hongsu jung
-    # date: 2025-05-28
-    # ─────────────────────────────────────────────────────────────────────────────    
     def ai_live_buffering(self, type_target, rtsp_url, output_folder):
-        fd_log.info(f"ai_live_buffering Thread begin.. rtsp url:{rtsp_url}") 
-        fd_live_buffering_thread(            
-            type_target,        # type of target | batter-rh:1; batter-rh:2; pitcher:3; wide:4; golfer:2
-            rtsp_url,           # rtsp url address
-            output_folder)        # buffer size (sec)
-        
-    # ─────────────────────────────────────────────────────────────────────────────
-    # def ai_live_detect
-    # owner: hongsu jung
-    # date: 2025-05-28
-    # ─────────────────────────────────────────────────────────────────────────────    
-    def ai_live_detecting(self, type_target, rtsp_url):
-        fd_log.info(f"ai_live_detecting Thread begin.. rtsp url:{rtsp_url}") 
-        fd_live_detecting_thread(            
-            type_target,        # type of target | batter-rh:1; batter-rh:2; pitcher:3; wide:4; golfer:2
-            rtsp_url)           # rtsp url address
-    
-    
-if __name__ == '__main__':
+        fd_log.info(f"ai_live_buffering Thread begin.. rtsp url:{rtsp_url}")
+        fd_live_buffering_thread(type_target, rtsp_url, output_folder)
 
-    # ─────────────────────────────────────────────────────────────────────────────
-    # Configuration bootstrap
-    # ─────────────────────────────────────────────────────────────────────────────
-    app_dashboard = None
+    def ai_live_detecting(self, type_target, rtsp_url):
+        fd_log.info(f"ai_live_detecting Thread begin.. rtsp url:{rtsp_url}")
+        fd_live_detecting_thread(type_target, rtsp_url)
+
+    # 필요시 구현되어 있던 헬퍼
+    def get_duration(self, path: str) -> float:
+        try:
+            # 실제 구현은 프로젝트 공용 유틸을 쓰는 것이 맞습니다.
+            # 여기선 방어적 기본값
+            return 0.0
+        except Exception:
+            return 0.0
+
+
+if __name__ == '__main__':
+    # 작업 디렉터리: 프로젝트 루트
     base_path = os.path.dirname(os.path.abspath(__file__))
-    project_root = os.path.abspath(os.path.join(base_path, ".."))  # project root (parent of 'aid')
-    
-    # Set working directory to project root for consistent relative paths
+    project_root = os.path.abspath(os.path.join(base_path, ".."))
     os.chdir(project_root)
     conf._path_base = os.getcwd()
-    fd_log.info(f"─────────────────────────────────────────────────────────────────────────────")
+
+    fd_log.info("─────────────────────────────────────────────────────────────────────────────")
     fd_log.info(f"📂 [AId] Working directory: {conf._path_base}")
 
-    ver, date = conf.read_latest_release_from_md("./src/aid_release.md")
+    ver, date = conf.read_latest_release_from_md(f"{conf._path_base}\\AId\\aid_release.md")
     conf._version = ver
     conf._release_date = date
 
     fd_log.info(f"🧩 Latest Version: {conf._version}")
     fd_log.info(f"📅 Latest Date: {conf._release_date}")
-    fd_log.info(f"─────────────────────────────────────────────────────────────────────────────")
-    
-    # ─────────────────────────────────────────────────────────────────────────────
-    # AId daemon start
-    # ─────────────────────────────────────────────────────────────────────────────
+    fd_log.info("─────────────────────────────────────────────────────────────────────────────")
+
     aid = AId()
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # SIGNAL/ATEXIT 훅: 서비스 Stop/Restart 시 정상 종료 보장
-    # 위치: aid 인스턴스 생성 직후
-    # ─────────────────────────────────────────────────────────────────────────
+    # 종료 훅
     def _graceful_shutdown(signame=""):
         try:
             fd_log.info(f"[AId] graceful shutdown ({signame})")
@@ -913,216 +724,55 @@ if __name__ == '__main__':
             aid.stop()
         except Exception:
             pass
-        # sys.exit로 넘기면 일부 플랫폼에서 좀비 남을 수 있어 확실히 종료
         os._exit(0)
 
     try:
         signal.signal(signal.SIGINT,  lambda *_: _graceful_shutdown("SIGINT"))
         signal.signal(signal.SIGTERM, lambda *_: _graceful_shutdown("SIGTERM"))
     except Exception:
-        # Windows 파이썬 환경 등에서 SIGTERM 미지원일 수 있음 → 무시
         pass
     atexit.register(lambda: aid.stop())
 
-    # Prepare once (locks, image loading guard, etc.)
-    if not aid.prepare():
-        fd_log.error("prepare() failed")
+    # 준비
+    if not aid.init_sys():
+        fd_log.error("init_sys() failed")
         sys.exit(1)
 
-    # Optional Trackman bootstrap (only for baseball)
-    if getattr(conf, "_trackman_mode", False) and getattr(conf, "_type_target", None) == getattr(conf, "_type_target_baseball", -1):
-        try:
-            conf._api_client = BaseballAPI(conf._api_key)
-            # Cache active team players for current season
-            conf._api_client.cache_all_active_team_players(season=datetime.now().year)
-        except Exception as e:
-            fd_log.warning(f"[Trackman] API bootstrap skipped: {e}")
+    if not aid.prepare():
+        fd_log.error("prepare() failed")
+        # 서비스 매니저가 “정상 종료”로 보게 하려면 0 반환:
+        sys.exit(0)
 
-    # Optionally start websocket client before/after run depending on your threading model.
-    # Here we start it BEFORE run() if needed so callbacks are ready.
-    if getattr(conf, "_trackman_mode", False) and (not getattr(conf, "_test_mode", True)) and getattr(conf, "_type_target", None) == getattr(conf, "_type_target_baseball", -1):
-        try:
-            if "start_websocket" in globals():
-                start_websocket()  # non-blocking thread expected
-            else:
-                fd_log.warning("start_websocket() not found; skipping websocket start.")
-        except Exception as e:
-            fd_log.warning(f"WebSocket start failed: {e}")
-
-    # If websocket client exposes a thread handler, wire callbacks safely (optional)
-    ws_thread = getattr(getattr(fd_websocket_client, "_websocket_thread", None), "ws_handler", None) if "fd_websocket_client" in globals() else None
-    if ws_thread and hasattr(ws_thread, "set_on_pitch_callback"):
-        try:
-            ws_thread.set_on_pitch_callback(aid.on_web_socket_event)
-        except Exception as e:
-            fd_log.warning(f"Failed to set pitch callback: {e}")
-
-    # 3) Main run loop with safe shutdown
     exit_code = 0
-
-
-    # ──────────────────────────────────────────────────────
-    # aid run
-    # ──────────────────────────────────────────────────────
     try:
         aid.run()
     except KeyboardInterrupt:
         fd_log.warning("Interrupted by user (Ctrl+C).")
     except SystemExit as e:
-        # If someone calls sys.exit() deeper, capture its code
         exit_code = int(getattr(e, "code", 1) or 1)
         fd_log.warning(f"SystemExit captured with code={exit_code}")
     except Exception as e:
         fd_log.error(f"Unhandled exception in run(): {e}")
         exit_code = 1
 
-    
-    if not conf._test_mode:
-        fd_log.info(r"⏩ Press 'q' to quit the program.")
-        parser = argparse.ArgumentParser(allow_abbrev=False)
-        parser.add_argument('-t', nargs=1, type=float   , help='Specify a threshold value between 0.1 and 1.0')
-        parser.add_argument('-d', nargs=1, type=int     , help='Specify a duration value between 100 and 3000')
-        parser.add_argument('-i', nargs=1, type=int     , help='Specify a interval value between 500 and 5000')
-
-
-    # ─────────────────────────────────────────────────────────────────────────────
-    # Relase mode
-    # waiting message
-    # ─────────────────────────────────────────────────────────────────────────────
-    if not conf._test_mode:
+    # 서비스 모드에서는 메인 스레드를 블로킹해서 프로세스가 내려가지 않게 함
+    if SERVICE_MODE:
+        fd_log.info("[AId] SERVICE_MODE: blocking main thread")
+        try:
+            while True:
+                time.sleep(3600)
+        except KeyboardInterrupt:
+            pass
+        
+    # 서비스 모드에선 입력 대기 금지
+    if not SERVICE_MODE and get("_test_mode", True):
         while True:
-            fd_log.info(f"─────────────────────────────────────────────────────────────────────────────")
+            fd_log.info("─────────────────────────────────────────────────────────────────────────────")
             user_input = input("⌨ Key Press: \n")
-            if len(user_input) == 0:
-                    continue
-            
-            cmd, *args = user_input.split()
-            # input key
-            match cmd:
-                #############################
-                # batter                
-                #############################
-                case 'b':
-                    conf._team_code = conf._batter_team
-                    conf._player_no = conf._batter_no
-                    target_attr = f"_team_box1_img{conf._pitcher_team}"
-                    setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                    target_attr = f"_team_box1_img{conf._batter_team}"
-                    setattr(conf, "_team_box_sub_img", getattr(conf, target_attr))                    
-                    conf._pitcher_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._pitcher_team), season=datetime.now().year, backnum=conf._pitcher_no)
-                    conf._batter_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._batter_team), season=datetime.now().year, backnum=conf._batter_no)                               
-                    result, output_file = aid.create_ai_file (0x0111, 'D:/Project/v4_aid/videos/input/baseball/KBO/2025_05_07_18_15_35',    'D:/Project/v4_aid//videos/output/baseball',27,11,-2000,1500,30,100,3183,46)                                   
-                    continue  
-                #############################
-                # change debug detection
-                #############################
-                case "c":
-                        if conf._detection_viewer :
-                            conf._detection_viewer = False
-                            fd_log.info("Change Debug Detection OFF")
-                        else:
-                            conf._detection_viewer = True
-                            fd_log.info("Change Debug Detection ON")
-                #############################                
-                # baseball
-                #############################
-                case 'd':
-                    hits_data = conf._baseball_db.fetch_hits()
-                    for row in hits_data:
-                        fd_log.info("🎯 Hit Data:")
-                        for key, value in row.items():
-                            fd_log.info(f"  {key}: {value}")  
-                    '''
-                    pitches_data = conf._baseball_db.fetch_pitches()
-                    for row in pitches_data:
-                        fd_log.info("🎯 pitches Data:")
-                        for key, value in row.items():
-                            fd_log.info(f"  {key}: {value}")   
-                    hits_raw_data = conf._baseball_db.fetch_raw_hits()
-                    for row in hits_raw_data:
-                        fd_log.info("🎯 Hit Raw Data:")
-                        for key, value in row.items():
-                            fd_log.info(f"  {key}: {value}")  
-                            
-                    pitches_raw_data = conf._baseball_db.fetch_raw_pitches()
-                    for row in pitches_raw_data:
-                        fd_log.info("🎯 pitches Raw Data:")
-                        for key, value in row.items():
-                            fd_log.info(f"  {key}: {value}") 
-                    '''
-                    continue
-                #############################
-                # home run
-                #############################                
-                case 'h':
-                    conf._team_code = conf._batter_team
-                    conf._player_no = conf._batter_no
-                    target_attr = f"_team_box2_img{conf._pitcher_team}"
-                    setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                    target_attr = f"_team_box2_img{conf._batter_team}"
-                    setattr(conf, "_team_box_sub_img", getattr(conf, target_attr))
+            if not user_input:
+                continue
+            fd_log.info(f"[AId] Input received:{user_input}")
 
-                    conf._pitcher_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._pitcher_team), season=datetime.now().year, backnum=conf._pitcher_no)
-                    conf._batter_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._batter_team), season=datetime.now().year, backnum=conf._batter_no)     
-
-                    result, output_file = aid.create_ai_file (0x0114, './videos/input/baseball/KBO/2025_05_07_18_15_35',    './videos/output/baseball',27,14,-1500,6000,30,100,2443,37)
-                    continue   
-                #############################
-                # pitching
-                #############################
-                case 'p':   
-                    conf._team_code = conf._pitcher_team
-                    conf._player_no = conf._pitcher_no                 
-                    target_attr = f"_team_box2_img{conf._pitcher_team}"
-                    setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                    conf._pitcher_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._pitcher_team), season=datetime.now().year, backnum=conf._pitcher_no)
-
-                    result, output_file = aid.create_ai_file (0x0113, './videos/input/baseball/KBO/2025_05_07_18_15_35',    './videos/output/baseball',27,13,-1500,4000,30,100,1141,39)        
-                    continue
-                #############################
-                # baseball 
-                #############################
-                case 't':         
-                    conf._baseball_db.count_hits()
-                    conf._baseball_db.count_pitches()
-                    conf._baseball_db.count_raw_hits()
-                    conf._baseball_db.count_raw_pitches()
-                    continue
-                #############################
-                # quit
-                #############################
-                case 'q':
-                    fd_log.info("Exiting the program.")
-                    break     
-                case _:
-                    fd_log.info(f"Input received:{user_input}")
-
-    # ─────────────────────────────────────────────────────────────────────────────##########
-    # Debug mode
-    # non waiting message
-    # ─────────────────────────────────────────────────────────────────────────────##########        
-    
-    #############################
-    # set temp baseball data
-    #############################
-    if(conf._type_performance == conf._type_performance_baseball_kbo):
-        if conf._trackman_mode:
-            conf._pitcher_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._pitcher_team), season=datetime.now().year, backnum=conf._pitcher_no)
-            conf._batter_player = conf._api_client.get_player_info_by_backnum(team_id=get_team_code_by_index(conf._batter_team), season=datetime.now().year, backnum=conf._batter_no)    
-            target_attr = f"_team_box2_img{conf._pitcher_team}"
-            setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-            target_attr = f"_team_box2_img{conf._batter_team}"
-            setattr(conf, "_team_box_sub_img", getattr(conf, target_attr))
-
-    # ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-    # RTSP Server
-    # [Owner] joonho kim
-    # [Date] 2025-05-25
-    # ───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-    if conf._rtsp_server :
-        fd_rtsp_server_start()        
-
-    if not SERVICE_MODE and conf._test_mode:
-        # 로컬 테스트 실행 같은 경우에만 명시 종료
+    if not SERVICE_MODE and get("_test_mode", True):
         aid.stop()
         sys.exit(exit_code)

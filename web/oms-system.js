@@ -1,8 +1,8 @@
-// ===================================================================
+﻿// ===================================================================
 //  OMs Connect Sequence Runner (via /oms/mtd-connect)
-//  - window.initOmsSystem(options?) 로 초기화
+//  - window.initOmsSystem(options?) ë¡œ ì´ˆê¸°í™”
 //  - options: { apiBase?: string }
-//  * 업데이트: PreSd 버전 조회를 Expect(ips,count,wait_sec) 기반 "배치 수집" + 단건 폴백으로 변경
+//  * ì—…ë°ì´íŠ¸: PreSd ë²„ì „ ì¡°íšŒë¥¼ Expect(ips,count,wait_sec) ê¸°ë°˜ "ë°°ì¹˜ ìˆ˜ì§‘" + ë‹¨ê±´ í´ë°±ìœ¼ë¡œ ë³€ê²½
 // ===================================================================
 (function(){
   // ---------- utils ----------
@@ -17,7 +17,7 @@
     if (!h || h === "localhost" || h === "127.0.0.1") return fallback || "127.0.0.1";
     return h;
   }
-  // DaemonList 필터: PreSd/PostSd/VPd/MMc 제외 + MMd→SPd
+  // DaemonList í•„í„°: PreSd/PostSd/VPd/MMc ì œì™¸ + MMdâ†’SPd
   function sanitizeDaemonList(list){
     const out = {};
     for (const [k,v] of Object.entries(list||{})){
@@ -166,7 +166,7 @@
     return { version: ver.version || "-", date: ver.date || "-" };
   }
 
-  // 단건 폴백 (남은 IP만)
+  // ë‹¨ê±´ í´ë°± (ë‚¨ì€ IPë§Œ)
   async function fetchPreSdVersionPerIp(host, port, dmpdip, ip){
     const msg = pkt_daemon_version(dmpdip, "PreSd");
     msg.Expect = { ips:[ip], count: 1, wait_sec: 5 };
@@ -175,12 +175,12 @@
     return { version: ver.version || "-", date: ver.date || "-", sender: (r && r.SenderIP) || ip };
   }
 
-  // 배치 수집: Expect(ips,count,wait_sec)로 한번 쏘고, 같은 Token으로 추가 폴링하여 모두 모음
+  // ë°°ì¹˜ ìˆ˜ì§‘: Expect(ips,count,wait_sec)ë¡œ í•œë²ˆ ì˜ê³ , ê°™ì€ Tokenìœ¼ë¡œ ì¶”ê°€ í´ë§í•˜ì—¬ ëª¨ë‘ ëª¨ìŒ
   async function fetchPreSdVersionsBatched(host, port, dmpdip, ips, waitSec=5, hardTimeoutMs=15000){
     if (!Array.isArray(ips) || ips.length===0) return { results:{}, pending:[], errors:{}, timedOut:false };
 
     const msg = pkt_daemon_version(dmpdip, "PreSd");
-    const token = msg.Token; // 최초 생성 토큰 고정
+    const token = msg.Token; // ìµœì´ˆ ìƒì„± í† í° ê³ ì •
     msg.Expect = { ips, count: ips.length, wait_sec: waitSec };
 
     const pending = new Set(ips);
@@ -189,7 +189,7 @@
 
     const deadline = Date.now() + hardTimeoutMs;
 
-    // 1) 최초 요청 (Expect 포함)
+    // 1) ìµœì´ˆ ìš”ì²­ (Expect í¬í•¨)
     try {
       const r = await mtdSend(host, port, msg, Math.max(8, waitSec+3));
       if (r && r.From === "PreSd" && r.Token === token){
@@ -207,7 +207,7 @@
       appendLog({ warn: "initial batch send failed", err: String(e?.message||e) });
     }
 
-    // 2) 남은 IP 수집: 같은 Token으로 폴링 (Expect 제거)
+    // 2) ë‚¨ì€ IP ìˆ˜ì§‘: ê°™ì€ Tokenìœ¼ë¡œ í´ë§ (Expect ì œê±°)
     while (pending.size > 0 && Date.now() < deadline){
       const poll = {
         Section1:"Daemon", Section2:"Information", Section3:"Version",
@@ -274,7 +274,7 @@
       a.click(); URL.revokeObjectURL(a.href);
     };
 
-    // 리스트에서 현재 화면의 프로세스 → DaemonMap 채우기
+    // ë¦¬ìŠ¤íŠ¸ì—ì„œ í˜„ìž¬ í™”ë©´ì˜ í”„ë¡œì„¸ìŠ¤ â†’ DaemonMap ì±„ìš°ê¸°
     EL.fillFromList.onclick = async ()=>{
       try{
         const j = await httpJson("/oms/status");
@@ -350,7 +350,7 @@
       let msg1 = null, msg2 = null, msg3 = null, msg4 = null;
 
       try{
-        // Step1: EMd만 run
+        // Step1: EMdë§Œ run
         if (_aborted) throw new Error("aborted");
         appendLog("== step1: EMd connect(run) ==");
         if (!EL.dry.checked){
@@ -360,7 +360,7 @@
         } else { appendLog({dry:"skip step1"}); }
         await upsertState({ dmpdip, connected_daemons: { MTd: true }, mtd_host: host, mtd_port: port });
 
-        // Step2: 전체 run
+        // Step2: ì „ì²´ run
         if (_aborted) throw new Error("aborted");
         appendLog("== step2: all daemons connect(run) ==");
         if (!EL.dry.checked){
@@ -377,7 +377,7 @@
           await upsertState({ dmpdip, connected_daemons: cd, daemon_map: dm });
         }
 
-        // Step3: CCd Select → EMd(get)
+        // Step3: CCd Select â†’ EMd(get)
         if (_aborted) throw new Error("aborted");
         appendLog("== step3: CCd Select(get) via EMd ==");
         let cameras = [], presd_units = [];
@@ -389,7 +389,7 @@
         } else { appendLog({dry:"skip step3 (no parsed data)"}); }
         await upsertState({ dmpdip, cameras, presd: presd_units });
 
-        // Step4: PreSd connect(set) → PCd
+        // Step4: PreSd connect(set) â†’ PCd
         if (_aborted) throw new Error("aborted");
         appendLog("== step4: PreSd connect(set) via PCd ==");
         if (!EL.dry.checked){
@@ -400,7 +400,7 @@
         const presd_ips = (Array.isArray(presd_units) ? presd_units : []).map(u => u && u.IP).filter(Boolean);
         await upsertState({ dmpdip, connected_daemons: { PreSd: true }, presd_ips });
 
-        // Step5: 버전 수집 (배치 + 폴백)
+        // Step5: ë²„ì „ ìˆ˜ì§‘ (ë°°ì¹˜ + í´ë°±)
         appendLog("== step5: Versions ==");
         const versions = {};
         const want = [];
@@ -420,7 +420,7 @@
           }catch(e){ appendLog({warn:`version failed: ${toName}`, err:String(e?.message||e)}); }
         }
 
-        // PreSd 배치 수집
+        // PreSd ë°°ì¹˜ ìˆ˜ì§‘
         const presd_versions = {};
         if (presd_ips.length){
           const batch = await fetchPreSdVersionsBatched(host, port, dmpdip, presd_ips, 5, 15000);
@@ -460,3 +460,4 @@
     EL.mgmt.value ||= guessMgmtIP(EL.host.value);
   };
 })();
+
