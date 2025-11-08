@@ -2,7 +2,7 @@
   "http_host": "0.0.0.0",
   "http_port": 51050,
   "log_dir": "logs/DMS",
-  "heartbeat_interval_sec": 5,
+  "heartbeat_interval_sec": 1,
   "executables": [
     {
       "name": "MTd",
@@ -10,7 +10,7 @@
       "path": "daemon/MTd/MTd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -19,7 +19,7 @@
       "path": "daemon/EMd/EMd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -28,7 +28,7 @@
       "path": "daemon/CCd/CCd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -60,10 +60,10 @@
     },
     {
       "name": "PreSd",
-      "alias": "Pre Storage [#n]",
+      "alias": "Pre Storage [#1]",
       "path": "daemon/PreSd/PreSd.exe",
       "args": [],
-      "select": false,
+      "select": true,
       "auto_restart": true,
       "start_on_boot": true
     },

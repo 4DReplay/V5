@@ -63,6 +63,16 @@
     <small id="titleHost"></small>
   </h2>
 
+  <!-- ───── Global Settings: heartbeat 즉시 적용 ───── -->
+  <div class="global-settings" style="margin:14px 0;padding:10px;background:#0c121b;
+       border:1px solid var(--line2);border-radius:8px;max-width:600px">
+    <h3 style="margin:0 0 8px;color:#a5b4fc;">Global Settings</h3>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      Heartbeat Interval (sec):
+      <input id="inputHeartbeat" type="number" placeholder="3" min="1" max="60"
+             style="flex:1;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
+    </label>
+  </div>
   <div class="toolbar">
     <button id="btnGoDashboard" class="btn-secondary" title="Back to System">
       <!-- compass -->
@@ -227,6 +237,7 @@ async function loadConfigObj(){
 const TBody   = document.querySelector("#grid tbody");
 const SaveTag = document.getElementById("saveState");
 const HB_EL   = document.getElementById("hb");
+const INPUT_HB= document.getElementById("inputHeartbeat");
 const M_PATH  = document.getElementById("metaPath");
 const M_SIZE  = document.getElementById("metaSize");
 const M_TIME  = document.getElementById("metaMtime");
@@ -234,6 +245,16 @@ const M_TIME  = document.getElementById("metaMtime");
 let CONFIG=null;
 let POLL=null, POLL_MS=1500;
 let IS_SAVING=false;
+
+/* ───── endpoints (apply 추가) ───── */
+const EP = {
+  apply: async () => {
+    try{
+      return await api("/config/apply","POST",{});  // DMS 런타임 적용
+    }catch(_){ /* 일부 에이전트에 없을 수 있음 → 무시 */ }
+  }
+};
+
 
 /* ───────────────────── 행/필드 렌더링 ───────────────────── */
 function parseArgs(val){
@@ -304,6 +325,13 @@ function render(){
   CONFIG = ensureConfigShape(CONFIG);
   TBody.innerHTML="";
   CONFIG.executables.forEach((e,i)=>TBody.appendChild(row(e,i)));
+  // heartbeat 필드 채우기 (없으면 3s 기본)
+  try{
+    const hb = Number(CONFIG.heartbeat_interval_sec);
+    INPUT_HB.value = (!isNaN(hb) && hb>0) ? hb : 3;
+  }catch(_){
+    INPUT_HB.value = 3;
+  }
 }
 function touchDirty(text="Edited"){
   SaveTag.textContent=text; SaveTag.className="pill";
@@ -364,13 +392,24 @@ async function saveConfig(){
   if (IS_SAVING) return;
   IS_SAVING = true;
   try{
-    console.log("[OMS] Save clicked");
+    console.log("[DMS] Save clicked");
     SaveTag.textContent="Saving..."; SaveTag.className="pill";
+    // ── Global Settings → CONFIG 반영
+    try{
+      const hb = Number(INPUT_HB.value||"");
+      if (!isNaN(hb) && hb > 0){
+        CONFIG.heartbeat_interval_sec = hb;
+      }else{
+        delete CONFIG.heartbeat_interval_sec;
+      }
+    }catch(_){}
+
     const txt = JSON.stringify(CONFIG, null, 2);
 
     // 실제 저장
     const res = await saveConfigText(txt);
     console.log("[OMS] Save response:", res);
+    await EP.apply().catch(()=>{});
 
     // 사용자 피드백
     SaveTag.textContent = `Saved (${(res && res.bytes) ? res.bytes : txt.length}B)`;
@@ -380,7 +419,7 @@ async function saveConfig(){
     await reloadConfig();
     await loadMeta();
   }catch(e){
-    console.error("[OMS] Save failed:", e);
+    console.error("[DMS] Save failed:", e);
     alert("Save failed: " + (e.message||e));
     SaveTag.textContent="Save failed"; SaveTag.className="pill pill-bad";
   }finally{
@@ -390,18 +429,17 @@ async function saveConfig(){
 
 
 // ===== 버튼 이벤트가 반드시 한 번만 걸리도록 정리 =====
-document.getElementById("btnSave").onclick = null;
-document.getElementById("btnSave").addEventListener("click", (ev)=>{
-  ev.preventDefault();
-  saveConfig();
-});
+const BTN_SAVE = document.getElementById("btnSave");
+BTN_SAVE.onclick = null;
+BTN_SAVE.replaceWith(BTN_SAVE.cloneNode(true)); // 리스너 초기화
+document.getElementById("btnSave").addEventListener("click",(ev)=>{ ev.preventDefault(); saveConfig(); });
+ 
 
 document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
   location.href = "dms-system.html";
 });
 document.getElementById("btnReload").addEventListener("click", reloadConfig);
 document.getElementById("btnFormat").addEventListener("click", formatConfig);
-document.getElementById("btnSave").addEventListener("click", saveConfig);
 document.getElementById("btnAdd").addEventListener("click", ()=>{
   CONFIG=ensureConfigShape(CONFIG);
   CONFIG.executables.push({
@@ -419,6 +457,10 @@ document.getElementById("btnAdd").addEventListener("click", ()=>{
 /* ───────────────────────── 초기화 ───────────────────────── */
 (async function init(){
   await reloadConfig();
+  // meta/heartbeat 폴링 시작
+  try{
+    await loadHeartbeat();
+  }catch(_){}
 })();
 </script>
 </body>

@@ -1,16 +1,19 @@
 # -*- coding: utf-8 -*-
-from __future__ import annotations
-import json, re, time, threading, traceback
-from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
-from urllib.parse import urlsplit, parse_qs, unquote
-import http.client, sys
-from collections import defaultdict, deque
-from copy import deepcopy
-
 # ➊ 파일 상단에 유틸 추가 (import 아래 아무 곳)
+from __future__ import annotations
+
 import socket
 import os
+import http.client, sys
+import json, re, time, threading, traceback
+
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from urllib.parse import urlsplit, parse_qs, unquote
+from collections import defaultdict, deque
+from copy import deepcopy
+from src.fd_communication.server_mtd_connect import tcp_json_roundtrip, MtdTraceError
 
 # ▼▼▼ [NEW] 기본 프로세스 Alias 테이블 (oms_config.json의 process_alias로 덮어쓸 수 있음)
 PROCESS_ALIAS_DEFAULT = {
@@ -42,6 +45,27 @@ STATE_FILE = LOGD / "oms_state.json"         # 연결/상태 스냅샷
 VERS_FILE  = LOGD / "oms_versions.json"      # 버전 캐시(선택)
 TRACE_DIR  = LOGD / "trace"                  # 개별 트레이스 파일 모음
 TRACE_DIR.mkdir(parents=True, exist_ok=True)
+
+HERE = Path(__file__).resolve()
+env_root = os.environ.get("FOURD_V5_ROOT") or os.environ.get("V5_ROOT")
+if env_root and Path(env_root).exists():
+    ROOT = Path(env_root).resolve()
+else:
+    ROOT = HERE
+    for i in range(1, 7):
+        cand = HERE.parents[i-1]
+        if (cand / "config" / "oms_config.json").exists():
+            ROOT = cand
+            break
+
+
+# ---- MTd TCP util
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+if str(ROOT/"src") not in sys.path: sys.path.insert(0, str(ROOT/"src"))
+
+WEB  = ROOT / "web"
+CFG  = ROOT / "config" / "oms_config.json"
+
 
 def _state_load():
     global STATE
@@ -101,27 +125,79 @@ def _guess_server_ip(peer_ip:str)->str:
         pass
     return host_ip
 
-HERE = Path(__file__).resolve()
-env_root = os.environ.get("FOURD_V5_ROOT") or os.environ.get("V5_ROOT")
-if env_root and Path(env_root).exists():
-    ROOT = Path(env_root).resolve()
-else:
-    ROOT = HERE
-    for i in range(1, 7):
-        cand = HERE.parents[i-1]
-        if (cand / "config" / "oms_config.json").exists():
-            ROOT = cand
-            break
+def _pluck_procs(status_obj):
+    if not status_obj:
+        return []
+    if isinstance(status_obj.get("data"), dict):
+        return list(status_obj["data"].values())
+    if isinstance(status_obj.get("processes"), list):
+        return status_obj["processes"]
+    if isinstance(status_obj.get("executables"), list):
+        return status_obj["executables"]
+    return []
 
-WEB  = ROOT / "web"
-CFG  = ROOT / "config" / "oms_config.json"
-LOGD = ROOT / "logs" / "OMS"
-LOGD.mkdir(parents=True, exist_ok=True)
+def _read_proc_snapshot(host, port, proc_name, timeout=4.0):
+    """노드 /status 에서 특정 프로세스의 스냅샷(pid/uptime/start_ts/running)을 뽑아온다."""
+    try:
+        st,_,dat = _http_fetch(host, port, "GET", "/status", None, None, timeout=timeout)
+        if st != 200:
+            return {}
+        js = json.loads(dat.decode("utf-8","ignore"))
+        for p in _pluck_procs(js):
+            if (p or {}).get("name") == proc_name:
+                snap = {
+                    "running": bool(p.get("running")),
+                    "pid": p.get("pid") or p.get("process_id") or None,
+                    "uptime": p.get("uptime") or p.get("uptime_sec") or None,
+                    "start_ts": p.get("start_ts") or p.get("started_at") or None,
+                }
+                # 숫자형으로 정규화
+                for k in ("uptime","start_ts"):
+                    try:
+                        if snap[k] is not None:
+                            snap[k] = float(snap[k])
+                    except Exception:
+                        snap[k] = None
+                return snap
+    except Exception:
+        pass
+    return {}
 
-# ---- MTd TCP util
-if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
-if str(ROOT/"src") not in sys.path: sys.path.insert(0, str(ROOT/"src"))
-from src.fd_communication.server_mtd_connect import tcp_json_roundtrip, MtdTraceError
+def _is_restarted(base: dict, cur: dict, sent_at: float, saw_down: bool) -> bool:
+    """
+    재시작 '증거' 기반 판정:
+      - cur.running 이 True 여야 함
+      - 아래 중 하나라도 만족하면 OK
+         * PID 변경
+         * start_ts 가 sent_at 이후
+         * uptime 이 뚜렷하게 리셋(예: base.uptime 이 있었고, cur.uptime < 0.5*base.uptime 또는 cur.uptime <= 5)
+      - 위 지표가 전혀 없으면, POST 이후 down->up 전이가 있었는지(saw_down)로 판정
+    """
+    if not cur or not cur.get("running"):
+        return False
+    pid_changed = bool(base.get("pid") and cur.get("pid") and cur["pid"] != base["pid"])
+    started_after = bool(cur.get("start_ts") and sent_at and (cur["start_ts"] >= sent_at - 0.2))
+    uptime_reset = False
+    if base.get("uptime") is not None and cur.get("uptime") is not None:
+        try:
+            # 업타임 리셋은 '이전보다 충분히 작다' + '다운→업 전이를 관찰했다' 를 함께 요구
+            uptime_reset = (cur["uptime"] < 0.5 * float(base["uptime"])) and bool(saw_down)
+        except Exception:
+            uptime_reset = False
+
+    # 강한 증거 우선: PID 변경 또는 start_ts 갱신
+    if pid_changed or started_after:
+        return True
+    # 보조 증거: 업타임 리셋(단, down→up 전이가 동반된 경우에만)
+    if uptime_reset:
+        return True
+    # 메타정보가 전혀 없으면, down→up 전이로만 인정
+    meta_present = any(base.get(k) is not None for k in ("pid","start_ts","uptime")) \
+                   or any(cur.get(k) is not None for k in ("pid","start_ts","uptime"))
+    if not meta_present:
+        return bool(saw_down)
+    return False
+
 
 # ─────────────────────────────────────────────────────────────
 # connection state (시퀀스 결과 저장)
@@ -315,8 +391,9 @@ class Orchestrator:
         }
         self._restart_lock = threading.RLock()
         # 재가동 대기 파라미터
-        self._restart_ready_timeout = 45.0   # 프로세스 1개당 최대 대기(초)
-        self._restart_poll_interval = 0.5    # 상태 폴링 간격(초)
+        self._restart_ready_timeout = 12.0   # 45s → 12s
+        self._restart_poll_interval = 0.25   # 0.5s → 0.25s
+        self._restart_max_workers = 8        # 동시 재시작 상한 (환경에 맞게 6~12)
         self._restart_seq = 0
 
     # ── restart state helpers
@@ -850,7 +927,11 @@ class Orchestrator:
                         # 워커 스레드
                         def _worker():
                             try:
-                                # 현재 캐시에서 'select==true'인 프로세스 수집
+                                orch._log("[OMS] Restart worker start")
+                                orch._log(f"[OMS] Restart worker nodes: {len(orch.nodes)}")
+                                orch._log(f"[OMS] Restart worker cache keys: {list(orch._cache.keys())}")
+
+                                # --- 잡 수집 ---
                                 with orch._lock:
                                     nodes = []
                                     for n in orch.nodes:
@@ -861,95 +942,194 @@ class Orchestrator:
                                             "port": int(n.get("port",51050)),
                                             "status": deepcopy(orch._cache.get(nm) or {})
                                         })
-                                jobs=[]
-                                for nd in nodes:
-                                    st = nd.get("status") or {}
-                                    if isinstance(st.get("data"), dict):
-                                        procs = list(st["data"].values())
-                                    elif isinstance(st.get("processes"), list):
-                                        procs = st["processes"]
-                                    elif isinstance(st.get("executables"), list):
-                                        procs = st["executables"]
-                                    else:
-                                        procs = []
-                                    for p in procs:
-                                        if p and p.get("select") is True and p.get("name"):
-                                            jobs.append((nd["host"], nd["port"], nd["name"], p["name"]))
 
+                                jobs = []  # [(host, port, node_name, proc_name)]
+                                def _unify_procs(st):
+                                    """
+                                    Normalize process lists coming from DMS status structures.
+                                    Accepts both {data:{}} and flat dict/list forms.
+                                    """
+                                    if not st:
+                                        return []
+                                    # most DMS send under "data"
+                                    if "data" in st and isinstance(st["data"], dict):
+                                        return list(st["data"].values())
+                                    if "processes" in st and isinstance(st["processes"], list):
+                                        return st["processes"]
+                                    if "executables" in st and isinstance(st["executables"], list):
+                                        return st["executables"]
+                                    # if already a dict of processes
+                                    if isinstance(st, dict) and all(isinstance(v, dict) for v in st.values()):
+                                        return list(st.values())
+                                    return []
+
+                                for nd in nodes:
+                                    # ✅ robustly extract process list from nested status.data
+                                    status_obj = nd.get("status") or {}
+                                    procs = _unify_procs(status_obj)
+                                    for p in procs:
+                                        if not p.get("name"):
+                                            continue
+                                        # include if selected or no explicit select flag
+                                        if p.get("select", True):
+                                            jobs.append((nd["host"], nd["port"], nd["name"], p["name"]))
+                                
                                 total = len(jobs)
                                 orch._restart_set(state="running", total=total, sent=0, done=0,
-                                                  fails=[], message=f"Preparing…", started_at=time.time())
+                                                fails=[], message=f"Preparing…", started_at=time.time())
 
-                                def _fetch_proc_running(h, p, proc_name)->bool:
-                                    """노드 상태에서 해당 프로세스가 running인지 확인"""
+                                # --- Utils ---
+                                def _overlay_connected_says_connected(proc_name: str) -> bool:
+                                    """
+                                    STATE 스냅샷(/oms/state/upsert로 누적)만 보고 '연결 OK'라고 빠르게 인정할지 판정.
+                                    - SPd → MMd 로 정규화해서 조회
+                                    - MMc 는 MMd 가 연결되면 연결된 것으로 간주(UX 요구)
+                                    - PreSd 는 connected_daemons["PreSd"] 가 True 면 OK
+                                    """
                                     try:
-                                        st,_,dat = _http_fetch(h, p, "GET", "/status", None, None, timeout=4.0)
-                                        if st != 200: return False
-                                        js = json.loads(dat.decode("utf-8","ignore"))
-                                        if isinstance(js.get("data"), dict):
-                                            procs = list(js["data"].values())
-                                        elif isinstance(js.get("processes"), list):
-                                            procs = js["processes"]
-                                        elif isinstance(js.get("executables"), list):
-                                            procs = js["executables"]
-                                        else:
-                                            procs = []
-                                        for q in procs:
-                                            if (q or {}).get("name") == proc_name:
-                                                return bool(q.get("running"))
-                                        return False
+                                        _, extra = _latest_state()  # {"connected_daemons": {...}, "presd_ips": [...], ...}
+                                        if not extra:
+                                            return False
+                                        conn = extra.get("connected_daemons") or {}
+
+                                        key = inward_name(proc_name)  # "SPd" -> "MMd", 나머지는 원형
+                                        # MMc는 MMd 연결되면 연결로 인정
+                                        if proc_name == "MMc":
+                                            return bool(conn.get("MMd"))
+
+                                        # 일반 케이스: connected_daemons 에 동일 키가 True 면 연결로 인정
+                                        return bool(conn.get(key))
                                     except Exception:
                                         return False
+                                    
+                                def _fetch_proc_running(h, p, proc_name)->bool:
+                                    # 먼저 /status-lite 시도 → 실패 시 /status 폴백
+                                    try:
+                                        st,_,dat = _http_fetch(h, p, "GET", "/status-lite", None, None, timeout=2.0)
+                                        if st == 200:
+                                            js = json.loads(dat.decode("utf-8","ignore"))
+                                            procs = js.get("executables") or []
+                                            for q in procs:
+                                                if (q or {}).get("name") == proc_name:
+                                                    return bool(q.get("running"))
+                                    except Exception:
+                                        pass
+                                    try:
+                                        st,_,dat = _http_fetch(h, p, "GET", "/status", None, None, timeout=3.0)
+                                        if st == 200:
+                                            js = json.loads(dat.decode("utf-8","ignore"))
+                                            procs = (list(js.get("data",{}).values()) if isinstance(js.get("data"),dict)
+                                                     else js.get("processes") or js.get("executables") or [])
+                                            for q in procs:
+                                                if (q or {}).get("name") == proc_name:
+                                                    return bool(q.get("running"))
+                                    except Exception:
+                                        pass
+                                    return False
+
+                                def _fmt_secs():
+                                    return f"{int(time.time() - orch._restart_get().get('started_at', time.time()))}s"
+
+                                sent = 0; done = 0; fails = []
+                                # 실패는 정확한 식별을 위해 (node,proc) 튜플로 관리
+                                fail_set = set()  # {(node_name, proc)}
+                                fail_msgs = []    # 사람이 읽는 문자열
+
+                                base_map = {}
+                                for (host,port,node_name,proc) in jobs:
+                                    base_map[(node_name,proc)] = _read_proc_snapshot(host, port, proc)
+
+ 
+
+                                # 1) Restart each selected process via POST (in parallel)
+                                from concurrent.futures import ThreadPoolExecutor, as_completed
+                                def send_restart(job):
+                                    host,port,node_name,proc = job
+                                    st,_,_ = _http_fetch(host, port, "POST",
+                                                         f"/restart/{proc}",
+                                                         b"{}",
+                                                         {"Content-Type":"application/json"},
+                                                         timeout=6.0)
+                                    if st>=400:
+                                        raise RuntimeError(f"http {st}")
+                                    return job
 
                                 sent = 0
-                                done = 0
                                 fails = []
+                                sent_at_map = {}
+                                with ThreadPoolExecutor(max_workers=orch._restart_max_workers) as ex:
+                                    futs = {ex.submit(send_restart, j): j for j in jobs}
+                                    for fut in as_completed(futs):
+                                        try:
+                                            _ = fut.result()
+                                            sent += 1
+                                            # 전송 직후 시각 기록
+                                            host,port,node_name,proc = futs[fut]
+                                            sent_at_map[(node_name,proc)] = time.time()
+                                        except Exception as e:
+                                            host,port,node_name,proc = futs[fut]
+                                            msg = f"{node_name}/{proc}: {e}"
+                                            fails.append(msg)
+                                            orch._log(f"[Restart][FAIL][send] {msg}")
+                                        finally:
+                                            orch._restart_set(sent=sent, fails=fails,
+                                                              message=f"Sent {sent}/{total} (fail {len(fails)})… waiting")
+ 
 
-                                # 1) 각 프로세스 재시작 POST
-                                for host,port,node_name,proc in jobs:
-                                    try:
-                                        st,_,_ = _http_fetch(host, port, "POST",
-                                                             f"/restart/{proc}",
-                                                             b"{}",
-                                                             {"Content-Type":"application/json"},
-                                                             timeout=8.0)
-                                        if st>=400:
-                                            raise RuntimeError(f"http {st}")
-                                        sent += 1
-                                        orch._restart_set(sent=sent, message=f"Sent {sent}/{total}… waiting for RUNNING")
-                                    except Exception as e:
-                                        fails.append(f"{node_name}/{proc}: {e}")
-                                        orch._restart_set(sent=sent, fails=fails,
-                                                          message=f"Sent {sent}/{total} (fail {len(fails)})… waiting")
-
-                                # 2) RUNNING 복귀 대기(프로세스별 타임아웃)
-                                #    이미 실패로 분류된 항목은 건너뜀
-                                pending = [(h,pt,nn,pr) for (h,pt,nn,pr) in jobs
-                                           if not any(pr in f for f in fails)]
-                                for host,port,node_name,proc in pending:
+                                # 2) RUNNING 복귀 대기 (병렬 폴링)
+                                def wait_ready(job):
+                                    host,port,node_name,proc = job
+                                    base = base_map.get((node_name,proc), {})
+                                    sent_at = sent_at_map.get((node_name,proc)) or time.time()
                                     t0 = time.time()
+                                    saw_down = False
                                     while True:
-                                        if _fetch_proc_running(host, port, proc):
-                                            done += 1
-                                            orch._restart_set(done=done,
-                                                message=f"Running back {done}/{total} (fail {len(fails)})")
-                                            break
+                                        cur = _read_proc_snapshot(host, port, proc, timeout=3.0)
+                                        if cur.get("running") is False:
+                                            saw_down = True
+                                        if _is_restarted(base, cur, sent_at, saw_down):
+                                            return (job, True)
                                         if time.time() - t0 > orch._restart_ready_timeout:
-                                            fails.append(f"{node_name}/{proc}: timeout")
-                                            orch._restart_set(fails=fails,
-                                                message=f"Running back {done}/{total} (fail {len(fails)})")
-                                            break
+                                            return (job, False)
                                         time.sleep(orch._restart_poll_interval)
-
-                                # 3) 최종 요약 메시지 고정(사라지지 않음)
+            
+                                pending = [(h,pt,nn,pr) for (h,pt,nn,pr) in jobs
+                                           if not any(f"{pr}" in f for f in fails)]
+                                with ThreadPoolExecutor(max_workers=orch._restart_max_workers) as ex:
+                                    futs = [ex.submit(wait_ready, j) for j in pending]
+                                    for fut in as_completed(futs):
+                                        job, ok = fut.result()  # wait_ready가 (job, True/False) 반환
+                                        host, port, node_name, proc = job
+                                        if ok:
+                                            done += 1
+                                        else:
+                                            msg = f"{node_name}/{proc}: timeout"
+                                            fails.append(msg)
+                                            orch._log(f"[Restart][FAIL][wait] {msg}")
+                                        orch._restart_set(
+                                            done=done,
+                                            fails=fails,
+                                            message=f"Sent {sent}/{total} (fail {len(fails)})… waiting"
+                                        )
+                                # --- 3) 최종 고정 메시지 & 상태 ---
                                 if fails:
                                     orch._restart_set(state="done",
-                                        message=f"Restart finished: ok {done}/{total}, fail {len(fails)}",
+                                        message=f"Restart finished: ok {done}/{total}, fail {len(fails)} · { _fmt_secs() }",
                                         fails=fails)
+                                    try:
+                                        (TRACE_DIR / f"restart_report_{int(time.time()*1000)}.json").write_text(
+                                            json.dumps({"ok": False, "fails": fails, "ok_count": done, "total": total}, ensure_ascii=False, indent=2),
+                                            encoding="utf-8"
+                                        )
+                                    except Exception:
+                                        pass
                                 else:
                                     orch._restart_set(state="done",
-                                        message=f"Restart finished: ok {done}/{total}, fail 0")
+                                        message=f"Restart finished: ok {done}/{total}, fail 0 · { _fmt_secs() }")
+
                             except Exception as e:
+                                orch._log(f"[OMS] Restart worker exception: {e}")                                
+                                orch._log(traceback.format_exc())
                                 orch._restart_set(state="error", message=f"Restart error: {e}")
 
                         orch._restart_set(state="running", total=0, done=0, fails=[], message="Preparing…", started_at=time.time())

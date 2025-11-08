@@ -25,7 +25,6 @@
     tr.running td{ background:var(--row-run); }
     tr.other   td{ background:var(--row-stop); }
     .pill{
-      /* 부모 폰트 상속 → 이모지 폰트 사용 */
       font-family: inherit;
       display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;
       line-height:1;font-weight:500;letter-spacing:.3px;background:transparent
@@ -37,7 +36,6 @@
     .pill-warn{ color:#fbbf24;border-color:var(--warn); }
     .muted{color:var(--muted)}
     button{
-      /* 버튼도 상속 → 이모지 정상 표시 */
       font-family: inherit;
       background:var(--btn);color:#fff;border:0;border-radius:14px;
       padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
@@ -50,18 +48,16 @@
     a.node:hover{text-decoration:underline}
     .spacer{flex:1}
     .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
-    /* 진행칩: 항상 자리를 유지(레이아웃 고정) */
     #progressChip{
       min-width: 180px;
       justify-content: center;
-      white-space: nowrap;   /* 줄바꿈 금지 */
-      flex: 0 0 auto;        /* 수축 금지 */
-      visibility: hidden;    /* 초기에는 숨김(자리 유지) */
+      white-space: nowrap;
+      flex: 0 0 auto;
+      visibility: hidden;
     }
-    /* 툴바는 wrap 허용이지만 진행칩은 줄바꿈 되지 않음(위 flex 설정으로 보호) */#busyMsg{margin-left:8px;opacity:.9}
+    #busyMsg{margin-left:8px;opacity:.9}
     #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
 
-    /* sequence panel */
     .panel{margin-top:18px;border:1px solid var(--line2);border-radius:12px;padding:12px;background:#0b1220}
     .kv{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}
     textarea{width:100%;height:180px;resize:vertical;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px ui-monospace,monospace;}
@@ -79,16 +75,13 @@
     <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
     <button id="btnReload" class="btn-secondary">🔄 Reload</button>
     <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <!-- 진행 상황 전용 칩 (SSE/폴링으로만 갱신; 다른 코드에서 건들지 않음) -->
     <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
-    <!-- 폴링 상태(읽기 전용) -->
     <span class="chip" id="hb">poll -</span>
   </div>
 
   <div id="err"></div>
 
-  <!-- grid -->
   <table id="grid">
     <thead>
       <tr>
@@ -106,7 +99,6 @@
     Tip: Logs are reachable via OMS proxy (<code>/proxy/&lt;node&gt;/…</code>).
   </p>
 
-  <!-- sequence panel -->
   <div class="panel">
     <h3 style="margin:0 0 8px">Connect Sequence (one-by-one via /oms/mtd-connect)</h3>
     <div class="kv">
@@ -153,22 +145,26 @@
   </div>
 
   <script>
-    // ===== util & grid rendering =====
     const DEBUG=false;
     const TBody=document.querySelector("#grid tbody");
     const HB=document.getElementById("hb");
     const META=document.getElementById("meta");
     const PROG=document.getElementById("progressChip");
-    const ERR=document.getElementById("err");    
+    const ERR=document.getElementById("err");
     const BTN_RELOAD=document.getElementById("btnReload");
     const BTN_CONFIG=document.getElementById("btnConfig");
     const BTN_RA=document.getElementById("omsRestartAll");
     let lastData=null;
     let OMS_ALIAS_MAP = {};
-    // 폴링/락 상태
     let POLLER = null;
-    let RA_LOCK = false; // Restart All 진행 중
-    let POLL_MS = 3000;  // 기본값(3s), 상태에 따라 동적으로 교체
+    let RA_LOCK = false;
+    let POLL_MS = 3000;
+    let RA_FINAL = false;          // 완료/에러/idle 이후 true → 더 이상 덮지 않음
+    let RA_MSG_PRIORITY = 0;       // 현재 메시지 우선순위 (높을수록 강함)
+    let RA_SEEN_RUNNING = false;   // running 을 한 번이라도 본 후에만 완료 인정
+    let RA_SESSION_ID = 0;         // 재시작 세션 가드
+    const RA_IDLE_GRACE_MS = 3000; // 클릭 후 초기 idle 무시 유예
+    
 
     function startPolling(ms){
       if (typeof ms === "number" && isFinite(ms) && ms > 0) {
@@ -182,6 +178,46 @@
       if (POLLER){ clearInterval(POLLER); POLLER=null; }
     }
 
+    // ── 진행칩 카운팅 유틸: 선택된 프로세스 중 running/stop 수 계산
+    function computeProgressFromStatus(data){
+      const nodes = Array.isArray(data && data.nodes) ? data.nodes : [];
+      let total=0, run=0, stop=0;
+      const toList = (status)=>{
+        if (!status) return [];
+        if (status.data && typeof status.data==="object") return Object.values(status.data);
+        if (Array.isArray(status.processes)) return status.processes;
+        if (Array.isArray(status.executables)) return status.executables;
+        return [];
+      };
+      for (const n of nodes){
+        const procs = toList(n.status);
+        for (const p of procs){
+          if (p && p.select === true){
+            total += 1;
+            if (p.running) run += 1; else stop += 1;
+          }
+        }
+      }
+      return { total, run, stop };
+    }
+
+    // ── Restart-All 중 진행칩만 갱신하는 경량 폴러
+    let RA_PROGRESS_POLLER = null;
+    async function startRaProgressPolling(){
+      stopRaProgressPolling();
+      RA_PROGRESS_POLLER = setInterval(async ()=>{
+        try{
+          const st = await api("/oms/status");
+          const { total, run, stop } = computeProgressFromStatus(st);
+          const s = await api("/oms/restart/state").catch(()=>null);
+          const base = (s && s.message) ? s.message : "Restarting…";
+          raWrite(`${base} (${run}/${total} running · ${stop}/${total} stopped)`, 1);
+        }catch(_){}
+      }, 800);
+    }
+    function stopRaProgressPolling(){
+      if (RA_PROGRESS_POLLER){ clearInterval(RA_PROGRESS_POLLER); RA_PROGRESS_POLLER=null; }
+    }
     async function api(path, init={}) {
       const res = await fetch(path, { cache:"no-store", ...init });
       const ct = res.headers.get("content-type") || "";
@@ -192,44 +228,51 @@
     }
     function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
     function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
-    // 폴링/버튼 상태만 제어(메시지는 건드리지 않음)
     function setBusy(on){
       BTN_RELOAD.disabled = on || RA_LOCK;
       BTN_CONFIG.disabled  = on || RA_LOCK;
       BTN_RA.disabled      = on || RA_LOCK;
     }
 
-    // ── 진행칩: 단일 쓰기 경로 (SSE/폴링/스토리지 이벤트만 변경 가능)
     const PROG_LS_KEY = "oms_ra_progress";
-    function raWrite(text){
+    /**
+     * 진행칩 메시지 쓰기 (우선순위 기반)
+     * @param {string} text
+     * @param {number} priority 1=progress, 2=live, 3=SSE, 10=final
+     */
+    function raWrite(text, priority=1){
+      if (RA_FINAL && priority < 10) return;            // 완료 이후엔 final만 허용
+      if (priority < RA_MSG_PRIORITY) return;           // 낮은 우선순위는 무시
+      RA_MSG_PRIORITY = priority;
       PROG.style.visibility = "visible";
       const msg = (text && String(text).trim()) ? text : (PROG.textContent.trim() || "Working…");
       if (PROG.textContent !== msg) PROG.textContent = msg;
-      // 로컬 캐시(다른 탭/페이지 동기화)
       try { localStorage.setItem(PROG_LS_KEY, msg); } catch {}
     }
     function raClear(){
-      // 완료 후에도 지우지 말고 마지막 메시지 유지 요구 → 숨기지 않음
-      // 필요 시 수동으로만 초기화
+      // 시작 시 초기화 (완료 메시지는 유지)
+      RA_FINAL = false;
+      RA_MSG_PRIORITY = 0;
+      RA_SEEN_RUNNING = false;
     }
-    // 외부 스크립트가 칩을 비우면 즉시 복구
     new MutationObserver(()=>{
+      // 완료 잠금 시 외부 복구 시도 무시
+      if (RA_FINAL) return;
       if (!PROG.textContent || !PROG.textContent.trim()){
         const cached = localStorage.getItem(PROG_LS_KEY);
         if (cached && cached.trim()) PROG.textContent = cached;
         else PROG.textContent = "Working…";
       }
     }).observe(PROG, {characterData:true, childList:true, subtree:true});
-    // 다른 탭/페이지에서 갱신되면 동기 반영(같은 오리진)
     window.addEventListener("storage", (e)=>{
+      // 완료 잠금 시 외부 탭 갱신 무시
+      if (RA_FINAL) return;
       if (e.key === PROG_LS_KEY && typeof e.newValue === "string"){
         PROG.style.visibility = "visible";
         if (e.newValue.trim()) PROG.textContent = e.newValue;
       }
     });
-    // 초기 복원
     (function(){ const cached = localStorage.getItem(PROG_LS_KEY); if (cached) { PROG.style.visibility="visible"; PROG.textContent=cached; }})();
-
 
     function toProcList(status){
       if (!status) return [];
@@ -243,17 +286,13 @@
       return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${total?` (${i+1}/${total})`:""}</span>`;
     }
 
-    // ▼ 추가: extra.* 를 프로세스들에 반영
     function applyOverlays(data){
       const extra = (data && data.extra) || {};
-      const verMap = extra.versions || {};                 // { EMd:{version,date}, MTd:{...}, MMd:{...}, ... }
-      const presdVer = extra.presd_versions || {};         // { "10.82.104.211":{version,date}, ... }
-      const conn = extra.connected_daemons || {};          // { EMd:true, SPd:true, PreSd:true, ... }
-      const presdIps = extra.presd_ips || [];              // ["10.82.104.211", "10.82.104.212"]
-
+      const verMap = extra.versions || {};
+      const presdVer = extra.presd_versions || {};
+      const conn = extra.connected_daemons || {};
+      const presdIps = extra.presd_ips || [];
       const nodes = Array.isArray(data.nodes) ? data.nodes : [];
-
-      // 상태/프로세스 접근 유틸
       const toList = (status)=>{
         if (!status) return [];
         if (status.data && typeof status.data==="object") return Object.values(status.data);
@@ -261,42 +300,29 @@
         if (Array.isArray(status.executables)) return status.executables;
         return [];
       };
-
       for (const n of nodes){
         const procs = toList(n.status);
         for (const p of procs){
           if (!p || !p.name) continue;
-
-          // ---- 버전 오버레이 ----
-          // 1) PreSd는 IP별 버전을 우선 매칭
           const ip = p.ip || p.IP || p.addr || p.address || "";
           if (p.name === "PreSd" && ip && presdVer[ip]){
             p.version = presdVer[ip].version || "-";
             p.version_date = presdVer[ip].date || "-";
-          }
-          // 2) MMd는 서버가 SPd에서 받아 저장하므로 MMd 키로 주입
-          else if (p.name === "MMd" && verMap.MMd){
+          } else if (p.name === "MMd" && verMap.MMd){
             p.version = verMap.MMd.version || "-";
             p.version_date = verMap.MMd.date || "-";
-          }
-          // 3) 일반 데몬(EMd/MTd/CCd/SCd/PCd/GCd/SPd 등)
-          else if (verMap[p.name]){
+          } else if (verMap[p.name]){
             p.version = verMap[p.name].version || "-";
             p.version_date = verMap[p.name].date || "-";
           }
-
-          // ---- 연결 상태 오버레이 ----
-          // SPd가 OK면 MMd/MMc까지 CONNECTED 처리
           if (conn.SPd && (p.name==="MMd" || p.name==="MMc")){
             p.connection_state = "CONNECTED";
           }
-          // PreSd OK면 presd_ips가 있으면 해당 IP만, 없으면 전체 PreSd를 CONNECTED
           if (conn.PreSd && p.name==="PreSd"){
             if (!presdIps.length || (ip && presdIps.includes(ip))){
               p.connection_state = "CONNECTED";
             }
           }
-          // 그 외 키들은 같은 이름의 데몬에 직접 반영 (예: EMd, CCd 등)
           if (conn[p.name]){
             p.connection_state = "CONNECTED";
           }
@@ -305,17 +331,13 @@
     }
 
     function render(data){
-      // ▼ 추가: 서버가 보관 중인 버전/연결 정보를 프로세스 리스트에 주입
       applyOverlays(data);
       OMS_ALIAS_MAP = (data && data.extra && data.extra.alias_map) || {};
       lastData=data;
 
-      // ---- Heartbeat 기반 폴링 주기 동적 반영 ----
       const hbSecRaw = Number(data && data.heartbeat_interval_sec);
       if (!Number.isNaN(hbSecRaw) && hbSecRaw > 0) {
-        // 최소/최대 가드(0.8s ~ 10s 정도로 안전 범위)
         const nextMs = Math.max(800, Math.min(10000, Math.floor(hbSecRaw * 1000)));
-        // Restart All 중에는 폴링 주기를 바꾸지 않음(깜빡임 방지)
         if (!RA_LOCK && nextMs !== POLL_MS) {
           startPolling(nextMs);
         }
@@ -323,7 +345,7 @@
       } else {
         HB.textContent = "poll -";
       }
-      
+
       const nodes = Array.isArray(data.nodes)? data.nodes : [];
       META.textContent = `nodes: ${nodes.length}`;
       TBody.innerHTML="";
@@ -346,18 +368,13 @@
           const badge = conn==="CONNECTED" ? `<span class="pill badge-ok">CONNECTED</span>` :
                         conn==="STOPPED"   ? `<span class="pill badge-bad">STOPPED</span>` :
                         (running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`);
-
-          // ▼ Version 표시(서버 오버레이 값 사용)
           const verHtml = (p.version || p.version_date)
             ? `${(p.version||"-")}<br><span class="muted">${(p.version_date||"-")}</span>`
             : `<span class="muted">-<br>-</span>`;
-
-          // ▼ Alias 병합: DMS(status)의 alias 우선, 없으면 OMS(extra.alias_map) 사용
           const dmsAlias = (p.alias || "").trim();
           const omsAlias = (OMS_ALIAS_MAP[p.name] || "").trim();
           let aliasHtml = "";
           if (dmsAlias && omsAlias && dmsAlias !== omsAlias) {
-            // DMS 우선 표기, OMS와 다르면 title로 보조 노출
             aliasHtml = `<br><span class="muted" title="OMS alias: ${omsAlias}">${dmsAlias}</span>`;
           } else {
             const a = dmsAlias || omsAlias;
@@ -380,7 +397,7 @@
 
     async function reloadNow(){
       try{
-        if (!RA_LOCK) setBusy(true);   // 메시지 변경 없음(깜빡임 제거)
+        if (!RA_LOCK) setBusy(true);
         clearErr();
         render(await api("/oms/status"));
       }catch(e){
@@ -390,24 +407,6 @@
       }
     }
 
-    BTN_RELOAD.onclick = reloadNow;
-    BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
-    // Restart All: 서버 오케스트레이터 호출 → SSE 구독 시작
-    BTN_RA.onclick = async ()=>{
-      RA_LOCK = true;
-      stopPolling();
-      clearErr(); setBusy(true);
-      raWrite("Restarting… preparing");
-      try{
-        await api("/oms/restart/all", {method:"POST"});
-        // SSE 구독 시작(있으면 재시작)
-        startSSE();
-      }catch(e){
-        showErr(e.message||e);
-        RA_LOCK=false; setBusy(false); startPolling(POLL_MS);
-      }
-    };
-
     document.querySelector("#grid tbody").addEventListener("click", ev=>{
       const b=ev.target.closest("button"); if(!b) return;
       if (b.dataset.a==="logs"){
@@ -416,19 +415,115 @@
       }
     });
 
-    // ── SSE & 폴백 폴링
+    // ==== Restart-All 진행 카운팅 & 라이브 진행칩 갱신 ====
+    function pluckProcs(status){
+      if (!status) return [];
+      if (status.data && typeof status.data==="object") return Object.values(status.data);
+      if (Array.isArray(status.processes)) return status.processes;
+      if (Array.isArray(status.executables)) return status.executables;
+      return [];
+    }
+    function calcProgressFromOmsStatus(omsStatus){
+      const nodes = Array.isArray(omsStatus && omsStatus.nodes) ? omsStatus.nodes : [];
+      let total=0, run=0, stop=0, unknown=0;
+      for (const n of nodes){
+        const list = pluckProcs(n && n.status);
+        for (const p of list){
+          if (!p || p.select !== true) continue;
+          total += 1;
+          if (p.running === true) run += 1;
+          else if (p.running === false) stop += 1;
+          else unknown += 1;
+        }
+      }
+      return { total, run, stop, unknown };
+    }
+    const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
+
+    let RA_LIVE = null;
+    async function startRaLiveProgressLoop(){
+      stopRaLiveProgressLoop();
+      RA_LIVE = setInterval(async ()=>{
+        try{
+          const data = await api("/oms/status");
+          const p = calcProgressFromOmsStatus(data);
+          const sec = Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000);
+          if (p.total > 0){
+            raWrite(`Restarting… (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${sec}s)`, 2);
+          }else{
+            raWrite(`Restarting… (discovering · ${sec}s)`, 2);
+          }
+        }catch{}
+      }, 600);
+    }
+    function stopRaLiveProgressLoop(){
+      if (RA_LIVE){ clearInterval(RA_LIVE); RA_LIVE = null; }
+    }
+
+    // ==== SSE & 폴백 폴링 ====
     let evtSrc=null, sseTimer=null, statePoller=null;
     function closeSSE(){ if(evtSrc){evtSrc.close(); evtSrc=null;} if(sseTimer){clearInterval(sseTimer); sseTimer=null;} }
     function onProgressState(s){
       if (!s) return;
-      if (s.message) raWrite(s.message);
-      if (s.state==="done" || s.state==="error" || s.state==="idle"){
-        RA_LOCK = false; setBusy(false);
-        // 마지막 메시지 남기고 폴링 재개
-        startPolling(POLL_MS);
+      if (s.message) raWrite(s.message, 3);
+      // running 신호 감지 → 이후에만 완료 인정
+      if (s.state === "running") {
+        RA_SEEN_RUNNING = true;
+        return;
+      }
+
+      // 클릭 직후 idle은 조기 완료로 오인될 수 있으므로 유예
+      if (s.state === "idle" && !RA_SEEN_RUNNING) {
+        const elapsed = performance.now() - (window.__raStartTs || performance.now());
+        if (elapsed < RA_IDLE_GRACE_MS) {
+          // 조용히 무시하거나 가벼운 대기 메시지
+          raWrite(`Waiting to start… (${Math.max(1, Math.round((RA_IDLE_GRACE_MS - elapsed)/1000))}s)`, 2);
+          return;
+        }
+        // 유예 후에도 running을 못 봤다면 "진행 없음"으로 안내만 하고 완료 처리하지 않음
+        raWrite("No restart in progress (idle).", 2);
+        return;
+      }
+      if (s.state==="done" || s.state==="error" || (s.state==="idle" && RA_SEEN_RUNNING)){         
+        // 완료 처리: 모든 작성자 정지 + 최종 메시지 고정
+        RA_FINAL = true;
+        stopRaProgressPolling();
+        stopRaLiveProgressLoop();
         closeSSE();
+
+        RA_LOCK = false; setBusy(false);
+        // 서버 요약 우선
+        if (s.summary && typeof s.summary === "object"){
+          const sum = s.summary;
+          const took = (sum.elapsedSec!=null) ? `${Math.round(sum.elapsedSec)}s`
+                    : `${Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000)}s`;
+          const stopOk = sum.stop?.ok ?? 0, stopFail = sum.stop?.fail ?? 0;
+          const startOk = sum.start?.ok ?? 0, startFail = sum.start?.fail ?? 0;
+          raWrite(`Restart-All done: stop ok ${stopOk}, fail ${stopFail}; start ok ${startOk}, fail ${startFail}; elapsed ${took}`, 10);
+          if ((sum.stop?.fail||0) + (sum.start?.fail||0) > 0 && Array.isArray(sum.failedNames) && sum.failedNames.length){
+            showErr("Restart-All partial failures: " + sum.failedNames.join(", "));
+          }
+        } else {
+          // 서버 요약이 없으면 라이브 스냅샷으로 임시 요약
+          (async ()=>{
+            try{
+              const snap = await api("/oms/status");
+              const p = calcProgressFromOmsStatus(snap);
+              const took = `${Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000)}s`;
+              const fails = Math.max(0, p.total - p.run);
+              const label = RA_SEEN_RUNNING ? "Restart-All done (live)" : "Restart-All finished (no activity)";
+              raWrite(`${label}: start ok ${p.run}, fail ${fails}; elapsed ${took}`, 10);
+              if (fails > 0){
+                // 실패 구체 목록은 서버에서 제공되지 않으므로 생략(원하면 /oms/restart/state 확장 필요)
+              }
+            }catch{
+              raWrite("Restart-All done", 10);
+            }
+          })();
+        }
+
+        startPolling(POLL_MS);
         if (statePoller){ clearInterval(statePoller); statePoller=null; }
-        // 최신 표로 1회 반영
         reloadNow().catch(()=>{});
       }
     }
@@ -436,9 +531,12 @@
       closeSSE();
       if ("EventSource" in window){
         evtSrc = new EventSource("/oms/restart/stream");
-        evtSrc.onmessage = (e)=>{ try{ onProgressState(JSON.parse(e.data)); }catch{} };
-        evtSrc.onerror = ()=>{ /* 네트워크 hiccup → 폴백 폴링 */ startStatePolling(); };
-        // SSE keepalive가 있다면 setInterval 필요 없음
+        // 서버는 event: progress 사용 → 정확 이벤트 리스너
+        const handler = (e)=>{ try{ onProgressState(JSON.parse(e.data)); }catch{} };
+        evtSrc.addEventListener("progress", handler);
+        // 혹시 배포에 따라 기본 onmessage로 올 수도 있어서 백업 유지
+        evtSrc.onmessage = handler;
+        evtSrc.onerror = ()=>{ startStatePolling(); };
       } else {
         startStatePolling();
       }
@@ -450,19 +548,52 @@
       }, 750);
     }
 
-    // 페이지 초기화
+    BTN_RELOAD.onclick = reloadNow;
+    BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
+    BTN_RA.onclick = async ()=>{
+      const mySession = ++RA_SESSION_ID;
+      RA_LOCK = true;
+      RA_FINAL = false;
+      RA_MSG_PRIORITY = 0;
+      RA_SEEN_RUNNING = false;
+      stopPolling();
+      clearErr(); setBusy(true);
+      raWrite("Restarting… preparing", 3);
+      window.__raStartTs = performance.now();
+      try{
+        await api("/oms/restart/all", {method:"POST"});
+        // 서버가 state=running 으로 전환할 유예
+        setTimeout(() => {
+          if (mySession !== RA_SESSION_ID) return; // 오래된 세션 보호
+          startRaLiveProgressLoop();
+          startSSE();
+          startRaProgressPolling();
+        }, 250);
+      }catch(e){
+        showErr(e.message||e);
+        RA_LOCK=false; setBusy(false); startPolling(POLL_MS);
+        stopRaProgressPolling();
+        stopRaLiveProgressLoop();
+      }
+    };
+
     (async function(){
-      // 기존 재시작이 서버에서 이미 돌고 있다면 바로 구독
       try{
         const s = await api("/oms/restart/state");
-        if (s && s.state === "running"){ RA_LOCK=true; setBusy(true); raWrite(s.message || "Working…"); startSSE(); }
+        if (s && s.state === "running"){
+          RA_LOCK=true; setBusy(true);
+          raWrite(s.message || "Working…", 3);
+          window.__raStartTs = performance.now();
+          startRaLiveProgressLoop();
+          startSSE();
+          RA_SEEN_RUNNING = true;
+        }
       }catch{}
       await reloadNow();
       startPolling(POLL_MS);
     })();
   </script>
 
-  <!-- 시퀀스 러너 로딩 & 초기화 -->
   <script src="/web/oms-system.js" defer></script>
   <script>
     window.addEventListener('DOMContentLoaded', () => {
