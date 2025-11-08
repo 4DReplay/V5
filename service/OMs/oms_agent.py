@@ -1009,7 +1009,7 @@ class Orchestrator:
                             try:
                                 t_start = time.time()
                                 orch._restart_set(state="running", total=0, sent=0, done=0, fails=[],
-                                                  message="Preparing…", started_at=t_start)
+                                                  message="Preparing… (collecting jobs)", started_at=t_start)
                                 # UI가 'Preparing…'을 볼 수 있도록 최소 표시 보장
                                 time.sleep(max(0, orch._restart_min_prepare_ms/1000.0))
                                 orch._log("[OMS] Restart worker start")
@@ -1029,6 +1029,8 @@ class Orchestrator:
                                         })
 
                                 jobs = []  # [(host, port, node_name, proc_name)]
+                                orch._restart_set(message="Preparing… (collecting jobs)")
+
                                 def _unify_procs(st):
                                     """
                                     Normalize process lists coming from DMS status structures.
@@ -1038,11 +1040,14 @@ class Orchestrator:
                                         return []
                                     # most DMS send under "data"
                                     if "data" in st and isinstance(st["data"], dict):
-                                        return list(st["data"].values())
+                                        try:
+                                            return [v for v in st["data"].values() if isinstance(v, dict)]
+                                        except Exception:
+                                            return []
                                     if "processes" in st and isinstance(st["processes"], list):
-                                        return st["processes"]
+                                        return [x for x in st["processes"] if isinstance(x, dict)]
                                     if "executables" in st and isinstance(st["executables"], list):
-                                        return st["executables"]
+                                        return [x for x in st["executables"] if isinstance(x, dict)]
                                     # if already a dict of processes
                                     if isinstance(st, dict) and all(isinstance(v, dict) for v in st.values()):
                                         return list(st.values())
@@ -1053,15 +1058,20 @@ class Orchestrator:
                                     status_obj = nd.get("status") or {}
                                     procs = _unify_procs(status_obj)
                                     for p in procs:
-                                        if not p.get("name"):
+                                        if not isinstance(p, dict) or not p.get("name"):
                                             continue
                                         # include if selected or no explicit select flag
                                         if p.get("select", True):
                                             jobs.append((nd["host"], nd["port"], nd["name"], p["name"]))
 
                                 total = len(jobs)
+                                # 잡 수집 완료 즉시 total 반영해 UI가 “0/총개”를 바로 볼 수 있게.
                                 orch._restart_set(state="running", total=total, sent=0, done=0,
-                                                fails=[], message=f"Preparing…", started_at=time.time())
+                                                    fails=[], message=f"Queued {total} process(es)… sending", started_at=time.time())
+                                if total == 0:
+                                    # 아무 것도 보낼 게 없으면 바로 done 처리 (UI가 Preparing…에서 못 빠지는 일 방지)
+                                    orch._restart_set(state="done", message="Restart finished: nothing selected to restart · 0.0s")
+                                    return
 
                                 # --- Utils ---
                                 def _overlay_connected_says_connected(proc_name: str, node_host: str) -> bool:
@@ -1139,6 +1149,7 @@ class Orchestrator:
                                 sent = 0
                                 fails = []
                                 sent_at_map = {}
+                                orch._restart_set(message=f"Sending restarts… 0/{total}")
                                 with ThreadPoolExecutor(max_workers=orch._restart_max_workers) as ex:
                                     futs = {ex.submit(send_restart, j): j for j in jobs}
                                     for fut in as_completed(futs):

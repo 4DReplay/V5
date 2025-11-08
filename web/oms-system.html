@@ -165,6 +165,12 @@
     let RA_SESSION_ID = 0;         // 재시작 세션 가드
     const RA_IDLE_GRACE_MS = 3000; // 클릭 후 초기 idle 무시 유예
     
+    /* ───────── Proxy-safe API prefix (works with /proxy/<node>/…) ───────── */
+    const __PROXY_PREFIX__ = (() => {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+      return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+    })();
+    const API = __PROXY_PREFIX__ || ""; // same-origin under proxy or root
 
     function startPolling(ms){
       if (typeof ms === "number" && isFinite(ms) && ms > 0) {
@@ -219,7 +225,9 @@
       if (RA_PROGRESS_POLLER){ clearInterval(RA_PROGRESS_POLLER); RA_PROGRESS_POLLER=null; }
     }
     async function api(path, init={}) {
-      const res = await fetch(path, { cache:"no-store", ...init });
+      // restart/state 갱신이 멈추는 걸 방지하기 위해 proxy-safe 프리픽스 적용
+      const url = (typeof path === "string" && path.startsWith("/")) ? (API + path) : path;
+      const res = await fetch(url, { cache:"no-store", ...init });
       const ct = res.headers.get("content-type") || "";
       const isJson = ct.includes("application/json");
       const body = isJson ? await res.json().catch(()=>({})) : await res.text().catch(()=> "");
@@ -541,7 +549,7 @@
     function startSSE(){
       closeSSE();
       if ("EventSource" in window){
-        evtSrc = new EventSource("/oms/restart/stream");
+        evtSrc = new EventSource(API + "/oms/restart/stream");
         // 서버는 event: progress 사용 → 정확 이벤트 리스너
         const handler = (e)=>{ try{ onProgressState(JSON.parse(e.data)); }catch{} };
         evtSrc.addEventListener("progress", handler);
@@ -553,10 +561,25 @@
       }
     }
     function startStatePolling(){
-      if (statePoller) return;
+      // 항상 보조 폴러를 켠다(= SSE 유무와 무관)
+      if (statePoller) clearInterval(statePoller);
       statePoller = setInterval(async ()=>{
-        try{ const s = await api("/oms/restart/state"); onProgressState(s); }catch{}
-      }, 750);
+        try{
+          const [s, st] = await Promise.all([
+            api("/oms/restart/state"),
+            api("/oms/status").catch(()=>null)
+          ]);
+          // 상태 숫자 붙여서 강제 진행 문구 출력
+          if (st){
+            const p = calcProgressFromOmsStatus(st);
+            const base = (s && s.message) ? s.message : "Restarting…";
+            raWrite(`${base} (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped)`, 3);
+          }else if (s && s.message){
+            raWrite(s.message, 3);
+          }
+          onProgressState(s);
+        }catch(_){}
+      }, 700);
     }
 
     BTN_RELOAD.onclick = reloadNow;
@@ -573,6 +596,7 @@
       window.__raStartTs = performance.now();
       try{
         await api("/oms/restart/all", {method:"POST"});
+        startStatePolling();
         // 서버가 state=running 으로 전환할 유예
         setTimeout(() => {
           if (mySession !== RA_SESSION_ID) return; // 오래된 세션 보호
@@ -581,9 +605,7 @@
           startRaProgressPolling();
           // 만약 SSE가 조용하면(메시지 미수신) 폴백 상태 폴링을 자동 시작
           setTimeout(() => {
-            if (mySession !== RA_SESSION_ID || RA_FINAL) return;
-            // 아직 SSE 갱신(우선순위 3)이 들어오지 않았다면 폴백 폴링 가동
-            if (RA_MSG_PRIORITY < 3) startStatePolling();
+            if (mySession !== RA_SESSION_ID || RA_FINAL) return;            
           }, 1200);
         }, 250);
       }catch(e){
@@ -591,6 +613,7 @@
         RA_LOCK=false; setBusy(false); startPolling(POLL_MS);
         stopRaProgressPolling();
         stopRaLiveProgressLoop();
+        if (statePoller){ clearInterval(statePoller); statePoller=null; }
       }
     };
 
