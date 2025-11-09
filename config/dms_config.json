@@ -1,8 +1,8 @@
 {
   "http_host": "0.0.0.0",
-  "http_port": 51050,
+  "http_port": 19776,
   "log_dir": "logs/DMS",
-  "heartbeat_interval_sec": 3,
+  "heartbeat_interval_sec": 4,
   "executables": [
     {
       "name": "MTd",
@@ -10,7 +10,7 @@
       "path": "daemon/MTd/MTd.exe",
       "args": [],
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true
     },
     {
@@ -19,7 +19,7 @@
       "path": "daemon/EMd/EMd.exe",
       "args": [],
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true
     },
     {
@@ -28,7 +28,7 @@
       "path": "daemon/CCd/CCd.exe",
       "args": [],
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true
     },
     {
@@ -73,7 +73,7 @@
         "PYTHONIOENCODING": "utf-8",
         "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\log"
       },
-      "select": false,
+      "select": true,
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false
@@ -93,7 +93,7 @@
         "PYTHONIOENCODING": "utf-8",
         "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AIc\\log"
       },
-      "select": false,
+      "select": true,
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false
@@ -161,5 +161,6 @@
       "auto_restart": true,
       "start_on_boot": true
     }
-  ]
+  ],
+  "port": 19776
 }

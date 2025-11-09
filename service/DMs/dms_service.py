@@ -1,7 +1,7 @@
-# ─────────────────────────────────────────────────────────────────────────────
-# dms_service.py  — robust import + clean shutdown
+﻿# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+# dms_service.py  â€” robust import + clean shutdown
 # date: 2025-10-25
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # -*- coding: utf-8 -*-
 
 import os
@@ -19,18 +19,18 @@ ROOT = HERE.parent.parent.parent.resolve()  # C:\4DReplay\V5
 LOG_ROOT = ROOT / "logs" / "DMS"
 LOG_ROOT.mkdir(parents=True, exist_ok=True)
 
-# 1) 우선 parent(=V5)를 경로에 추가
+# 1) ìš°ì„  parent(=V5)ë¥¼ ê²½ë¡œì— ì¶”ê°€
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-# 2) dms_agent 로드: 패키지 임포트 → 실패하면 파일에서 직접 로드
+# 2) dms_agent ë¡œë“œ: íŒ¨í‚¤ì§€ ìž„í¬íŠ¸ â†’ ì‹¤íŒ¨í•˜ë©´ íŒŒì¼ì—ì„œ ì§ì ‘ ë¡œë“œ
 def _load_agent_module():
     try:
-        # 정상 패키지 경로 임포트 (service.DMs.dms_agent)
+        # ì •ìƒ íŒ¨í‚¤ì§€ ê²½ë¡œ ìž„í¬íŠ¸ (service.DMs.dms_agent)
         from service.DMs import dms_agent as agent  # type: ignore
         return agent
     except Exception as e:
-        # fallback: 파일 경로로 직접 로드
+        # fallback: íŒŒì¼ ê²½ë¡œë¡œ ì§ì ‘ ë¡œë“œ
         try:
             import importlib.util, traceback
             agent_path = ROOT / "service" / "DMs" / "dms_agent.py"
@@ -38,7 +38,7 @@ def _load_agent_module():
             mod = importlib.util.module_from_spec(spec)  # type: ignore
             assert spec and spec.loader
             spec.loader.exec_module(mod)  # type: ignore
-            # 패키지 임포트 실패 원인 로그
+            # íŒ¨í‚¤ì§€ ìž„í¬íŠ¸ ì‹¤íŒ¨ ì›ì¸ ë¡œê·¸
             with (LOG_ROOT / "DMs.service.err.log").open("a", encoding="utf-8") as f:
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S") + " [INFO] package import failed, used file-loader\n")
                 f.write(repr(e) + "\n")
@@ -69,16 +69,16 @@ class DMsService(win32serviceutil.ServiceFramework):
         self._runner = None
 
     def SvcStop(self):
-        # 서비스 정지 전파
+        # ì„œë¹„ìŠ¤ ì •ì§€ ì „íŒŒ
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         try:
             if self._sup is not None:
-                # supervisor 내부에서 모든 관리 exe를 강제 정리하도록 구현되어 있음
+                # supervisor ë‚´ë¶€ì—ì„œ ëª¨ë“  ê´€ë¦¬ exeë¥¼ ê°•ì œ ì •ë¦¬í•˜ë„ë¡ êµ¬í˜„ë˜ì–´ ìžˆìŒ
                 self._sup.shutdown()
         except Exception:
             pass
 
-        # 실행 스레드 종료 대기(최대 10초)
+        # ì‹¤í–‰ ìŠ¤ë ˆë“œ ì¢…ë£Œ ëŒ€ê¸°(ìµœëŒ€ 10ì´ˆ)
         t0 = time.time()
         while self._runner and self._runner.is_alive() and (time.time() - t0 < 10):
             time.sleep(0.1)
@@ -101,7 +101,7 @@ class DMsService(win32serviceutil.ServiceFramework):
                 pass
 
     def SvcDoRun(self):
-        # 설정 로드
+        # ì„¤ì • ë¡œë“œ
         try:
             cfg = agent.load_config(agent.DEFAULT_CONFIG)
         except Exception as e:
@@ -110,27 +110,28 @@ class DMsService(win32serviceutil.ServiceFramework):
                 f.write(time.strftime("%Y-%m-%d %H:%M:%S") + f" [WARN] fallback config: {e}\n")
             cfg = {
                 "http_host": "0.0.0.0",
-                "http_port": 51050,
+                "http_port": 19776,
                 "log_dir": str(agent.LOG_DIR_DEFAULT),
                 "heartbeat_interval_sec": 5,
                 "executables": [],
             }
 
-        # 로그 경로 절대화
+        # ë¡œê·¸ ê²½ë¡œ ì ˆëŒ€í™”
         log_dir = cfg.get("log_dir", str(agent.LOG_DIR_DEFAULT))
         log_dir_path = Path(log_dir)
         if not log_dir_path.is_absolute():
             log_dir_path = (agent.ROOT / log_dir_path).resolve()
 
-        # supervisor 구동
+        # supervisor êµ¬ë™
         self._sup = agent.DmsSupervisor(cfg, log_dir_path)
         self._runner = threading.Thread(target=self._run_supervisor, daemon=True)
         self._runner.start()
 
-        # Stop 이벤트 대기
+        # Stop ì´ë²¤íŠ¸ ëŒ€ê¸°
         win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
 
 
 if __name__ == "__main__":
-    # 예) 관리자 PowerShell:  python service\DMs\dms_service.py install /start
+    # ì˜ˆ) ê´€ë¦¬ìž PowerShell:  python service\DMs\dms_service.py install /start
     win32serviceutil.HandleCommandLine(DMsService)
+

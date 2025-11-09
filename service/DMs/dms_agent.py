@@ -1,8 +1,8 @@
-# ─────────────────────────────────────────────────────────────────────────────
+﻿# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 # dms_agent.py (minimal-fix, consolidated)
 # date: 2025-11-08
 # owner: hongsu jung
-# ─────────────────────────────────────────────────────────────────────────────
+# â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 # -*- coding: utf-8 -*-
 import json
@@ -18,14 +18,14 @@ from pathlib import Path
 from typing import Dict, Optional, List
 import urllib.parse as _uparse
 
-# ── paths ────────────────────────────────────────────────────────────────────
+# â”€â”€ paths â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 HERE = Path(__file__).resolve()
 ROOT = HERE.parents[2] if len(HERE.parts) >= 3 and HERE.parts[-3].lower() == "service" else HERE.parent
 DEFAULT_CONFIG = ROOT / "config" / "dms_config.json"
 LOG_DIR_DEFAULT = ROOT / "logs" / "DMS"
 STATIC_ROOT = ROOT / "web"
 
-# ── json5-lite loader ───────────────────────────────────────────────────────
+# â”€â”€ json5-lite loader â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _strip_json5_comments(text: str) -> str:
     text = re.sub(r"/\*.*?\*/", "", text, flags=re.S)
     lines, in_str, quote = [], False, None
@@ -66,7 +66,7 @@ def now_ms() -> int:
 
 
 
-# ── Windows helpers (no psutil) ─────────────────────────────────────────────
+# â”€â”€ Windows helpers (no psutil) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def _taskkill_pid(pid: int, force: bool = True) -> None:
     flags = ["/T", "/F"] if force else ["/T"]
     try:
@@ -112,7 +112,7 @@ def _kill_all_by_path(path: Path) -> int:
     return len(pids)
 
 def _pids_by_cmd_contains(substr: str) -> List[int]:
-    """CommandLine에 substr(대소문자 무시)이 포함된 프로세스 PID 목록"""
+    """CommandLineì— substr(ëŒ€ì†Œë¬¸ìž ë¬´ì‹œ)ì´ í¬í•¨ëœ í”„ë¡œì„¸ìŠ¤ PID ëª©ë¡"""
     if not substr:
         return []
     s = substr.lower()
@@ -185,7 +185,7 @@ def _serve_static_safe(handler, rel_path: str):
     try: handler.wfile.write(data)
     except (ConnectionAbortedError, BrokenPipeError): pass
 
-# ── supervisor ──────────────────────────────────────────────────────────────
+# â”€â”€ supervisor â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 class ProcSpec:
     def __init__(self, name: str, path: Path, args: list,
                  auto_restart: bool, start_on_boot: bool, select: bool,
@@ -249,7 +249,7 @@ class DmsSupervisor:
         ensure_dir(self.log_dir)
 
         self.http_host = config.get("http_host", "0.0.0.0")
-        self.http_port = int(config.get("http_port", 51050))
+        self.http_port = int(config.get("http_port", 19776))
         self.heartbeat_interval = float(config.get("heartbeat_interval_sec", 5))
 
         self.specs: Dict[str, ProcSpec] = {}
@@ -289,10 +289,10 @@ class DmsSupervisor:
         self._status_cache = None
         self._status_cache_ts = 0.0
 
-        # ── maintenance lock: restart-all 등에서 auto_restart 일시 정지
+        # â”€â”€ maintenance lock: restart-all ë“±ì—ì„œ auto_restart ì¼ì‹œ ì •ì§€
         self._maint_lock = False
     
-    # ── small wait helper (class method) ────────────────────────────────────
+    # â”€â”€ small wait helper (class method) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _wait_until(self, predicate, *, timeout=20.0, interval=0.4, hint=""):
         t0 = time.time()
         while True:
@@ -305,7 +305,7 @@ class DmsSupervisor:
                 raise TimeoutError(f"timeout while waiting {hint}".strip())
             time.sleep(interval)
 
-    # ── atomic restart-all (class method) ───────────────────────────────────
+    # â”€â”€ atomic restart-all (class method) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def restart_all(self) -> dict:
         with self._lock:
             prev_auto = {nm: st.spec.auto_restart for nm, st in self.states.items()}
@@ -348,7 +348,7 @@ class DmsSupervisor:
                     st.spec.auto_restart = prev_auto.get(nm, st.spec.auto_restart)
                 self._maint_lock = False        
     
-    # ── proc snapshot ────────────────────────────────────────────────────────
+    # â”€â”€ proc snapshot â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _proc_snapshot(self) -> dict:
         now = time.time()
         if (now - self._psnap_ts) < 2.0 and self._psnap:
@@ -378,7 +378,7 @@ class DmsSupervisor:
         self._psnap_ts = now
         return self._psnap
 
-    # ── helpers ──────────────────────────────────────────────────────────────
+    # â”€â”€ helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _get_state(self, name: str) -> Optional[ProcState]:
         if not name:
             return None
@@ -407,7 +407,7 @@ class DmsSupervisor:
                 key = str(p).lower()
                 if key not in seen:
                     seen.add(key); cands.append(p)
-        # DMS 자체 로그 폴더 하위 logs 도 후보
+        # DMS ìžì²´ ë¡œê·¸ í´ë” í•˜ìœ„ logs ë„ í›„ë³´
         try:
             dms_log = Path(str(self.log_dir)).resolve()
             for dn in ("log", "logs"):
@@ -509,7 +509,7 @@ class DmsSupervisor:
 
     def _status_payload(self, use_snapshot: bool) -> dict:
         """
-        호환 스키마 동시 제공:
+        í˜¸í™˜ ìŠ¤í‚¤ë§ˆ ë™ì‹œ ì œê³µ:
           - data: {name: {...}}
           - executables: [{...}, ...]
         """
@@ -522,7 +522,7 @@ class DmsSupervisor:
             d["running"] = running
             d["pid"] = st.pid
             data[name] = d
-            # 배열 항목(프론트 호환용)
+            # ë°°ì—´ í•­ëª©(í”„ë¡ íŠ¸ í˜¸í™˜ìš©)
             executables.append({
                 "name": d["name"],
                 "alias": d.get("alias",""),
@@ -548,9 +548,9 @@ class DmsSupervisor:
         self._status_cache_ts = now
         return payload
 
-    # ── process control ──────────────────────────────────────────────────────
+    # â”€â”€ process control â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _preclean_existing(self, spec: ProcSpec) -> int:
-        # wrapper는 경로가 공유되므로 여기서 경로 기반 제거를 하지 않는다
+        # wrapperëŠ” ê²½ë¡œê°€ ê³µìœ ë˜ë¯€ë¡œ ì—¬ê¸°ì„œ ê²½ë¡œ ê¸°ë°˜ ì œê±°ë¥¼ í•˜ì§€ ì•ŠëŠ”ë‹¤
         if _is_wrapper_exe(spec.path):
             return 0
         killed = _kill_all_by_path(spec.path)
@@ -563,7 +563,7 @@ class DmsSupervisor:
         return killed
 
     def _enforce_singleton_after_start(self, st: ProcState):
-        # wrapper(exe)면 ExecutablePath가 동일하게 찍혀 서로 오탐 → 스킵
+        # wrapper(exe)ë©´ ExecutablePathê°€ ë™ì¼í•˜ê²Œ ì°í˜€ ì„œë¡œ ì˜¤íƒ â†’ ìŠ¤í‚µ
         if _is_wrapper_exe(st.spec.path):
             return
         time.sleep(0.3)
@@ -577,12 +577,12 @@ class DmsSupervisor:
         st.pid = keep
 
     def _script_hint(self, spec: ProcSpec) -> Optional[str]:
-        # 1) 스크립트/배치 파일명
+        # 1) ìŠ¤í¬ë¦½íŠ¸/ë°°ì¹˜ íŒŒì¼ëª…
         for a in spec.args:
             a = str(a)
             if a.lower().endswith((".py", ".bat", ".cmd")):
                 return os.path.basename(a).lower()
-        # 2) -m module 패턴
+        # 2) -m module íŒ¨í„´
         for i, a in enumerate(map(str, spec.args)):
             if a == "-m" and i + 1 < len(spec.args):
                 return str(spec.args[i + 1]).lower()
@@ -607,7 +607,7 @@ class DmsSupervisor:
             if st.is_running():
                 return {"ok": True, "msg": f"{name} already running", "pid": st.pid}
 
-            # 스냅샷 기반 중복 실행 체크 (wrapper는 제외)
+            # ìŠ¤ëƒ…ìƒ· ê¸°ë°˜ ì¤‘ë³µ ì‹¤í–‰ ì²´í¬ (wrapperëŠ” ì œì™¸)
             if not _is_wrapper_exe(spec.path):
                 snap = self._proc_snapshot()
                 p = str(spec.path.resolve()).lower()
@@ -616,7 +616,7 @@ class DmsSupervisor:
                     st.pid = pid
                     return {"ok": True, "msg": f"{name} already running", "pid": st.pid}
 
-            # 이중 Popen 제거: 한 번만 실행
+            # ì´ì¤‘ Popen ì œê±°: í•œ ë²ˆë§Œ ì‹¤í–‰
             creationflags = 0
             if os.name == "nt":
                 creationflags = subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS
@@ -655,7 +655,7 @@ class DmsSupervisor:
             st.last_start_ms = now_ms()
             self._log(f"[START] {name} pid={st.pid}")
 
-            # wrapper는 스킵, 일반 exe만 singleton enforcement
+            # wrapperëŠ” ìŠ¤í‚µ, ì¼ë°˜ exeë§Œ singleton enforcement
             self._enforce_singleton_after_start(st)
 
             return {"ok": True, "msg": "started", "pid": st.pid}
@@ -666,7 +666,7 @@ class DmsSupervisor:
             if not st:
                 return {"ok": False, "error": f"unknown process: {name}"}
 
-            # 1) 자식 핸들 종료 시도
+            # 1) ìžì‹ í•¸ë“¤ ì¢…ë£Œ ì‹œë„
             if st.proc and (st.proc.poll() is None):
                 try:
                     if os.name == "nt":
@@ -680,7 +680,7 @@ class DmsSupervisor:
                 except Exception:
                     pass
 
-            # 2) wrapper/python → 커맨드라인 키워드로만 종료
+            # 2) wrapper/python â†’ ì»¤ë§¨ë“œë¼ì¸ í‚¤ì›Œë“œë¡œë§Œ ì¢…ë£Œ
             spec = st.spec
             killed = 0
             script_kw = self._script_hint(spec)
@@ -691,7 +691,7 @@ class DmsSupervisor:
             if (is_wrapper or is_python) and script_kw:
                 killed += _kill_by_cmd_contains(script_kw)
             else:
-                # 3) 일반 exe만 경로 기준 종료
+                # 3) ì¼ë°˜ exeë§Œ ê²½ë¡œ ê¸°ì¤€ ì¢…ë£Œ
                 killed += _kill_all_by_path(spec.path)
 
             st.last_exit_code = None if not st.proc else st.proc.poll()
@@ -719,7 +719,7 @@ class DmsSupervisor:
     def stop_all(self) -> dict:
         with self._lock:
             results = {}
-            # 선택된 항목은 wrapper 여부와 무관하게 stop() 호출
+            # ì„ íƒëœ í•­ëª©ì€ wrapper ì—¬ë¶€ì™€ ë¬´ê´€í•˜ê²Œ stop() í˜¸ì¶œ
             for nm, st in self.states.items():
                 if st.spec.select:
                     results[nm] = self.stop(nm, force=True)
@@ -746,7 +746,7 @@ class DmsSupervisor:
 
             return {"ok": True, "data": {k: row(v) for k, v in self.states.items()}}
 
-    # ── loops & http ─────────────────────────────────────────────────────────
+    # â”€â”€ loops & http â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     def _tick_loop(self):
         self._log("[DMs] tick loop started")
         for nm, st in self.states.items():
@@ -758,7 +758,7 @@ class DmsSupervisor:
             self._reload_config_if_needed()
             with self._lock:
                 for nm, st in self.states.items():
-                    # 중복 보정: 일반 exe만
+                    # ì¤‘ë³µ ë³´ì •: ì¼ë°˜ exeë§Œ
                     if not _is_wrapper_exe(st.spec.path):
                         pids = _pids_by_exact_path(st.spec.path)
                         if len(pids) > 1:
@@ -769,7 +769,7 @@ class DmsSupervisor:
 
                     # auto-restart
                     if (not self._maint_lock) and st.spec.auto_restart and st.last_start_ms is not None:
-                        # wrapper라도 여기선 다시 시작 가능
+                        # wrapperë¼ë„ ì—¬ê¸°ì„  ë‹¤ì‹œ ì‹œìž‘ ê°€ëŠ¥
                         snap = self._proc_snapshot()
                         alive = st.is_running_fast(snap)
                         if not alive:
@@ -777,7 +777,7 @@ class DmsSupervisor:
                             try: self.start(nm)
                             except Exception: pass
 
-                    # select=false → 강제 정지
+                    # select=false â†’ ê°•ì œ ì •ì§€
                     if not st.spec.select and st.is_running():
                         self._log(f"[ENFORCE STOP] {nm} select=false -> stopping")
                         try: self.stop(nm, force=True)
@@ -799,7 +799,7 @@ class DmsSupervisor:
             return
 
         items = {str(it["name"]): it for it in cfg.get("executables", [])}
-        # 업데이트/삭제
+        # ì—…ë°ì´íŠ¸/ì‚­ì œ
         for nm, st in list(self.states.items()):
             it = items.get(nm)
             if not it:
@@ -814,7 +814,7 @@ class DmsSupervisor:
             st.spec.args = list(it.get("args", []))
             st.spec.path = (ROOT / it["path"]).resolve() if not os.path.isabs(it["path"]) else Path(it["path"]).resolve()
 
-        # 신규 추가
+        # ì‹ ê·œ ì¶”ê°€
         for nm, it in items.items():
             if nm in self.states:
                 continue
@@ -851,7 +851,7 @@ class DmsSupervisor:
 
             def do_GET(self):
                 try:
-                    # 정규화(// → /, /web/web/… → /web/…)
+                    # ì •ê·œí™”(// â†’ /, /web/web/â€¦ â†’ /web/â€¦)
                     clean_path = _uparse.urlsplit(self.path).path
                     clean_path = re.sub(r'/+', '/', clean_path)
                     norm_path  = re.sub(r'^/(?:web/)+', '/web/', clean_path)
@@ -865,7 +865,7 @@ class DmsSupervisor:
                         self.end_headers()
                         return
                     
-                    # ── 간단 별칭: /system, /web/system, /config-ui, /log-viewer 등
+                    # â”€â”€ ê°„ë‹¨ ë³„ì¹­: /system, /web/system, /config-ui, /log-viewer ë“±
                     if clean_path in ("/", "/dms", "/system", "/web/system"):           return _serve_static_safe(self, "dms-system.html")
                     if clean_path in ("/configi", "/dms-config", "/web/dms-config"):    return _serve_static_safe(self, "dms-config.html")
                     if clean_path in ("/log", "/web/log-viewer"):                       return _serve_static_safe(self, "log-viewer.html")
@@ -883,7 +883,7 @@ class DmsSupervisor:
 
                     parts = [p for p in norm_path.split('/') if p]
 
-                    # 루트/별칭 리다이렉트
+                    # ë£¨íŠ¸/ë³„ì¹­ ë¦¬ë‹¤ì´ë ‰íŠ¸
                     if clean_path in ("/", "/dms"):
                         self.send_response(302); self.send_header("Location", "/web/dms-system.html")
                         self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
@@ -891,7 +891,7 @@ class DmsSupervisor:
                         self.send_response(302); self.send_header("Location", "/web/oms-system.html")
                         self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
 
-                    # 로그 API
+                    # ë¡œê·¸ API
                     if parts and parts[0] == "logs":
                         if len(parts) == 3 and parts[1] == "list":
                             name = parts[2]
@@ -944,7 +944,7 @@ class DmsSupervisor:
                             except Exception as e:
                                 return self._ok(500, {"ok": False, "error": repr(e)})
 
-                    # 정적 파일
+                    # ì •ì  íŒŒì¼
                     if parts[:1] == ["web"]:
                         sub = "/".join(parts[1:])
                         return _serve_static_safe(self, sub)
@@ -953,11 +953,11 @@ class DmsSupervisor:
                     if parts == ["log-viewer.html"]:
                         return _serve_static_safe(self, "log-viewer.html")
 
-                    # 상태
+                    # ìƒíƒœ
                     if parts == ["status-lite"]:
                         hb = getattr(sup, "heartbeat_interval", 5)
                         full = sup._status_payload(use_snapshot=False)
-                        # 최소 필드만 추려서도 제공(기존 UI가 이 경량 목록을 사용)
+                        # ìµœì†Œ í•„ë“œë§Œ ì¶”ë ¤ì„œë„ ì œê³µ(ê¸°ì¡´ UIê°€ ì´ ê²½ëŸ‰ ëª©ë¡ì„ ì‚¬ìš©)
                         lite_execs = [
                             {
                                 "name": e["name"],
@@ -971,7 +971,7 @@ class DmsSupervisor:
                             "ok": True,
                             "heartbeat_interval_sec": hb,
                             "executables": lite_execs,
-                            # 필요 시 data도 같이 (문제 없으면 유지)
+                            # í•„ìš” ì‹œ dataë„ ê°™ì´ (ë¬¸ì œ ì—†ìœ¼ë©´ ìœ ì§€)
                             "data": full.get("data", {})
                         })
 
@@ -981,13 +981,13 @@ class DmsSupervisor:
                         return self._ok(200, {
                             "ok": True,
                             "heartbeat_interval_sec": hb,
-                            **st  # data + executables 둘 다 포함
+                            **st  # data + executables ë‘˜ ë‹¤ í¬í•¨
                         })
 
                     if parts and parts[0] == "status" and len(parts) > 1:
                         name = parts[1]
                         one = sup.status(name)
-                        # 단건 조회에도 호환용 executables 배열(길이1) 포함
+                        # ë‹¨ê±´ ì¡°íšŒì—ë„ í˜¸í™˜ìš© executables ë°°ì—´(ê¸¸ì´1) í¬í•¨
                         execs = []
                         if one.get("ok") and "data" in one:
                             d = one["data"]
@@ -1008,7 +1008,7 @@ class DmsSupervisor:
                         one["executables"] = execs
                         return self._ok(200, one)
 
-                    # 설정 메타/본문
+                    # ì„¤ì • ë©”íƒ€/ë³¸ë¬¸
                     if parts == ["config", "meta"]:
                         if not DEFAULT_CONFIG.exists():
                             return self._ok(404, {"ok": False, "error": "config not found"})
@@ -1050,7 +1050,7 @@ class DmsSupervisor:
                     if parts == ["restart-all"]:
                         return self._ok(200, sup.restart_all())
 
-                    # 개별 제어
+                    # ê°œë³„ ì œì–´
                     if parts and parts[0] in ("start", "stop", "restart"):
                         name = parts[1] if len(parts) > 1 else ""
                         if parts[0] == "start":
@@ -1060,11 +1060,11 @@ class DmsSupervisor:
                         if parts[0] == "restart":
                             return self._ok(200, sup.restart(name))
 
-                    # 로그 POST → GET 동일 처리
+                    # ë¡œê·¸ POST â†’ GET ë™ì¼ ì²˜ë¦¬
                     if parts and parts[0] == "logs":
                         return self.do_GET()
 
-                    # 설정 저장/포맷
+                    # ì„¤ì • ì €ìž¥/í¬ë§·
                     if parts == ["config"]:
                         DEFAULT_CONFIG.parent.mkdir(parents=True, exist_ok=True)
                         DEFAULT_CONFIG.write_text(body, encoding="utf-8")
@@ -1124,7 +1124,7 @@ class DmsSupervisor:
         line = time.strftime("%Y-%m-%d %H:%M:%S") + " " + msg + "\n"
         (self.log_dir / "DMs.log").open("a", encoding="utf-8").write(line)
 
-# ── entry ───────────────────────────────────────────────────────────────────
+# â”€â”€ entry â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 def main():
     try:
         cfg = load_config(DEFAULT_CONFIG)
@@ -1135,7 +1135,7 @@ def main():
         )
         cfg = {
             "http_host": "0.0.0.0",
-            "http_port": 51050,
+            "http_port": 19776,
             "log_dir": str(LOG_DIR_DEFAULT),
             "heartbeat_interval_sec": 2,
             "executables": [],
@@ -1162,3 +1162,6 @@ if __name__ == "__main__":
         except Exception:
             pass
     main()
+
+
+

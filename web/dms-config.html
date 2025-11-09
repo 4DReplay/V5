@@ -63,15 +63,20 @@
     <small id="titleHost"></small>
   </h2>
 
-  <!-- ───── Global Settings: heartbeat 즉시 적용 ───── -->
+  <!-- ───── Global Settings: heartbeat/port 즉시 적용 ───── -->
   <div class="global-settings" style="margin:14px 0;padding:10px;background:#0c121b;
-       border:1px solid var(--line2);border-radius:8px;max-width:600px">
+       border:1px solid var(--line2);border-radius:8px;max-width:820px">
     <h3 style="margin:0 0 8px;color:#a5b4fc;">Global Settings</h3>
-    <label style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-      Heartbeat Interval (sec):
+    <div style="display:grid;grid-template-columns:240px 1fr;gap:10px;align-items:center">
+      <label>Heartbeat Interval (sec):</label>
       <input id="inputHeartbeat" type="number" placeholder="3" min="1" max="60"
-             style="flex:1;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
-    </label>
+             style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
+
+      <label>Service Port:</label>
+      <input id="inputPort" type="number" placeholder="19776" min="1" max="65535"
+             style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
+    </div>
+    <div class="muted" style="margin-top:8px">• 포트 키 자동 감지( port | listen_port | service_port | dms_port ). 존재하는 키가 없으면 <code>port</code>로 저장합니다.</div>
   </div>
   <div class="toolbar">
     <button id="btnGoDashboard" class="btn-secondary" title="Back to System">
@@ -130,7 +135,7 @@
 /* ───────────────────────── proxy  ───────────────────────── */
 // ① /proxy/<node>/ 접두사 감지
 const __PROXY_PREFIX__ = (() => {
-  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+  const m = location.pathname.match(/^\/proxy\/([^\/]+)\//);
   return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
 })();
 
@@ -238,6 +243,7 @@ const TBody   = document.querySelector("#grid tbody");
 const SaveTag = document.getElementById("saveState");
 const HB_EL   = document.getElementById("hb");
 const INPUT_HB= document.getElementById("inputHeartbeat");
+const INPUT_PORT = document.getElementById("inputPort");
 const M_PATH  = document.getElementById("metaPath");
 const M_SIZE  = document.getElementById("metaSize");
 const M_TIME  = document.getElementById("metaMtime");
@@ -255,6 +261,21 @@ const EP = {
   }
 };
 
+/* ─────────────── 포트 키 헬퍼: 기존 스키마 자동 감지 ─────────────── */
+const PORT_KEYS = ["port","listen_port","service_port","dms_port"];
+function detectPortKey(cfg){
+  if (!cfg || typeof cfg !== 'object') return null;
+  for (const k of PORT_KEYS){ if (k in cfg) return k; }
+  return null; // 없으면 저장 시 port 사용
+}
+function readPort(cfg){
+  const k = detectPortKey(cfg);
+  return (k && typeof cfg[k] !== 'undefined') ? Number(cfg[k]) : NaN;
+}
+function writePort(cfg, value){
+  const k = detectPortKey(cfg) || 'port';
+  cfg[k] = value;
+}
 
 /* ───────────────────── 행/필드 렌더링 ───────────────────── */
 function parseArgs(val){
@@ -332,6 +353,11 @@ function render(){
   }catch(_){
     INPUT_HB.value = 3;
   }
+  // port 필드: 자동 감지 후 표시
+  try{
+    const p = readPort(CONFIG);
+    INPUT_PORT.value = (!isNaN(p) && p>0) ? p : '';
+  }catch(_){ INPUT_PORT.value=''; }
 }
 function touchDirty(text="Edited"){
   SaveTag.textContent=text; SaveTag.className="pill";
@@ -404,6 +430,16 @@ async function saveConfig(){
       }
     }catch(_){}
 
+    // ── Port 반영 (자동 키 감지)
+    try{
+      const pv = Number(INPUT_PORT.value||"");
+      if (!isNaN(pv) && pv>0 && pv<=65535){
+        writePort(CONFIG, pv);
+      }else{
+        // 입력이 비어있으면 아무 것도 하지 않음 (기존 값 유지)
+      }
+    }catch(_){}
+
     const txt = JSON.stringify(CONFIG, null, 2);
 
     // 실제 저장
@@ -432,7 +468,8 @@ async function saveConfig(){
 const BTN_SAVE = document.getElementById("btnSave");
 BTN_SAVE.onclick = null;
 BTN_SAVE.replaceWith(BTN_SAVE.cloneNode(true)); // 리스너 초기화
-document.getElementById("btnSave").addEventListener("click",(ev)=>{ ev.preventDefault(); saveConfig(); });
+const BTN_SAVE2 = document.getElementById("btnSave");
+BTN_SAVE2.addEventListener("click",(ev)=>{ ev.preventDefault(); saveConfig(); });
  
 
 document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
