@@ -61,12 +61,15 @@ class AId:
         self.property_data = None
         self.th = None
         self.app_server = None     # 외부로 응답 송신시 사용(없을 수 있음)
-        self.tcp = None            # 인바운드 TCP 서버
         self.end = False
-        self.host = None
+        self.host = None        
         self.msg_queue = queue.Queue()
         self.lock = threading.Lock()
         self._stopped = False
+
+        self.conf = conf  # conf 객체를 직접 할당
+        self.version = self.conf._version  # conf에서 _version 가져오기
+        self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
 
     # ─────────────────────────────────────────────────────────────────────────
     # 시스템 초기화(로그 폴더 등). 실패시 False
@@ -108,16 +111,14 @@ class AId:
         fd_log.info(f"📄 [AId] Load Config - Private {config_private_path}")
         fd_log.info(f"📄 [AId] Load Config - Public  {config_public_path}")
 
-        # 전역 conf의 락을 인스턴스 락과 연동
-        conf._lock = self.lock
-
+     
         # NOTE: 전역 conf 사용 (self.conf 아님)
         port = conf._aid_daemon_port
         fd_log.info(f"📄 [AId] TCPService: port {port}")
 
         try:
-            self.tcp = TCPServer("0.0.0.0", port, handle=self.on_msg, name=self.name)
-            self.tcp.open()
+            self.app_server = TCPServer("", port, self.put_data)
+            self.app_server.open()
             fd_log.info(f"[{self.name}] listening on 0.0.0.0:{port}")
             return True
         except Exception as e:
@@ -169,12 +170,12 @@ class AId:
 
         # 인바운드 TCP 서버 종료
         try:
-            if self.tcp:
-                self.tcp.close()
+            if self.app_server:
+                self.app_server.close()
         except Exception as e:
-            fd_log.warning(f"[AId] tcp close failed: {e}")
+            fd_log.warning(f"[AId] app_server close failed: {e}")
         finally:
-            self.tcp = None
+            self.app_server = None
 
         # 아웃바운드 서버(있을 수 있음) 종료
         srv = getattr(self, "app_server", None)
@@ -237,6 +238,8 @@ class AId:
     def classify_msg(self, msg: dict) -> None:
         _4dmsg = FDMsg()
         _4dmsg.assign(msg)
+        #_4dmsg.data.update(msg)  
+        #_4dmsg.assign(json.dumps(msg))
 
         # From 필드 보정
         if len(_4dmsg.data.get('From', '').strip()) == 0:
@@ -252,7 +255,7 @@ class AId:
 
                     case 'Daemon', 'Information', 'Version':
                         _4dmsg.update(Version={
-                            AId.name: {'version': conf._version, 'date': conf._release_date}
+                            AId.name: {'version': self.version, 'date': self.release_date}
                         })
 
                     case 'AI', 'Operation', 'Calibration':

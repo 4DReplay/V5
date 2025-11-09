@@ -341,7 +341,7 @@ def _state_for_host(host: str) -> dict:
 class Orchestrator:
     def __init__(self, cfg:dict):
         self.http_host = cfg.get("http_host","0.0.0.0")
-        self.http_port = int(cfg.get("http_port",52050))
+        self.http_port = int(cfg.get("http_port",19777))
         self.heartbeat = float(cfg.get("heartbeat_interval_sec",2))
         self.nodes = list(cfg.get("nodes",[]))
         # ▼▼▼ [NEW] process_alias 로드(기본값 + 설정 덮어쓰기)
@@ -433,14 +433,14 @@ class Orchestrator:
         for n in self.nodes:
             name=n.get("name") or n.get("host")
             try:
-                st,_,data = _http_fetch(n["host"], int(n.get("port",51050)), "GET", "/status", None, None, timeout=2.5)
+                st,_,data = _http_fetch(n["host"], int(n.get("port",19776)), "GET", "/status", None, None, timeout=2.5)
                 payload = json.loads(data.decode("utf-8","ignore")) if st==200 else {"ok":False,"error":f"http {st}"}
             except Exception as e:
                 payload = {"ok":False,"error":repr(e)}
             # ▼ DMS /config에서 실행 항목(alias)도 끌어옴
             alias_map = None
             try:
-                st2, hdr2, dat2 = _http_fetch(n["host"], int(n.get("port",51050)), "GET", "/config", None, None, timeout=self._status_fetch_timeout)
+                st2, hdr2, dat2 = _http_fetch(n["host"], int(n.get("port",19776)), "GET", "/config", None, None, timeout=self._status_fetch_timeout)
                 if st2 == 200:
                     txt = dat2.decode("utf-8","ignore")
                     cfg = json.loads(_strip_json5(txt))
@@ -476,7 +476,7 @@ class Orchestrator:
                 nm = n.get("name") or n.get("host")
                 nodes.append({
                     "name": nm, "alias": n.get("alias",""),
-                    "host": n["host"], "port": int(n.get("port",51050)),
+                    "host": n["host"], "port": int(n.get("port",19776)),
                     "status": self._cache.get(nm), "ts": self._cache_ts.get(nm,0)
                 })
             payload = {"ok": True, "heartbeat_interval_sec": self.heartbeat, "nodes": nodes}
@@ -644,7 +644,7 @@ class Orchestrator:
                         sub="/"+"/".join(parts[2:]) if len(parts)>2 else "/"
                         qs=urlsplit(self.path).query
                         if qs: sub=f"{sub}?{qs}"
-                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "GET", sub, None, None, 4.0)
+                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",19776)), "GET", sub, None, None, 4.0)
                         ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/octet-stream"
                         return self._write(st, data, ct)
 
@@ -969,7 +969,7 @@ class Orchestrator:
                     # ──────────────────────────────────────────────────────────
                     # CONNECT STATE CLEAR 
                     # cmd
-                    # curl -X POST http://127.0.0.1:52050/oms/alias/clear
+                    # curl -X POST http://127.0.0.1:19777/oms/alias/clear
                     # ──────────────────────────────────────────────────────────
                     if parts==["oms","connect","clear"]:
                         try:
@@ -1024,7 +1024,7 @@ class Orchestrator:
                                         nodes.append({
                                             "name": nm,
                                             "host": n["host"],
-                                            "port": int(n.get("port",51050)),
+                                            "port": int(n.get("port",19776)),
                                             "status": deepcopy(orch._cache.get(nm) or {})
                                         })
 
@@ -1293,7 +1293,7 @@ class Orchestrator:
                         sub="/"+"/".join(parts[2:]) or "/"
                         qs=urlsplit(self.path).query
                         if qs: sub=f"{sub}?{qs}"
-                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",51050)), "POST", sub, body, {"Content-Type": self.headers.get("Content-Type","application/json")})
+                        st,hdr,data=_http_fetch(target["host"], int(target.get("port",19776)), "POST", sub, body, {"Content-Type": self.headers.get("Content-Type","application/json")})
                         ct=hdr.get("Content-Type") or hdr.get("content-type") or "application/json"
                         return self._write(st, data, ct)
 
@@ -1371,7 +1371,7 @@ def main():
         cfg = load_config(CFG)
     except Exception as e:
         (LOGD / "OMS.log").open("a", encoding="utf-8").write(f"[WARN] fallback cfg: {e}\n")
-        cfg = {"http_host":"0.0.0.0","http_port":52050,"heartbeat_interval_sec":2,"nodes":[]}
+        cfg = {"http_host":"0.0.0.0","http_port":19777,"heartbeat_interval_sec":2,"nodes":[]}
     _state_load()  # ← 추가
     Orchestrator(cfg).run()
 

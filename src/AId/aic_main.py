@@ -58,13 +58,16 @@ class AIc:
         self.name = "AIc"
         self.property_data = None
         self.th = None
-        self.app_server = None   # (옵션) 외부 송신용 TCP/WS 등
-        self.tcp = None          # 인바운드 TCP 리스너
+        self.app_server = None   # (옵션) 외부 송신용 TCP/WS 등        
         self.end = False
         self.host = None
         self.msg_queue = queue.Queue()
         self.lock = threading.Lock()
         self._stopped = False
+
+        self.conf = conf  # conf 객체를 직접 할당
+        self.version = self.conf._version  # conf에서 _version 가져오기
+        self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
 
     # ─────────────────────────────────────────────────────────────────────────
     # 시스템 초기화(로그 폴더 등). 실패시 False
@@ -106,19 +109,12 @@ class AIc:
         fd_log.info(f"📄 [AIc] Load Config - Private {config_private_path}")
         fd_log.info(f"📄 [AIc] Load Config - Public  {config_public_path}")
 
-        # 전역 conf 락을 인스턴스 락에 바인딩
-        conf._lock = self.lock
-
-        port = conf._aic_daemon_port
-        if self.tcp and getattr(self.tcp, "sock", None):
-            fd_log.info(f"[{self.name}] TCP already listening 0.0.0.0:{port}")
-            return True
-
+        port = conf._aic_daemon_port        
         fd_log.info(f"📄 [AIc] TCPService: port {port}")
+        
         try:
-            # fd_common.tcp_server.TCPServer(host, port, handle, name)
-            self.tcp = TCPServer("0.0.0.0", port, handle=self.on_msg, name=self.name)
-            self.tcp.open()
+            self.app_server = TCPServer("", port, self.put_data)
+            self.app_server.open()
             fd_log.info(f"[{self.name}] listening on 0.0.0.0:{port}")
             return True
         except Exception as e:
@@ -158,12 +154,12 @@ class AIc:
 
         # 인바운드 TCP 서버 종료
         try:
-            if self.tcp:
-                self.tcp.close()
+            if self.app_server:
+                self.app_server.close()
         except Exception as e:
-            fd_log.warning(f"[AIc] tcp close failed: {e}")
+            fd_log.warning(f"[AIc] app_server close failed: {e}")
         finally:
-            self.tcp = None
+            self.app_server = None
 
         # (옵션) 아웃바운드 송신 소켓/서버 정리
         srv = getattr(self, "app_server", None)

@@ -55,7 +55,7 @@ class OMsService(win32serviceutil.ServiceFramework):
             cfg = agent.load_config(agent.CFG)
         except Exception as e:
             (LOG_ROOT / "OMS.log").open("a", encoding="utf-8").write(time.strftime("%F %T ") + f"[WARN] fallback cfg: {e}\n")
-            cfg = {"http_host":"0.0.0.0","http_port":52050,"heartbeat_interval_sec":2,"nodes":[]}
+            cfg = {"http_host":"0.0.0.0","http_port":19777,"heartbeat_interval_sec":2,"nodes":[]}
         self._orch = agent.Orchestrator(cfg)
         import threading
         t = threading.Thread(target=self._orch.run, daemon=True)

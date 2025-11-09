@@ -73,7 +73,7 @@
         "PYTHONIOENCODING": "utf-8",
         "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\log"
       },
-      "select": true,
+      "select": false,
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false
@@ -93,7 +93,7 @@
         "PYTHONIOENCODING": "utf-8",
         "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AIc\\log"
       },
-      "select": true,
+      "select": false,
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false

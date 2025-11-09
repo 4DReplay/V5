@@ -154,6 +154,26 @@
     const BTN_RELOAD=document.getElementById("btnReload");
     const BTN_CONFIG=document.getElementById("btnConfig");
     const BTN_RA=document.getElementById("omsRestartAll");
+
+    // --- Connect Sequence refs
+    const SEQ = {
+      host: document.getElementById("seqHost"),
+      port: document.getElementById("seqPort"),
+      mgmt: document.getElementById("seqMgmtIP"),
+      autoToken: document.getElementById("seqAutoToken"),
+      sanitize: document.getElementById("seqSanitize"),
+      dryRun: document.getElementById("seqDryRun"),
+      mapArea: document.getElementById("seqDaemonMap"),
+      status: document.getElementById("seqStatus"),
+      log: document.getElementById("seqLog"),
+      btnFill: document.getElementById("btnSeqFillFromList"),
+      btnStart: document.getElementById("btnSeqStart"),
+      btnAbort: document.getElementById("btnSeqAbort"),
+      btnCopy: document.getElementById("btnCopySeqLog"),
+      btnSave: document.getElementById("btnSaveSeqLog"),
+    };
+    let SEQ_ABORT=false;
+
     let lastData=null;
     let OMS_ALIAS_MAP = {};
     let POLLER = null;
@@ -242,6 +262,44 @@
       BTN_RA.disabled      = on || RA_LOCK;
     }
 
+    // ===== Connect Sequence helpers =====
+    function seqSetStatus(text, kind="pill-warn"){
+      if (!SEQ.status) return;
+      SEQ.status.className = `pill ${kind}`;
+      SEQ.status.textContent = text;
+    }
+    function appendLog(line, obj){
+      if (!SEQ.log) return;
+      const ts = new Date().toLocaleTimeString();
+      let s = `[${ts}] ${line}`;
+      if (obj!==undefined){
+        try { s += `\n${JSON.stringify(obj, null, 2)}`; }
+        catch { s += `\n${String(obj)}`; }
+      }
+      if (SEQ.log.textContent === "-" || !SEQ.log.textContent) {
+        SEQ.log.textContent = s;
+      } else {
+        SEQ.log.textContent += `\n${s}`;
+      }
+      SEQ.log.scrollTop = SEQ.log.scrollHeight;
+    }
+    function parseDaemonMap(){
+      const txt = (SEQ.mapArea?.value||"").trim();
+      if (!txt) return {};
+      try { return JSON.parse(txt); } catch(e) {
+        throw new Error("Daemon Map JSON parse error: " + e.message);
+      }
+    }
+    function sanitizeDaemonMap(dm){
+      // SPd/MMd 동치 처리 + 빈 값 제거
+      const out = {};
+      for (const [k,v] of Object.entries(dm||{})){
+        if (!v) continue;
+        out[k] = v;
+      }
+      return out;
+    }
+
     const PROG_LS_KEY = "oms_ra_progress";
     /**
      * 진행칩 메시지 쓰기 (우선순위 기반)
@@ -289,7 +347,7 @@
       if (Array.isArray(status.executables)) return status.executables;
       return [];
     }
-    // 노드 셀: 프로세스 기준 인덱스/총계 표기로 변경 (예: 10.82.104.201:51050 (1/9))
+    // 노드 셀: 프로세스 기준 인덱스/총계 표기로 변경 (예: 10.82.104.201:19776 (1/9))
     function nodeCellHtml(n, procIndex, procTotal){
       const href = `/proxy/${encodeURIComponent(n.name)}/dms-system.html`;
       const suffix = (typeof procIndex === "number" && typeof procTotal === "number" && procTotal>0)
@@ -616,6 +674,96 @@
         if (statePoller){ clearInterval(statePoller); statePoller=null; }
       }
     };
+
+    // ===== Connect Sequence bindings =====
+    if (SEQ?.btnFill){
+      SEQ.btnFill.onclick = ()=>{
+        try{
+          if (!lastData) { appendLog("No status yet. Click Reload first."); return; }
+          const dm = {};
+          // 가장 단순한 채우기: 각 프로세스 이름의 최초 등장 노드의 host를 매핑
+          for (const n of (lastData.nodes||[])){
+            const host = n.host;
+            const list = (n.status && (n.status.data ? Object.values(n.status.data)
+                              : (n.status.processes || n.status.executables))) || [];
+            for (const p of (list||[])){
+              if (!p?.name) continue;
+              if (dm[p.name]) continue;
+              dm[p.name] = host;
+            }
+          }
+          SEQ.mapArea.value = JSON.stringify(dm, null, 2);
+          appendLog("Filled Daemon Map from current list.", dm);
+        }catch(e){ appendLog("Fill failed", {error:String(e)}); }
+      };
+    }
+    if (SEQ?.btnStart){
+      SEQ.btnStart.onclick = async ()=>{
+        SEQ_ABORT = false;
+        try{
+          SEQ.log.textContent = "-";
+          seqSetStatus("Running", "pill-ok");
+          appendLog("== step1: EMd connect(run) ==");
+          const dm0 = parseDaemonMap();
+          const dm  = SEQ.sanitize?.checked ? sanitizeDaemonMap(dm0) : sanitizeDaemonMap(dm0);
+          const payload = {
+            mtd_host: (SEQ.host?.value||"").trim(),
+            mtd_port: Number(SEQ.port?.value||19765),
+            dmpdip:   (SEQ.mgmt?.value||"").trim(),
+            daemon_map: dm,
+            trace: true,
+            return_partial: true,
+            dry_run: !!SEQ.dryRun?.checked
+          };
+          const res = await api("/oms/connect/sequence", {
+            method:"POST",
+            headers:{ "Content-Type":"application/json" },
+            body: JSON.stringify(payload)
+          });
+          if (res?.events){
+            for (const ev of res.events){
+              if (SEQ_ABORT) break;
+              const head = ev.step || "(step)";
+              if (ev.error){
+                appendLog(`${head} -> ERROR`, ev.error);
+              }else{
+                appendLog(`${head} -> OK`, ev.response ?? ev);
+              }
+            }
+            appendLog("Sequence finished.", {ok:true});
+            seqSetStatus("Done", "pill-ok");
+          }else{
+            appendLog("No events returned.", res);
+            seqSetStatus("Done", "pill-warn");
+          }
+        }catch(e){
+          appendLog("Sequence failed", {error:String(e)});
+          seqSetStatus("Error", "pill-bad");
+        }
+      };
+    }
+    if (SEQ?.btnAbort){
+      SEQ.btnAbort.onclick = ()=>{ SEQ_ABORT = true; appendLog("Abort requested."); seqSetStatus("Aborted","pill-warn"); };
+    }
+    if (SEQ?.btnCopy){
+      SEQ.btnCopy.onclick = async ()=>{
+        try{
+          await navigator.clipboard.writeText(SEQ.log.textContent||"");
+          appendLog("Copied log to clipboard.");
+        }catch(e){ appendLog("Copy failed", {error:String(e)}); }
+      };
+    }
+    if (SEQ?.btnSave){
+      SEQ.btnSave.onclick = ()=>{
+        const blob = new Blob([SEQ.log.textContent||""], {type:"text/plain;charset=utf-8"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = `connect_sequence_${Date.now()}.log`;
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
+        appendLog("Saved log file.");
+      };
+    }    
 
     (async function(){
       try{

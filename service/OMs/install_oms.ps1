@@ -13,7 +13,7 @@
 # 사용법(관리자 PowerShell):
 #   cd C:\4DReplay\V5
 #   # 설치
-#   powershell -ExecutionPolicy Bypass -File service\OMs\install_oms.ps1 -OpenFirewall -Port 52050
+#   powershell -ExecutionPolicy Bypass -File service\OMs\install_oms.ps1 -OpenFirewall -Port 19777
 #   # 재설치
 #   powershell -ExecutionPolicy Bypass -File service\OMs\install_oms.ps1 -Reinstall
 #   # 제거
@@ -23,7 +23,7 @@
 #   -PythonPath "C:\Program Files\Python310\python.exe"
 #   -StartType auto|delayed-auto|demand|disabled   (default: delayed-auto)
 #   -OpenFirewall                                   (TCP 포트 허용)
-#   -Port 52050                                     (방화벽 허용 포트; -OpenFirewall 시 사용)
+#   -Port 19777                                     (방화벽 허용 포트; -OpenFirewall 시 사용)
 #   -Reinstall                                      (기존 제거 후 재설치)
 #   -Uninstall                                      (서비스 제거만)
 #
@@ -37,7 +37,7 @@ param(
   [ValidateSet("auto","delayed-auto","demand","disabled")]
   [string]$StartType = "delayed-auto",
   [switch]$OpenFirewall = $false,
-  [int]$Port = 52050,
+  [int]$Port = 19777,
   [switch]$Reinstall = $false,
   [switch]$Uninstall = $false
 )

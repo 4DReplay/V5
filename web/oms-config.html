@@ -87,7 +87,7 @@
   <div class="global-settings">
     <h3 style="margin-top:0;color:#a5b4fc;">Global Settings</h3>
     <label>HTTP Host: <input id="inputHttpHost" type="text" placeholder="0.0.0.0"></label>
-    <label>HTTP Port: <input id="inputHttpPort" type="number" placeholder="52050" min="1" max="65535"></label>
+    <label>HTTP Port: <input id="inputHttpPort" type="number" placeholder="19777" min="1" max="65535"></label>
     <label>Heartbeat Interval (sec): <input id="inputHeartbeat" type="number" placeholder="3" min="1" max="60"></label>
   </div>
 
@@ -178,7 +178,7 @@ let CONFIG=null; let POLL=null; let POLL_MS=1500; let IS_SAVING=false;
 function ensureOmsShape(cfg){
   cfg=cfg||{};
   if(!Array.isArray(cfg.nodes)) cfg.nodes=[];
-  cfg.nodes=cfg.nodes.map(n=>({name:n?.name??"",alias:n?.alias??"",host:n?.host??"",port:Number(n?.port??51050)}));
+  cfg.nodes=cfg.nodes.map(n=>({name:n?.name??"",alias:n?.alias??"",host:n?.host??"",port:Number(n?.port??19776)}));
   return cfg;
 }
 function uniqueNodeName(base){
@@ -195,7 +195,7 @@ function rowNode(node,idx){
     <td><input type="text" data-k="name" value="${node.name||""}"></td>
     <td><input type="text" data-k="alias" value="${node.alias||""}"></td>
     <td><input type="text" data-k="host" value="${node.host||""}"></td>
-    <td><input type="text" data-k="port" value="${node.port??51050}"></td>
+    <td><input type="text" data-k="port" value="${node.port??19776}"></td>
     <td class="col-btns">
       <button data-a="up" class="btn-ghost">▲</button>
       <button data-a="down" class="btn-ghost">▼</button>
@@ -204,7 +204,7 @@ function rowNode(node,idx){
     </td>`;
   tr.addEventListener("change",ev=>{
     const t=ev.target,k=t.getAttribute("data-k"); if(!k)return;
-    let v=t.value; if(k==="port") v=Math.max(1,parseInt(v||"51050",10));
+    let v=t.value; if(k==="port") v=Math.max(1,parseInt(v||"19776",10));
     CONFIG.nodes[idx][k]=v; touchDirty("Edited");
   });
   tr.addEventListener("click",ev=>{
@@ -221,7 +221,7 @@ function rowNode(node,idx){
 function render(){
   CONFIG=ensureOmsShape(CONFIG);
   document.getElementById("inputHttpHost").value=CONFIG.http_host||"0.0.0.0";
-  document.getElementById("inputHttpPort").value=CONFIG.http_port||52050;
+  document.getElementById("inputHttpPort").value=CONFIG.http_port||19777;
   document.getElementById("inputHeartbeat").value=CONFIG.heartbeat_interval_sec||3;
   TBody.innerHTML="";
   CONFIG.nodes.forEach((n,i)=>TBody.appendChild(rowNode(n,i)));
@@ -256,7 +256,7 @@ async function saveConfig(){
   IS_SAVING=true;
   try{
     CONFIG.http_host=document.getElementById("inputHttpHost").value||"0.0.0.0";
-    CONFIG.http_port=parseInt(document.getElementById("inputHttpPort").value||"52050",10);
+    CONFIG.http_port=parseInt(document.getElementById("inputHttpPort").value||"19777",10);
     CONFIG.heartbeat_interval_sec=parseFloat(document.getElementById("inputHeartbeat").value||"3");
     const txt=JSON.stringify(CONFIG,null,2);
     const res=await saveConfigText(txt);
@@ -285,7 +285,7 @@ document.getElementById("btnFormat").addEventListener("click",async()=>{
 });
 document.getElementById("btnAdd").addEventListener("click",()=>{
   CONFIG=ensureOmsShape(CONFIG);
-  CONFIG.nodes.push({name:uniqueNodeName("DMS-NEW"),alias:"",host:"",port:51050});
+  CONFIG.nodes.push({name:uniqueNodeName("DMS-NEW"),alias:"",host:"",port:19776});
   render();touchDirty("Edited");
 });
 document.getElementById("btnSave").addEventListener("click",(ev)=>{ev.preventDefault();saveConfig();});

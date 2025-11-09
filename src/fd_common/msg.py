@@ -54,7 +54,7 @@ class FDMsg:
             or len(self.data.get('To','').strip()) == 0          \
             or len(self.data.get('SendState','').strip()) == 0   \
             or len(self.data.get('Token','').strip()) == 0:
-                return False
+                return False        
         return True
     
     

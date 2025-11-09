@@ -270,7 +270,7 @@ function pickMTdTarget(status){
               : (Array.isArray(st.executables) ? st.executables : []));
     if (!arr) continue;
     if (arr.some(p => p && p.name === "MTd")) {
-      return { nodeName: n.name, host: n.host, port: n.port || 51050 };
+      return { nodeName: n.name, host: n.host, port: n.port || 19776 };
     }
   }
   return null;
