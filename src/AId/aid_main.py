@@ -17,7 +17,15 @@ from threading import Semaphore
 from datetime import datetime
 
 # ── service/env ──────────────────────────────────────────────────────────────
-SERVICE_MODE = os.getenv("FD_SERVICE", "0") == "1"
+def _is_service_env():
+    try:
+        import sys
+        # 콘솔이 없거나(서비스) 표준입력이 TTY가 아니면 서비스로 간주
+        return not hasattr(sys, "stdin") or (sys.stdin is None) or (not sys.stdin.isatty())
+    except Exception:
+        return True
+SERVICE_MODE = (os.getenv("FD_SERVICE", "0") == "1") or _is_service_env()
+
 os.environ.setdefault("PYTHONUNBUFFERED", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["AID_DAEMON_NAME"] = r"AId"
