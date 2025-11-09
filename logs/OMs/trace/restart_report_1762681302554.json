@@ -1,0 +1,21 @@
+{
+  "ok": false,
+  "ok_count": 11,
+  "total": 13,
+  "fails": [
+    "DMS-1/AIc: timeout",
+    "DMS-1/AId: timeout"
+  ],
+  "failed_list": [
+    "DMS-1/AIc",
+    "DMS-1/AId"
+  ],
+  "failed_nodes": [
+    "DMS-1",
+    "DMS-1"
+  ],
+  "failed_procs": [
+    "AIc",
+    "AId"
+  ]
+}

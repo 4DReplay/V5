@@ -31,6 +31,10 @@
     }
     .badge-ok { color:#22c55e;border-color:var(--badge-ok); }
     .badge-bad{ color:#f87171;border-color:var(--badge-bad); }
+    /* NEW: CONNECTED 는 흰 글자 + 약간 두껍게 */
+    .badge-connected { color:#fff !important; font-weight:600; border-color:var(--badge-ok); }
+    /* NEW: RUNNING 은 기존 초록 톤 유지(가독성 위해 클래스만 분리) */
+    .badge-running   { color:#22c55e; border-color:var(--badge-ok); }
     .pill-ok{ color:#22c55e;border-color:var(--ok); }
     .pill-bad{ color:#f87171;border-color:var(--bad); }
     .pill-warn{ color:#fbbf24;border-color:var(--warn); }
@@ -114,6 +118,7 @@
       <label class="chip"><input type="checkbox" id="seqAutoToken" checked> Auto Token</label>
       <label class="chip"><input type="checkbox" id="seqSanitize" checked> Sanitize DaemonList</label>
       <label class="chip"><input type="checkbox" id="seqDryRun"> Dry-Run</label>
+      <label class="chip"><input type="checkbox" id="seqVerbose"> Verbose Trace</label>
       <button id="btnSeqFillFromList" class="btn-secondary">🧩 Fill from List</button>
       <span class="spacer"></span>
       <span id="seqStatus" class="pill">Idle</span>
@@ -171,6 +176,7 @@
       btnAbort: document.getElementById("btnSeqAbort"),
       btnCopy: document.getElementById("btnCopySeqLog"),
       btnSave: document.getElementById("btnSaveSeqLog"),
+      verbose:  document.getElementById("seqVerbose"),
     };
     let SEQ_ABORT=false;
 
@@ -208,20 +214,11 @@
     function computeProgressFromStatus(data){
       const nodes = Array.isArray(data && data.nodes) ? data.nodes : [];
       let total=0, run=0, stop=0;
-      const toList = (status)=>{
-        if (!status) return [];
-        if (status.data && typeof status.data==="object") return Object.values(status.data);
-        if (Array.isArray(status.processes)) return status.processes;
-        if (Array.isArray(status.executables)) return status.executables;
-        return [];
-      };
       for (const n of nodes){
-        const procs = toList(n.status);
+        const procs = selectedProcList(n.status);
         for (const p of procs){
-          if (p && p.select === true){
-            total += 1;
-            if (p.running) run += 1; else stop += 1;
-          }
+          total += 1;
+          if (p.running === true) run += 1; else stop += 1;
         }
       }
       return { total, run, stop };
@@ -271,11 +268,24 @@
     function appendLog(line, obj){
       if (!SEQ.log) return;
       const ts = new Date().toLocaleTimeString();
-      let s = `[${ts}] ${line}`;
-      if (obj!==undefined){
-        try { s += `\n${JSON.stringify(obj, null, 2)}`; }
-        catch { s += `\n${String(obj)}`; }
+      let headStr;
+      // 1) 첫 인자가 객체/배열이면 JSON으로 변환
+      if (typeof line === "object" && line !== null){
+        try { headStr = JSON.stringify(line, null, 2); }
+        catch { headStr = String(line); }
+        obj = undefined; // 두 번째 줄은 별도 출력 안 함
+      } else {
+        headStr = String(line);
       }
+      // 2) 두 번째 인자가 객체/배열이면 JSON으로 변환
+      let tailStr = "";
+      if (obj !== undefined){
+        try { tailStr = `\n${JSON.stringify(obj, null, 2)}`; }
+        catch { tailStr = `\n${String(obj)}`; }
+      }
+      // 3) 과도한 출력 보호(200KB 이상은 잘라냄)
+      const cap = (txt)=> (txt.length > 200_000 ? txt.slice(0, 200_000) + "\n...[truncated]..." : txt);
+      let s = `[${ts}] ${cap(headStr)}${cap(tailStr)}`;
       if (SEQ.log.textContent === "-" || !SEQ.log.textContent) {
         SEQ.log.textContent = s;
       } else {
@@ -347,6 +357,54 @@
       if (Array.isArray(status.executables)) return status.executables;
       return [];
     }
+    
+    // dms-system과 동일 규칙: "executables"의 select=true가 표 대상,
+    // running은 processes.running(없으면 executables.status 문자열)로 판단
+    // 선택된(executables.select=true) 프로세스만 표시하되,
+    // 실행/연결 상태는 processes/executables/data 를 모두 병합해서 판단
+    function selectedProcList(status){
+      if (!status) return [];
+      const execs = Array.isArray(status.executables) ? status.executables : [];
+      const procs = Array.isArray(status.processes) ? status.processes : [];
+      const dataObjs = (status.data && typeof status.data === "object") ? Object.values(status.data) : [];
+
+      // 상태 병합 맵 구성 (name 단위로 가장 풍부한 필드가 남도록 덮어쓰기)
+      const stateMap = Object.create(null);
+      const ingest = (arr)=> {
+        for (const x of (arr||[])){
+          if (!x || !x.name) continue;
+          stateMap[x.name] = { ...(stateMap[x.name]||{}), ...x };
+        }
+      };
+      ingest(procs);      // 보통 여기에 running(boolean)이 있음
+      ingest(execs);      // 일부 배포에선 status 문자열이 여기 존재
+      ingest(dataObjs);   // 구버전/커스텀 배포에서 여기에 상태가 섞여 있음
+
+      const normRunning = (v)=>{
+        if (typeof v === "boolean") return v;
+        const s = String(v||"").trim().toLowerCase();
+        // 다양한 표현 대응
+        return s === "running" || s === "started" || s === "ok" || s === "online";
+      };
+
+      // executables 중 선택된 것만, 병합된 상태로 반환
+      return execs
+        .filter(e => e && e.select === true)
+        .map(e => {
+          const ref = stateMap[e.name] || {};
+          const running = normRunning(
+            ref.running ?? ref.status ?? e.running ?? e.status
+          );
+          return {
+            name: e.name,
+            alias: e.alias || ref.alias || "",
+            select: true,
+            running,
+            connection_state: ref.connection_state || e.connection_state || null,
+            // 버전/날짜가 다른 곳에 있다면 이후 applyOverlays에서 덮임
+          };
+        });
+    }
     // 노드 셀: 프로세스 기준 인덱스/총계 표기로 변경 (예: 10.82.104.201:19776 (1/9))
     function nodeCellHtml(n, procIndex, procTotal){
       const href = `/proxy/${encodeURIComponent(n.name)}/dms-system.html`;
@@ -356,12 +414,17 @@
     }
 
     function applyOverlays(data){
-      const extra = (data && data.extra) || {};
-      const verMap = extra.versions || {};
-      const presdVer = extra.presd_versions || {};
-      const conn = extra.connected_daemons || {};
-      const presdIps = extra.presd_ips || [];
-      const nodes = Array.isArray(data.nodes) ? data.nodes : [];
+      const extra   = (data && data.extra) || {};
+      const verMap  = extra.versions || {};
+      const presdVer= extra.presd_versions || {};
+      const conn    = extra.connected_daemons || {};
+      const presdIps= extra.presd_ips || [];
+      const nodes   = Array.isArray(data.nodes) ? data.nodes : [];
+
+      const ipFromHost = (s)=>{
+        const m = String(s||"").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
+        return m ? m[0] : String(s||"");
+      };
       const toList = (status)=>{
         if (!status) return [];
         if (status.data && typeof status.data==="object") return Object.values(status.data);
@@ -369,14 +432,28 @@
         if (Array.isArray(status.executables)) return status.executables;
         return [];
       };
+      const hasNonDash = v => (typeof v === "string") ? v.trim() !== "-" && v.trim() !== "" : !!v;
+
       for (const n of nodes){
+        const nodeIp = ipFromHost(n.host);
         const procs = toList(n.status);
         for (const p of procs){
           if (!p || !p.name) continue;
-          const ip = p.ip || p.IP || p.addr || p.address || "";
-          if (p.name === "PreSd" && ip && presdVer[ip]){
-            p.version = presdVer[ip].version || "-";
-            p.version_date = presdVer[ip].date || "-";
+
+          // ---- (1) 버전 오버레이 ----
+          if (p.name === "PreSd"){
+            const src =
+              presdVer[nodeIp] ||
+              (verMap.PreSd && (verMap.PreSd[nodeIp] || (verMap.PreSd.byIp && verMap.PreSd.byIp[nodeIp]))) ||
+              null;
+            if (src){
+              p.version = src.version || "-";
+              p.version_date = src.date || "-";
+            } else if (verMap.PreSd && verMap.PreSd.version) {
+              // fallback (집계형)
+              p.version = verMap.PreSd.version || "-";
+              p.version_date = verMap.PreSd.date || "-";
+            }
           } else if (p.name === "MMd" && verMap.MMd){
             p.version = verMap.MMd.version || "-";
             p.version_date = verMap.MMd.date || "-";
@@ -384,27 +461,41 @@
             p.version = verMap[p.name].version || "-";
             p.version_date = verMap[p.name].date || "-";
           }
-          if (conn.SPd && (p.name==="MMd" || p.name==="MMc")){
+
+          // ---- (2) PCd connect 응답 기반 CONNECTED 판정만 적용 ----
+          // 일반 데몬
+          if (conn && typeof conn === "object" && conn[p.name] === true){
             p.connection_state = "CONNECTED";
           }
-          if (conn.PreSd && p.name==="PreSd"){
-            if (!presdIps.length || (ip && presdIps.includes(ip))){
+          // PreSd는 IP별 허용 목록
+          if (p.name === "PreSd" && conn && conn.PreSd === true){
+            if (!presdIps.length || presdIps.includes(nodeIp)){
               p.connection_state = "CONNECTED";
             }
-          }
-          if (conn[p.name]){
-            p.connection_state = "CONNECTED";
           }
         }
       }
     }
-
     function render(data){
       applyOverlays(data);
       OMS_ALIAS_MAP = (data && data.extra && data.extra.alias_map) || {};
       lastData=data;
 
       const hbSecRaw = Number(data && data.heartbeat_interval_sec);
+
+      // A안: versions / presd_versions를 한 번 꺼내서 표 렌더링에 사용
+      const VERS = (data && data.extra && data.extra.versions) || {};
+      const PRESD_VERS = (data && data.extra && data.extra.presd_versions) || {};
+      // 폴백용 전역 저장(선택)
+      window.__omsLastState = window.__omsLastState || {};
+      window.__omsLastState.versions = VERS;
+      window.__omsLastState.presd_versions = PRESD_VERS;
+      // 노드의 host 문자열에서 IP만 추출
+      const ipOf = (s)=>{
+        const m = String(s||"").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
+        return m ? m[0] : String(s||"");
+      };
+
       if (!Number.isNaN(hbSecRaw) && hbSecRaw > 0) {
         const nextMs = Math.max(800, Math.min(10000, Math.floor(hbSecRaw * 1000)));
         if (!RA_LOCK && nextMs !== POLL_MS) {
@@ -416,11 +507,11 @@
       }
 
       const nodes = Array.isArray(data.nodes)? data.nodes : [];
-      // 전체 선택된 프로세스 개수 계산
+      // 전체 선택된 프로세스 개수 계산 (executables.select 기준)
       let procTotal = 0;
       for (const _n of nodes){
-        const _all = toProcList(_n.status);
-        procTotal += _all.filter(p=>p && p.select===true).length;
+        const _sel = selectedProcList(_n.status);
+        procTotal += _sel.length;
       }
       const bullet = "\u2022";
       META.textContent = `nodes: ${nodes.length} ${bullet} processes: ${procTotal}`;
@@ -430,9 +521,8 @@
       }
       for(let i=0;i<nodes.length;i++){
         const n=nodes[i];
-        const all=toProcList(n.status);
-        const shown = all.filter(p=>p && p.select===true);
-        if (!n.status || all.length===0){
+        const shown = selectedProcList(n.status);
+        if (!n.status){
           TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,0,0)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
         }
         if (shown.length===0){
@@ -440,14 +530,39 @@
         }
         for(let j=0;j<shown.length;j++){
           const p = shown[j];
-          const running=!!p.running;
+          const running = !!p.running;
+          // A안: 행마다 버전 텍스트를 versions 맵에서 계산
+          const nodeIp = ipOf(n.host);
+          // NOTE: PreSd는 IP별 버전이므로 외부 resolveVersion을 쓰지 않고 로컬 맵을 직접 참조한다.
+          const _rv = (proc, ip) => {
+            // applyOverlays에서 p.version/p.version_date를 넣어줬다면 그것을 최우선 사용
+            if (p && typeof p.version === "string" && p.version.trim()) return p.version;
+            if (proc === "PreSd") {
+              return (PRESD_VERS[ip]?.version)
+                   || (VERS.PreSd?.[ip]?.version)
+                   || (VERS.PreSd?.byIp?.[ip]?.version)
+                   || (VERS.PreSd?.version)
+                   || "-";
+            }
+            return (VERS[proc]?.version) || "-";
+          };   
           const conn=(p.connection_state||"").toUpperCase();
-          const badge = conn==="CONNECTED" ? `<span class="pill badge-ok">CONNECTED</span>` :
-                        conn==="STOPPED"   ? `<span class="pill badge-bad">STOPPED</span>` :
-                        (running ? `<span class="pill badge-ok">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`);
-          const verHtml = (p.version || p.version_date)
-            ? `${(p.version||"-")}<br><span class="muted">${(p.version_date||"-")}</span>`
-            : `<span class="muted">-<br>-</span>`;
+          const badge =
+            conn === "CONNECTED" ? `<span class="pill badge-connected">CONNECTED</span>` :
+            conn === "STOPPED"   ? `<span class="pill badge-bad">STOPPED</span>` :
+            (running ? `<span class="pill badge-running">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`);          // 날짜는 서버가 date를 함께 내려줄 때만 표시(PreSd는 IP별 date 지원)
+          const rowIsRunning = running || conn === "CONNECTED";
+          const verText = _rv(p.name, nodeIp);
+          const dateText = (p && typeof p.version_date === "string" && p.version_date.trim())
+            ? p.version_date
+            : (p.name === "PreSd"
+                ? (PRESD_VERS[nodeIp]?.date
+                   || VERS.PreSd?.[nodeIp]?.date
+                   || VERS.PreSd?.byIp?.[nodeIp]?.date
+                   || VERS.PreSd?.date
+                   || "-")
+                : (VERS[p.name]?.date || "-"));
+          const verHtml = `${verText}<br><span class="muted">${dateText}</span>`;
           const dmsAlias = (p.alias || "").trim();
           const omsAlias = (OMS_ALIAS_MAP[p.name] || "").trim();
           let aliasHtml = "";
@@ -459,7 +574,7 @@
           }
 
           TBody.insertAdjacentHTML("beforeend", `
-            <tr class="${running?'running':'other'}">
+            <tr class="${rowIsRunning ? 'running' : 'other'}">
               <td>${nodeCellHtml(n, j, shown.length)}</td>
               <td>${p.name||"-"}${aliasHtml}</td>
               <td>${verHtml}</td>
@@ -502,18 +617,15 @@
     }
     function calcProgressFromOmsStatus(omsStatus){
       const nodes = Array.isArray(omsStatus && omsStatus.nodes) ? omsStatus.nodes : [];
-      let total=0, run=0, stop=0, unknown=0;
+      let total=0, run=0, stop=0;
       for (const n of nodes){
-        const list = pluckProcs(n && n.status);
+        const list = selectedProcList(n && n.status);
         for (const p of list){
-          if (!p || p.select !== true) continue;
           total += 1;
-          if (p.running === true) run += 1;
-          else if (p.running === false) stop += 1;
-          else unknown += 1;
+          if (p.running) run += 1; else stop += 1;
         }
       }
-      return { total, run, stop, unknown };
+      return { total, run, stop, unknown: 0 };
     }
     const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
 
@@ -711,7 +823,7 @@
             mtd_port: Number(SEQ.port?.value||19765),
             dmpdip:   (SEQ.mgmt?.value||"").trim(),
             daemon_map: dm,
-            trace: true,
+            trace: !!SEQ.verbose?.checked,   // 기본 false
             return_partial: true,
             dry_run: !!SEQ.dryRun?.checked
           };

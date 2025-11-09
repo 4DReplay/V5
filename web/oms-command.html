@@ -91,7 +91,6 @@
 }'></textarea>
 
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
-          <label style="gap:6px"><input type="checkbox" id="cbSanitize" checked> Sanitize DaemonList (EMd/CCd/SCd/GCd/PCd만 허용)</label>
           <label style="gap:6px"><input type="checkbox" id="cbAutoToken" checked> Auto Token</label>
           <span class="right muted">파일 또는 붙여넣기 후 바로 “Send” 가능</span>
         </div>
@@ -180,7 +179,6 @@ const RESP_META = document.getElementById("respMeta");
 const IN_HOST   = document.getElementById("inputHost");
 const IN_PORT   = document.getElementById("inputPort");
 const TXT_JSON  = document.getElementById("inputJson");
-const CB_SAN    = document.getElementById("cbSanitize");
 const CB_TOKEN  = document.getElementById("cbAutoToken");
 
 document.getElementById("btnBack").addEventListener("click", ()=> location.href="oms-system.html");
@@ -275,14 +273,7 @@ function pickMTdTarget(status){
   }
   return null;
 }
-function sanitizeDaemonList(list){
-  const allowed = ["EMd","CCd","SCd","GCd","PCd","SPd"]; // MTd/PreSd 제외
-  const out = {};
-  for (const [k,v] of Object.entries(list||{})){
-    if (allowed.includes(k)) out[k] = v;
-  }
-  return out;
-}
+
 function parseJsonLoose(text){
   text = String(text||"");
   text = text.replace(/\/\*[\s\S]*?\*\//g, "");               // /* */ 주석 제거
@@ -317,14 +308,6 @@ function normalizeAndValidate(msg, hostForGuess){
   // 2) To=MMd → SPd 자동 치환(대소문자 무시)
   if (typeof msg.To === "string" && msg.To.trim().toUpperCase() === "MMD") {
     msg.To = "SPd";
-  }
-
-  // 3) To 허용 목록 제한 제거(이전 검증 로직 삭제됨)
-
-  // 4) DaemonList 정화(옵션)
-  if (msg.DaemonList && CB_SAN.checked) {
-    msg.DaemonList = sanitizeDaemonList(msg.DaemonList);
-    if ("MTd" in msg.DaemonList) delete msg.DaemonList["MTd"];
   }
 
   // 5) DMPDIP 보정

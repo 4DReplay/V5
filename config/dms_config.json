@@ -2,7 +2,7 @@
   "http_host": "0.0.0.0",
   "http_port": 19776,
   "log_dir": "logs/DMS",
-  "heartbeat_interval_sec": 4,
+  "heartbeat_interval_sec": 3,
   "executables": [
     {
       "name": "MTd",
@@ -10,7 +10,7 @@
       "path": "daemon/MTd/MTd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -19,7 +19,7 @@
       "path": "daemon/EMd/EMd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -28,7 +28,7 @@
       "path": "daemon/CCd/CCd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -50,9 +50,9 @@
       "start_on_boot": true
     },
     {
-      "name": "PreSd",
-      "alias": "Pre Storage [#1]",
-      "path": "daemon/PreSd/PreSd.exe",
+      "name": "MMd",
+      "alias": "Multimedia Maker",
+      "path": "daemon/MMd/MMdServer.exe",
       "args": [],
       "select": true,
       "auto_restart": true,
@@ -79,6 +79,15 @@
       "shell": false
     },
     {
+      "name": "PreSd",
+      "alias": "Pre Storage [#1]",
+      "path": "daemon/PreSd/PreSd.exe",
+      "args": [],
+      "select": true,
+      "auto_restart": true,
+      "start_on_boot": true
+    },
+    {
       "name": "AIc",
       "alias": "AI Client [#1]",
       "path": "C:\\Program Files\\Python310\\python.exe",
@@ -97,15 +106,6 @@
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false
-    },
-    {
-      "name": "MMd",
-      "alias": "Multimedia Maker",
-      "path": "daemon/MMd/MMdServer.exe",
-      "args": [],
-      "select": true,
-      "auto_restart": true,
-      "start_on_boot": true
     },
     {
       "name": "MMc",
@@ -161,6 +161,5 @@
       "auto_restart": true,
       "start_on_boot": true
     }
-  ],
-  "port": 19776
+  ]
 }

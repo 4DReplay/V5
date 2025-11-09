@@ -17,7 +17,7 @@
 # 옵션:
 #   -PythonPath "C:\Program Files\Python310\python.exe"
 #   -StartType auto|delayed-auto|demand|disabled   (default: delayed-auto)
-#   -OpenFirewall                                   (TCP 51050 허용)
+#   -OpenFirewall                                   (TCP 19776 허용)
 #   -Uninstall                                      (서비스 제거만)
 #
 # 요구:
@@ -272,9 +272,9 @@ function Install-ViaWin32ServiceUtil {
 
   # 방화벽(선택)
   if ($OpenFirewall) {
-    $rule = "DMs-51050"
+    $rule = "DMs-19776"
     if (-not (Get-NetFirewallRule -DisplayName $rule -ErrorAction SilentlyContinue)) {
-      New-NetFirewallRule -DisplayName $rule -Direction Inbound -Action Allow -Protocol TCP -LocalPort 51050 | Out-Null
+      New-NetFirewallRule -DisplayName $rule -Direction Inbound -Action Allow -Protocol TCP -LocalPort 19776 | Out-Null
       Write-Info "Firewall rule '$rule' added."
     } else {
       Write-Info "Firewall rule '$rule' already exists."

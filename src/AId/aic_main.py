@@ -15,7 +15,13 @@ import atexit
 from threading import Semaphore
 
 # ── service/env ──────────────────────────────────────────────────────────────
-SERVICE_MODE = os.getenv("FD_SERVICE", "0") == "1"
+def _is_service_env():
+    try:
+        return not hasattr(sys, "stdin") or (sys.stdin is None) or (not sys.stdin.isatty())
+    except Exception:
+        return True
+SERVICE_MODE = (os.getenv("FD_SERVICE", "0") == "1") or _is_service_env()
+
 os.environ.setdefault("PYTHONUNBUFFERED", "1")
 os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["AID_DAEMON_NAME"] = r"AIc"
