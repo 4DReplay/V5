@@ -6,6 +6,8 @@ import socket
 import os
 import http.client, sys
 import json, re, time, threading, traceback
+import subprocess
+import errno
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -201,6 +203,71 @@ def _is_restarted(base: dict, cur: dict, sent_at: float, saw_down: bool) -> bool
         return bool(saw_down)
     return False
 
+# ─────────────────────────────────────────────────────────────
+# ping
+# ─────────────────────────────────────────────────────────────
+
+def _tcp_probe(ip: str, port: int = 554, timeout_sec: float = 1.0) -> bool | None:
+    """
+    TCP 연결 시도. 성공이면 True.
+    연결거부(ECONNREFUSED)는 '호스트는 살아있음'으로 보고 True.
+    타임아웃/네트워크 에러면 False.
+    파라미터 이상/기타 예외 시 None.
+    """
+    try:
+        with socket.create_connection((ip, int(port)), timeout=timeout_sec):
+            return True
+    except socket.timeout:
+        return False
+    except OSError as e:
+        # 연결 거부면 IP는 살아있다고 간주
+        if isinstance(e, ConnectionRefusedError) or getattr(e, "errno", None) == errno.ECONNREFUSED:
+            return True
+        # 즉시 도달 불가/라우팅 없음 등은 False
+        if getattr(e, "errno", None) in (errno.ENETUNREACH, errno.EHOSTUNREACH, errno.EHOSTDOWN):
+            return False
+        # 기타는 판단 불가
+        return None
+    except Exception:
+        return None
+
+def _icmp_ping(ip: str, timeout_sec: float = 1.0) -> bool | None:
+    """
+    시스템 ping 사용. 성공시 True, 실패시 False, 예외시 None
+    Windows/Unix 모두 지원.
+    """
+    try:
+        is_win = os.name == "nt"
+        if is_win:
+            # -n 1(1회), -w timeout(ms)
+            cmd = ["ping", "-n", "1", "-w", str(int(timeout_sec * 1000)), ip]
+        else:
+            # -c 1(1회), -W timeout(s)
+            cmd = ["ping", "-c", "1", "-W", str(int(timeout_sec)), ip]
+        ret = subprocess.run(
+            cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=timeout_sec + 0.5
+        ).returncode
+        return ret == 0
+    except Exception:
+        return None
+
+def _ping_check(ip: str, method: str = "auto", port: int = 554, timeout_sec: float = 1.0) -> tuple[bool | None, str]:
+    """
+    method: 'tcp' | 'icmp' | 'auto'
+    반환: (alive, used_method)
+      alive: True/False/None(None은 판단불가)
+    """
+    m = (method or "auto").lower()
+    if m == "tcp":
+        return _tcp_probe(ip, port, timeout_sec), "tcp"
+    if m == "icmp":
+        return _icmp_ping(ip, timeout_sec), "icmp"
+
+    # auto: TCP 우선 → 판단불가면 ICMP 시도
+    a = _tcp_probe(ip, port, timeout_sec)
+    if a is not None:
+        return a, "tcp"
+    return _icmp_ping(ip, timeout_sec), "icmp"
 
 # ─────────────────────────────────────────────────────────────
 # connection state (시퀀스 결과 저장)
@@ -836,6 +903,32 @@ class Orchestrator:
                             except: pass
                         return
 
+                    # ── ping
+                    if parts == ["oms", "ping"]:
+                        qs = parse_qs(urlsplit(self.path).query)
+                        ip = (qs.get("ip") or [""])[0].strip()
+                        if not ip:
+                            return self._write(400, b'{"ok":false,"error":"ip required"}')
+                        # 옵션: TCP 포트/방법/타임아웃(ms)
+                        port = int((qs.get("port") or ["554"])[0] or 554)
+                        method = (qs.get("method") or ["auto"])[0].lower()  # auto|tcp|icmp
+                        try:
+                            t_ms = int((qs.get("timeout") or ["1000"])[0])
+                        except Exception:
+                            t_ms = 1000
+                        timeout_sec = max(0.2, min(5.0, t_ms / 1000.0))
+                        alive, used = _ping_check(ip, method=method, port=port, timeout_sec=timeout_sec)
+
+                        # alive=None(판단불가)도 프론트에서 흔들리지 않게 ok:true로 내려주되 alive=null 표기
+                        payload = {
+                            "ok": True,
+                            "alive": (None if alive is None else bool(alive)),
+                            "method": used,
+                            "port": port,
+                            "timeout_ms": int(timeout_sec * 1000)
+                        }
+                        return self._write(200, json.dumps(payload).encode("utf-8"))
+                    
                     return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
                     return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())

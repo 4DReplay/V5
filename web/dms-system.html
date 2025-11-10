@@ -4,38 +4,40 @@
   <meta charset="utf-8" />
   <title>4DReplay V5 - DMs System</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#1f2937; --line2:#243045;
-      --ok:#16a34a; --bad:#ef4444; --off:#52525b;
-      --btn:#1e40af; --btn2:#334155;
+  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script>
+  (function () {
+    // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+    const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+    const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+
+    const CSS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common.css",
+      "./4d-common.css",
+    ];
+    const JS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common-style.js",
+      "./4d-common-style.js",
+    ];
+
+    function injectCSS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("link");
+      el.rel = "stylesheet"; el.href = list[i] + bust;
+      el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i+1); };
+      document.head.appendChild(el);
     }
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,
-      "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Noto Emoji","EmojiOne Color","Twemoji Mozilla",sans-serif;margin:24px}
-    h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
-    h2 small{font-size:14px;opacity:.8}
-    .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
-    .toolbar small{opacity:.8;margin-left:8px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease;
-      font-family:inherit;}
-    button.btn-secondary{background:var(--btn2)}
-    button:hover{filter:brightness(1.15)}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid var(--line2);padding:10px}
-    th{background:#0f172a;text-align:left}
-    tr.running{background:#06220a}
-    tr.stopped{background:#1b0f0f}
-    tr.disabled{background:#111827}
-    .pill{display:inline-block;padding:3px 10px;border-radius:14px;font-size:12px;border:1px solid}
-    .ok{background:#0d3b1a;border-color:#16a34a;color:#a7f3d0}
-    .bad{background:#3b0d0d;border-color:#ef4444;color:#fecaca}
-    .off{background:#27272a;border-color:#52525b;color:#d4d4d8}
-    .select-cell{display:flex;gap:6px;align-items:center}
-    .namecell small{opacity:.8}
-    #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
-  </style>
+    function injectJS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("script");
+      el.defer = true; el.src = list[i] + bust;
+      el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
+  })();
+  </script>
 </head>
 <body>
   <h2>
@@ -57,8 +59,8 @@
   <table id="grid">
     <thead>
       <tr>
-        <th style="width:110px">Select</th>
-        <th style="width:280px">Name / Alias</th>
+        <!-- Select 제거 -->
+        <th style="width:320px">Name / Alias</th>
         <th>Exe</th>
         <th style="width:120px">PID</th>
         <th style="width:160px">Status</th>
@@ -72,7 +74,7 @@
   <p class="small" id="beat">Auto refresh: -</p>
 
 <script>
-/* ───────────────── Proxy 지원 ───────────────── */
+/* ─────────────── Proxy 지원 ─────────────── */
 const __PROXY_PREFIX__ = (() => {
   const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
   return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
@@ -101,7 +103,7 @@ const __PROXY_PREFIX__ = (() => {
   };
 })();
 
-/* ───────────────── 공통 API ───────────────── */
+/* ─────────────── 공통 API ─────────────── */
 async function api(path, opts={}){
   const r = await fetch(path, Object.assign({cache:"no-store"}, opts));
   if(!r.ok){ const t=await r.text().catch(()=>String(r.status)); throw new Error(t||`HTTP ${r.status}`); }
@@ -109,7 +111,7 @@ async function api(path, opts={}){
   return ct.includes("application/json") ? r.json() : r.text();
 }
 
-/* ───────────────── DOM ───────────────── */
+/* ─────────────── DOM ─────────────── */
 const TBody = document.querySelector("#grid tbody");
 const ERR   = document.getElementById("err");
 const TITLE = document.getElementById("titleHost");
@@ -117,9 +119,8 @@ const BEAT  = document.getElementById("beat");
 const BUSY  = document.getElementById("busyMsg");
 if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
 
-/* ───────────────── 상태 UI ───────────────── */
-let CFG = null;    // /config-format 결과(JSON)
-let STATUS = null; // /status 결과(JSON)
+let CFG = null;
+let STATUS = null;
 
 function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
 function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
@@ -134,7 +135,7 @@ function setBusy(flag,msg=""){
   BUSY.textContent = msg || "";
 }
 
-/* ───────────────── 렌더링 ───────────────── */
+/* ─────────────── 렌더링 ─────────────── */
 function toList(status){
   if (!status) return [];
   if (status.data && typeof status.data === "object") return Object.values(status.data);
@@ -142,23 +143,17 @@ function toList(status){
   if (Array.isArray(status.executables)) return status.executables;
   return [];
 }
+
 function row(item){
   const tr = document.createElement("tr");
-  const selected = item.select === true;
-  const running  = !!item.running;
-  tr.className = selected ? (running ? "running" : "stopped") : "disabled";
+  const running = !!item.running;
+  tr.className = running ? "running" : "stopped";
+
   const exeShort = (item.exe||"").split(/[\\/]/).slice(-2).join("/");
-  const badge = !selected
-      ? `<span class="pill off">DISABLED</span>`
-      : (running ? `<span class="pill ok">RUNNING</span>`
-                 : `<span class="pill bad">STOPPED</span>`);
+  const badge = running ? `<span class="pill ok">RUNNING</span>`
+                        : `<span class="pill bad">STOPPED</span>`;
+
   tr.innerHTML = `
-    <td>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" data-a="toggle" data-n="${item.name}" ${selected?"checked":""}>
-        <span>${selected?"on":"off"}</span>
-      </div>
-    </td>
     <td>
       <div style="font-weight:700">${item.name||"-"}</div>
       ${item.alias ? `<div class="small">${item.alias}</div>` : `<div class="small">-</div>`}
@@ -168,14 +163,15 @@ function row(item){
     <td>${badge}</td>
     <td>${item.last_rc ?? "-"}</td>
     <td>
-      <button data-a="start"   data-n="${item.name}" ${selected?"":"disabled"}>Start</button>
+      <button data-a="start" data-n="${item.name}">Start</button>
       <button class="btn-secondary" data-a="stop" data-n="${item.name}">Stop</button>
-      <button class="btn-secondary" data-a="restart" data-n="${item.name}" ${selected?"":"disabled"}>Restart</button>
+      <button class="btn-secondary" data-a="restart" data-n="${item.name}">Restart</button>
       <button class="btn-secondary" data-a="logs" data-n="${item.name}">📜 Logs</button>
     </td>
   `;
   return tr;
 }
+
 function render(){
   clearErr();
   const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
@@ -183,12 +179,13 @@ function render(){
   for (const s of toList(STATUS)) statusMap[s.name] = s;
   TBody.innerHTML = "";
   for (const c of cfgExecs){
+    // ✅ select==true 인 항목만 표시
+    if (!c.select) continue;
     const s = statusMap[c.name] || {};
     const item = {
       name: c.name,
       alias: c.alias || s.alias || "",
       exe: c.path || s.path || s.exe || "",
-      select: c.select === true,
       running: !!s.running,
       pid: s.pid ?? "-",
       last_rc: (s.last_rc ?? s.last_exit_code) ?? "-"
@@ -197,7 +194,7 @@ function render(){
   }
 }
 
-/* ───────────────── 이벤트 바인딩 ───────────────── */
+/* ─────────────── 버튼 액션 ─────────────── */
 document.getElementById("btnConfig").onclick = ()=>location.href="dms-config.html";
 
 document.getElementById("btnStartAll").onclick = async ()=>{
@@ -222,90 +219,73 @@ document.getElementById("btnStopAll").onclick = async ()=>{
 
 document.getElementById("btnRestartAll").onclick = async ()=>{
   if (IS_BUSY) return;
-    const startedAt = Date.now();
-    const fmt = (ms)=>`${Math.round(ms/1000)}s`;
-    const selectedNames = () => {
-      const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
-      return cfgExecs.filter(e => e.select === true).map(e => e.name);
-    };
-    const progressLine = () => {
-      // STATUS 기반 진행 카운트
-      const names = selectedNames();
-      const stMap = {}; for (const s of toList(STATUS)) stMap[s.name] = s;
-      let run=0, stop=0, unknown=0;
-      for (const n of names){
-        const s = stMap[n];
-        if (!s) { unknown++; continue; }
-        if (s.running) run++; else stop++;
-      }
-      return { total:names.length, run, stop, unknown };
-    };
-    const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
-    const withTimeout = (p, ms)=>Promise.race([
-      p.then(v=>({ok:true, v})).catch(e=>({ok:false, e})),
-      new Promise(r=>setTimeout(()=>r({ok:false, timeout:true}), ms))
-    ]);
-    try{
-      setBusy(true, "RESTART-ALL...");
-      clearErr();
-
-      // 1) 서버에 재시작 요청을 발사 (대기는 나중에)
-      const req = api("/restart-all", {method:"POST"});
-
-      // 2) 진행 상태 폴링
-      let allRunningSeenAt = 0;
-      const hardDeadline = Date.now() + 30_000; // 30s 상한
-      while (Date.now() < hardDeadline) {
-        await tick();
-        const p = progressLine();
-        BUSY.textContent = `RESTART-ALL... (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${fmt(Date.now()-startedAt)})`;
-        const allRunning = (p.total>0 && p.run === p.total);
-        if (allRunning) {
-          if (!allRunningSeenAt) allRunningSeenAt = Date.now();
-          // all-running 되면 잠깐(800ms) 더 보며 안정화 시간을 준다
-          if (Date.now() - allRunningSeenAt > 800) break;
-        }
-        await sleep(500);
-      }
-
-      // 3) 서버 응답을 최대 5초까지만 기다린다. 안 오면 임시 요약 확정.
-      const got = await withTimeout(req, 5000);
-
-      // 4) 최종 요약(성공/실패 개수) 출력      
-      const sum = (bag) => {
-        // bag = {"results": {"name": {"ok":true|false, ...}, ...}}
-        if (!bag || !bag.results) return {ok:0, fail:0, fails:[]};
-        let ok=0, fail=0, fails=[];
-        for (const [n, r] of Object.entries(bag.results)){
-          if (r && r.ok) ok++; else { fail++; fails.push(n); }
-        }
-        return {ok, fail, fails};
-      };
-
-      let finalMsg;
-      if (got.ok && !got.timeout) {
-        // 정확 요약 (서버 응답 사용)
-        const resp = got.v;
-        const stopSum  = sum(resp.stop);
-        const startSum = sum(resp.start);
-        const took = fmt(Date.now()-startedAt);
-        const fallback = resp && resp.fallback ? " (fallback mode)" : "";
-        finalMsg = `Restart-All done${fallback}: stop ok ${stopSum.ok}, fail ${stopSum.fail}; start ok ${startSum.ok}, fail ${startSum.fail}; elapsed ${took}`;
-        // 실패 항목 에러 박스
-        const failList = [...stopSum.fails, ...startSum.fails];
-        if (failList.length){ showErr("Restart-All partial failures: " + failList.join(", ")); }
-      } else {
-        // 임시 요약(STATUS 기반) – 응답 지연/미수신 시
-        const p = progressLine();
-        const took = fmt(Date.now()-startedAt);
-        const fails = Math.max(0, p.total - p.run);
-        finalMsg = `Restart-All done (live): start ok ${p.run}, fail ${fails}; elapsed ${took}`;
-      }
-    }catch(e){
-      showErr("Restart-All failed: " + (e.message||e));
-    }finally{
-      setBusy(false);
+  const startedAt = Date.now();
+  const fmt = (ms)=>`${Math.round(ms/1000)}s`;
+  const allNames = () => {
+    const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+    return cfgExecs.filter(e=>e.select===true).map(e => e.name);
+  };
+  const progressLine = () => {
+    const names = allNames();
+    const stMap = {}; for (const s of toList(STATUS)) stMap[s.name] = s;
+    let run=0, stop=0, unknown=0;
+    for (const n of names){
+      const s = stMap[n];
+      if (!s) { unknown++; continue; }
+      if (s.running) run++; else stop++;
     }
+    return { total:names.length, run, stop, unknown };
+  };
+  const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
+  const withTimeout = (p, ms)=>Promise.race([
+    p.then(v=>({ok:true, v})).catch(e=>({ok:false, e})),
+    new Promise(r=>setTimeout(()=>r({ok:false, timeout:true}), ms))
+  ]);
+
+  try{
+    setBusy(true, "RESTART-ALL...");
+    clearErr();
+
+    const req = api("/restart-all", {method:"POST"});
+
+    let allRunningSeenAt = 0;
+    const hardDeadline = Date.now() + 30_000;
+    while (Date.now() < hardDeadline) {
+      await tick();
+      const p = progressLine();
+      BUSY.textContent = `RESTART-ALL... (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${fmt(Date.now()-startedAt)})`;
+      const allRunning = (p.total>0 && p.run === p.total);
+      if (allRunning) {
+        if (!allRunningSeenAt) allRunningSeenAt = Date.now();
+        if (Date.now() - allRunningSeenAt > 800) break;
+      }
+      await sleep(500);
+    }
+
+    const got = await withTimeout(req, 5000);
+    const sum = (bag) => {
+      if (!bag || !bag.results) return {ok:0, fail:0, fails:[]};
+      let ok=0, fail=0, fails=[];
+      for (const [n, r] of Object.entries(bag.results)){
+        if (r && r.ok) ok++; else { fail++; fails.push(n); }
+      }
+      return {ok, fail, fails};
+    };
+
+    if (got.ok && !got.timeout) {
+      const resp = got.v;
+      const stopSum  = sum(resp.stop);
+      const startSum = sum(resp.start);
+      const took = fmt(Date.now()-startedAt);
+      const fallback = resp && resp.fallback ? " (fallback mode)" : "";
+      const failList = [...stopSum.fails, ...startSum.fails];
+      if (failList.length){ showErr("Restart-All partial failures: " + failList.join(", ")); }
+    }
+  }catch(e){
+    showErr("Restart-All failed: " + (e.message||e));
+  }finally{
+    setBusy(false);
+  }
 };
 
 document.getElementById("btnReload").onclick = async ()=>{
@@ -315,46 +295,27 @@ document.getElementById("btnReload").onclick = async ()=>{
   finally { setBusy(false); }
 };
 
-/* 테이블 내 액션: select 토글, 개별 start/stop/restart/logs */
+/* ─────────────── 테이블 버튼 클릭 ─────────────── */
 TBody.addEventListener("click", async (ev)=>{
   const btn = ev.target.closest("button");
-  const chk = ev.target.closest('input[type="checkbox"][data-a="toggle"]');
-
-  if (chk){
-    try{
-      const name = chk.dataset.n;
-      const ex = CFG.executables.find(e=>e.name===name);
-      if (ex){ ex.select = chk.checked; }
-      const formatted = await api("/config-format", {method:"POST", body: JSON.stringify(CFG)});
-      await api("/config", {method:"POST", body: formatted.text});
-      await tick();
-    }catch(e){ showErr("Update select failed: "+(e.message||e)); }
-    return;
-  }
-
   if (!btn) return;
   const act = btn.dataset.a, name = btn.dataset.n;
   if (act === "logs"){
-    // 현재 경로가 /proxy/<node>/ 인 경우 그 <node>를 추출해 넘겨줌
     const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
     const node = m ? decodeURIComponent(m[1]) : "";
     const nodeQ = node ? `node=${encodeURIComponent(node)}&` : "";
-    // 절대 경로로 OMS의 뷰어를 연다 (프록시 base 무시)
     window.open(`/_/../web/log-viewer.html?${nodeQ}name=${encodeURIComponent(name)}&tail=50000`, "_blank");
-    // ↑ 만약 상위 경로 계산이 불편하면 그냥 아래처럼 절대 루트 사용
-    // window.open(`/web/log-viewer.html?${nodeQ}name=${encodeURIComponent(name)}&tail=50000`, "_blank");    
     return;
   }
   try{
     setBusy(true, `${act.toUpperCase()} ${name}...`);
     await api(`/${act}/${encodeURIComponent(name)}`, {method:"POST"});
-    // 서버가 일괄 관리 → 클라이언트는 곧바로 갱신만
     await tick();
   }catch(e){ showErr(`${act.toUpperCase()} failed: `+(e.message||e)); }
   finally{ setBusy(false); }
 });
 
-/* ───────────────── 주기 폴링 & 초기 로드 ───────────────── */
+/* ─────────────── 주기 갱신 ─────────────── */
 function pickDisplayHost(st){
   const pick = (o)=> {
     if (!o || typeof o !== "object") return "";
@@ -379,7 +340,6 @@ async function tick(){
     BEAT.textContent = `ON (${hb}s)`;
 
     if (!CFG){
-      // BUGFIX: 올바른 GET 사용
       const raw = await api("/config");
       const fm  = await api("/config-format", {method:"POST", body: raw});
       CFG = JSON.parse(fm.text);

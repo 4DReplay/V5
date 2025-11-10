@@ -147,11 +147,14 @@ function pkt_camera_connect_run(dmpdip){
     Token: makeToken(), Action:"run", DMPDIP: dmpdip
   };
 }
-function pkt_daemon_version(dmpdip, toName){
+// Switch 모델 정보 조회 (여러 IP를 한 번에)
+function pkt_switch_model_get(dmpdip, switchIps){
+  const list = (switchIps||[]).filter(Boolean).map(ip => ({ ip }));
   return {
-    Section1:"Daemon", Section2:"Information", Section3:"Version",
-    SendState:"request", From:"4DOMS", To: toName,
-    Token: makeToken(), Action:"set", DMPDIP: dmpdip
+    Section1:"Switch", Section2:"Information", Section3:"Model",
+    SendState:"request", From:"4DOMS", To:"SCd",
+    Token: makeToken(), Action:"get", DMPDIP: dmpdip,
+    Switches: list
   };
 }
 
@@ -221,8 +224,22 @@ function ensureStep1Inputs({host, port, dmpdip, dm}){
 }
 
 /* ---------- version helpers ---------- */
+/* ---------- version helpers (self-contained; no external builder deps) ---------- */
+function buildVersionMsg(dmpdip, toName, token){
+  return {
+    Section1: "Daemon",
+    Section2: "Information",
+    Section3: "Version",
+    SendState: "request",
+    From: "4DOMS",
+    To: toName,
+    Token: token || makeToken(),
+    Action: "set",
+    DMPDIP: dmpdip
+  };
+}
 async function fetchVersion(host, port, dmpdip, toName){
-  const msg = pkt_daemon_version(dmpdip, toName);
+  const msg = buildVersionMsg(dmpdip, toName);
   const r = await mtdSend(host, port, msg, 8);
   const ver = (r && r.Version && r.Version[toName]) || {};
   return { version: ver.version || "-", date: ver.date || "-" };
@@ -230,7 +247,7 @@ async function fetchVersion(host, port, dmpdip, toName){
 
 // Per-IP fallback for PreSd
 async function fetchPreSdVersionPerIp(host, port, dmpdip, ip){
-  const msg = pkt_daemon_version(dmpdip, "PreSd");
+  const msg = buildVersionMsg(dmpdip, "PreSd");
   msg.Expect = { ips:[ip], count: 1, wait_sec: 5 };
   const r = await mtdSend(host, port, msg, 8);
   const ver = (r && r.Version && r.Version.PreSd) || {};
@@ -241,7 +258,7 @@ async function fetchPreSdVersionPerIp(host, port, dmpdip, ip){
 async function fetchPreSdVersionsBatched(host, port, dmpdip, ips, waitSec=5, hardTimeoutMs=15000){
   if (!Array.isArray(ips) || ips.length===0) return { results:{}, pending:[], errors:{}, timedOut:false };
 
-  const msg = pkt_daemon_version(dmpdip, "PreSd");
+  const msg = buildVersionMsg(dmpdip, "PreSd");
   const token = msg.Token; // fixed token for batch + polls
   msg.Expect = { ips, count: Math.min(ips.length, 1), wait_sec: waitSec };
 
@@ -270,11 +287,7 @@ async function fetchPreSdVersionsBatched(host, port, dmpdip, ips, waitSec=5, har
   }
 
   // 2) token-poll loop (lightweight)
-  const poll = {
-    Section1:"Daemon", Section2:"Information", Section3:"Version",
-    SendState:"request", From:"4DOMS", To:"PreSd",
-    Token: token, Action:"set", DMPDIP: dmpdip
-  };
+  const poll = buildVersionMsg(dmpdip, "PreSd", token);
 
   while (pending.size > 0 && Date.now() < deadline) {
     try{
@@ -309,14 +322,16 @@ function parse_ccd_select(resp){
       .filter(c => !!c.IP);
 
     const grouped = {};
+    const switchSet = new Set();
     for (const r of ra){
       const pid = r.PreSd_id || r.presd_id || r.PreSd || "";
       if (!pid) continue;
       if (!grouped[pid]) grouped[pid] = { IP: pid, Mode: "replay", Cameras: [] };
       grouped[pid].Cameras.push({ Index: r.cam_idx ?? r.id, IP: r.ip, CameraModel: r.model || "" });
+      if (r.SCd_id) switchSet.add(r.SCd_id);
     }
     const presd_units = Object.values(grouped);
-    return { cameras, presd_units };
+    return { cameras, presd_units, switch_ips: Array.from(switchSet) };
   }
 
   const cams_src = resp?.Cameras || resp?.CameraList || resp?.CameraInfo || [];
@@ -325,6 +340,7 @@ function parse_ccd_select(resp){
     .map(c=>({ Index:c.Index, IP:(c.IP||c.IPAddress), CameraModel:(c.CameraModel||c.Model)||"" }))
     .filter(c=>!!c.IP);
   const presd_units = [];
+  const switch_ips = [];
   for (const u of pres_src){
     const ent = {
       IP: u.IP, Mode: u.Mode || "replay",
@@ -332,7 +348,7 @@ function parse_ccd_select(resp){
     };
     if (ent.IP) presd_units.push(ent);
   }
-  return { cameras, presd_units };
+  return { cameras, presd_units, switch_ips };
 }
 
 /* ---------- main initializer / UI binding ---------- */
@@ -508,14 +524,14 @@ window.initOmsSystem = function initOmsSystem(options){
       // Step3: CCd Select(get) via EMd
       if (_aborted) throw new Error("aborted");
       appendLog("== step3: CCd Select(get) via EMd ==");
-      let cameras = [], presd_units = [];
+      let cameras = [], presd_units = [], switch_ips = [];
       if (!EL.dry.checked){
         msg3 = pkt_ccd_select_get(dmpdip);
         r3 = await mtdSend(host, port, msg3, 12);
-        ({ cameras, presd_units } = parse_ccd_select(r3));
-        appendLog({parsed: {cameras, presd_units}});
+        ({ cameras, presd_units, switch_ips } = parse_ccd_select(r3));
+        appendLog({parsed: {cameras, presd_units, switch_ips}});
       } else { appendLog({dry:"skip step3 (no parsed data)"}); }
-      await upsertState({ dmpdip, cameras, presd: presd_units });
+      await upsertState({ dmpdip, cameras, presd: presd_units, switch_ips });
 
       // Step4: PreSd connect(set) via PCd (BATched ONCE)
       if (_aborted) throw new Error("aborted");

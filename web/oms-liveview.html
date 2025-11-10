@@ -4,43 +4,40 @@
   <meta charset="UTF-8" />
   <title>OMS LiveView (CCd + MediaMTX WebRTC/HLS, no npm)</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- ì™¸ë¶€ ì˜ì¡´ì„±: React/Hls.js (ìˆœìˆ˜ UMD) -->
-  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
-  <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#243045; --line2:#1f2937;
-      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script>
+  (function () {
+    // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+    const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+    const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+
+    const CSS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common.css",
+      "./4d-common.css",
+    ];
+    const JS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common-style.js",
+      "./4d-common-style.js",
+    ];
+
+    function injectCSS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("link");
+      el.rel = "stylesheet"; el.href = list[i] + bust;
+      el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i+1); };
+      document.head.appendChild(el);
     }
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
-    .muted{color:var(--muted)}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}
-    .grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:10px}
-    .card{background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:14px;margin-top:12px}
-    input,select,button,textarea{border-radius:10px;padding:9px 11px;font-size:14px}
-    input,select,textarea{background:#0b1220;color:#e5e7eb;border:1px solid var(--line)}
-    button{background:var(--btn);border:0;color:#fff;cursor:pointer}
-    button.secondary{background:var(--btn2)}
-    .status{display:inline-block;padding:4px 10px;border-radius:999px;font-size:12px}
-    .idle{background:#1f2937}.connecting{background:#3b2a0d}.live{background:#0d3b1a}.warn{background:#3b2a0d}.error{background:#3b0d0d}
-    .aspect{position:relative;width:100%;padding-top:56.25%;background:#000;border-radius:14px;overflow:hidden}
-    .aspect>video,.aspect>iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-    .pill{border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px}
-    textarea{width:100%;height:180px;font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace}
-    label{font-size:12px;color:#cbd5e1;display:block;margin-bottom:6px}
-    .help{font-size:12px;color:#cbd5e1}
-    .right{margin-left:auto}
-    .tabbar{display:flex;gap:6px;align-items:center;margin-bottom:8px}
-    .tab{border:1px solid var(--line);background:#0f172a;color:#e5e7eb;border-radius:999px;padding:6px 10px;cursor:pointer}
-    .tab.active{border-color:#60a5fa;color:#bfdbfe;background:#10223a}
-    .urlbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-    .url{font:12px ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;color:#cbd5e1}
-    a.link{color:#93c5fd;text-decoration:none;border:1px solid #334155;border-radius:999px;padding:6px 10px}
-  </style>
+    function injectJS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("script");
+      el.defer = true; el.src = list[i] + bust;
+      el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
+  })();
+  </script>
 </head>
 <body>
   <div id="root"></div>

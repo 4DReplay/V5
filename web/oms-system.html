@@ -4,70 +4,40 @@
   <meta charset="utf-8" />
   <title>4DReplay V5 - OMs System</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" href="images/4dmain.ico" type="image/x-icon">
-  <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --th:#0f172a; --line:#243045; --line2:#1f2937;
-      --row-run:#0e2416; --row-stop:#171a1e;
-      --badge-ok:#1f9d48; --badge-bad:#b83a3a;
-      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
-    }
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,
-      "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji","Noto Emoji",sans-serif;margin:24px}
-    h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
-    h2 small{font-size:14px;color:var(--muted)}
-    .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid var(--line);padding:10px}
-    th{background:var(--th);text-align:left}
-    tr.running td{ background:var(--row-run); }
-    tr.other   td{ background:var(--row-stop); }
-    .pill{
-      font-family: inherit;
-      display:inline-block;padding:6px 12px;border-radius:999px;border:1px solid;
-      line-height:1;font-weight:500;letter-spacing:.3px;background:transparent
-    }
-    .badge-ok { color:#22c55e;border-color:var(--badge-ok); }
-    .badge-bad{ color:#f87171;border-color:var(--badge-bad); }
-    /* NEW: CONNECTED 는 흰 글자 + 약간 두껍게 */
-    .badge-connected { color:#fff !important; font-weight:600; border-color:var(--badge-ok); }
-    /* NEW: RUNNING 은 기존 초록 톤 유지(가독성 위해 클래스만 분리) */
-    .badge-running   { color:#22c55e; border-color:var(--badge-ok); }
-    .pill-ok{ color:#22c55e;border-color:var(--ok); }
-    .pill-bad{ color:#f87171;border-color:var(--bad); }
-    .pill-warn{ color:#fbbf24;border-color:var(--warn); }
-    .muted{color:var(--muted)}
-    button{
-      font-family: inherit;
-      background:var(--btn);color:#fff;border:0;border-radius:14px;
-      padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;
-      transition:filter .2s ease
-    }
-    .btn-secondary{ background:var(--btn2); }
-    button:hover{ filter:brightness(1.08) }
-    .toolbar button{ border-radius:12px; padding:10px 16px }
-    a.node{color:#93c5fd;text-decoration:none}
-    a.node:hover{text-decoration:underline}
-    .spacer{flex:1}
-    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
-    #progressChip{
-      min-width: 180px;
-      justify-content: center;
-      white-space: nowrap;
-      flex: 0 0 auto;
-      visibility: hidden;
-    }
-    #busyMsg{margin-left:8px;opacity:.9}
-    #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
+  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script>
+  (function () {
+    // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+    const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+    const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
 
-    .panel{margin-top:18px;border:1px solid var(--line2);border-radius:12px;padding:12px;background:#0b1220}
-    .kv{display:grid;grid-template-columns:150px 1fr;gap:8px;align-items:center}
-    textarea{width:100%;height:180px;resize:vertical;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:8px;padding:8px;font:13px ui-monospace,monospace;}
-    pre{white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:280px;overflow:auto}
-    .btn-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  </style>
+    const CSS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common.css",
+      "./4d-common.css",
+    ];
+    const JS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common-style.js",
+      "./4d-common-style.js",
+    ];
+
+    function injectCSS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("link");
+      el.rel = "stylesheet"; el.href = list[i] + bust;
+      el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    function injectJS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("script");
+      el.defer = true; el.src = list[i] + bust;
+      el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
+  })();
+  </script>
 </head>
 <body>
   <h2>
@@ -77,8 +47,10 @@
 
   <div class="toolbar">
     <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
-    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+    <button id="btnConnect">🔌 Connect</button>
+    <button id="btnReload" class="btn-secondary">🔄 Reload</button>    
     <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
+    <button id="btnToggleSeq" class="btn-secondary">⚙️ Developer</button>
     <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
     <span class="chip" id="hb">poll -</span>
@@ -100,10 +72,10 @@
   </table>
 
   <p class="muted" style="margin-top:10px">
-    Tip: Logs are reachable via OMS proxy (<code>/proxy/&lt;node&gt;/…</code>).
+    Tip: Clicking the title of each node allows you to manage the system.
   </p>
 
-  <div class="panel">
+  <div class="panel" id="connectPanel">
     <h3 style="margin:0 0 8px">Connect Sequence (one-by-one via /oms/mtd-connect)</h3>
     <div class="kv">
       <span>MTd Host</span>
@@ -142,7 +114,7 @@
       <button id="btnSeqAbort" class="btn-secondary">⛔ Abort</button>
       <span class="spacer"></span>
       <button id="btnCopySeqLog" class="btn-secondary">📋 Copy Log</button>
-      <button id="btnSaveSeqLog" class="btn-secondary">💾 Save Log</button>
+      <button id="btnSaveSeqLog" class="btn-secondary">💾 Save Log</button>      
     </div>
 
     <h4 style="margin:12px 0 6px">Progress</h4>
@@ -159,6 +131,14 @@
     const BTN_RELOAD=document.getElementById("btnReload");
     const BTN_CONFIG=document.getElementById("btnConfig");
     const BTN_RA=document.getElementById("omsRestartAll");
+    const BTN_CONNECT = document.getElementById("btnConnect");
+    document.getElementById('connectPanel')?.setAttribute('hidden', 'true');
+    const BTN_TOGGLE_SEQ = document.getElementById('btnToggleSeq');
+    const PANEL_SEQ = document.getElementById('connectPanel');
+    BTN_TOGGLE_SEQ?.addEventListener('click', () => {
+      const hidden = PANEL_SEQ.hasAttribute('hidden');
+      if (hidden) PANEL_SEQ.removeAttribute('hidden'); else PANEL_SEQ.setAttribute('hidden','true');
+    });
 
     // --- Connect Sequence refs
     const SEQ = {
@@ -190,6 +170,9 @@
     let RA_SEEN_RUNNING = false;   // running 을 한 번이라도 본 후에만 완료 인정
     let RA_SESSION_ID = 0;         // 재시작 세션 가드
     const RA_IDLE_GRACE_MS = 3000; // 클릭 후 초기 idle 무시 유예
+    // 한 번 STOPPED가 되면 과거 CONNECTED 표시는 무시하기 위한 로컬 가드
+    // key = `${nodeName}::${procName}`
+    let LOST_CONN = Object.create(null);
     
     /* ───────── Proxy-safe API prefix (works with /proxy/<node>/…) ───────── */
     const __PROXY_PREFIX__ = (() => {
@@ -546,12 +529,31 @@
             }
             return (VERS[proc]?.version) || "-";
           };   
-          const conn=(p.connection_state||"").toUpperCase();
+          // ---- 상태 우선순위 + STOPPED 후 CONNECTED 무시 규칙
+          const conn = String(p.connection_state || "").toUpperCase();
+          const key  = `${n.name}::${p.name}`;
+
+          // 실행 안 됨 => STOPPED로 확정하고, 이후 CONNECTED 기억을 무시
+          if (!running) {
+            LOST_CONN[key] = true;
+          }
+
+          // 기본 우선순위: STOPPED > CONNECTED > RUNNING
+          // 단, STOPPED를 한 번이라도 본 프로세스는 재가동되더라도
+          // CONNECTED 표시는 무시하고 RUNNING 으로만 표시(Connect 시퀀스 전까지).
+          let effective;
+          if (!running) {
+            effective = "STOPPED";
+          } else if (conn === "CONNECTED" && !LOST_CONN[key]) {
+            effective = "CONNECTED";
+          } else {
+            effective = "RUNNING";
+          }
           const badge =
-            conn === "CONNECTED" ? `<span class="pill badge-connected">CONNECTED</span>` :
-            conn === "STOPPED"   ? `<span class="pill badge-bad">STOPPED</span>` :
-            (running ? `<span class="pill badge-running">RUNNING</span>` : `<span class="pill badge-bad">STOPPED</span>`);          // 날짜는 서버가 date를 함께 내려줄 때만 표시(PreSd는 IP별 date 지원)
-          const rowIsRunning = running || conn === "CONNECTED";
+            effective === "STOPPED"   ? `<span class="pill bad">STOPPED</span>` :
+            effective === "CONNECTED" ? `<span class="pill connected">CONNECTED</span>` :
+                                        `<span class="pill ok">RUNNING</span>`;
+          const rowCls = (effective === "STOPPED") ? "stopped" : "running";
           const verText = _rv(p.name, nodeIp);
           const dateText = (p && typeof p.version_date === "string" && p.version_date.trim())
             ? p.version_date
@@ -574,7 +576,7 @@
           }
 
           TBody.insertAdjacentHTML("beforeend", `
-            <tr class="${rowIsRunning ? 'running' : 'other'}">
+            <tr class="${rowCls}">
               <td>${nodeCellHtml(n, j, shown.length)}</td>
               <td>${p.name||"-"}${aliasHtml}</td>
               <td>${verHtml}</td>
@@ -752,6 +754,41 @@
       }, 700);
     }
 
+    if (BTN_CONNECT) {
+      BTN_CONNECT.onclick = async () => {
+        try {
+          // 중복 클릭 방지
+          BTN_CONNECT.disabled = true;
+          // 새 Connect 시퀀스 시작: 과거 STOPPED로 인해 잠긴 CONNECTED 무시 플래그 초기화
+          // (연결을 새로 맺었으니 CONNECTED 표기를 다시 허용)
+          LOST_CONN = Object.create(null);
+          // Fill이 현재 그리드(lastData)에 의존하므로, 없으면 한 번만 상태 로드
+          if (!lastData) {
+            try { await reloadNow(); } catch (_) {}
+          }
+
+          // 진행 칩에 간단 안내(기존 raWrite 유틸 재사용, 없어도 무방)
+          raWrite("Connect… filling from list", 1);
+
+          // 1) Fill from List
+          SEQ.btnFill?.click();
+
+          // UI 값 반영 틱 대기 (textarea 갱신 → 곧바로 Run에서 읽게)
+          await new Promise(r => setTimeout(r, 50));
+
+          raWrite("Connect… running sequence", 2);
+
+          // 2) Run Sequence
+          SEQ.btnStart?.click();
+        } catch (e) {
+          showErr(String(e));
+        } finally {
+          // 약간의 딜레이 후 버튼 복구(즉시 복구해도 됨)
+          setTimeout(() => { BTN_CONNECT.disabled = false; }, 300);
+        }
+      };
+    }
+
     BTN_RELOAD.onclick = reloadNow;
     BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
     BTN_RA.onclick = async ()=>{
@@ -844,6 +881,7 @@
             }
             appendLog("Sequence finished.", {ok:true});
             seqSetStatus("Done", "pill-ok");
+            LOST_CONN = Object.create(null);
           }else{
             appendLog("No events returned.", res);
             seqSetStatus("Done", "pill-warn");

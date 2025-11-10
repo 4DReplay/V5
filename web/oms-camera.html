@@ -2,77 +2,90 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>4DReplay V5 - Cameras</title>
+  <title>4DReplay V5 - Camera Manager</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <style>
-    :root{ --bg:#0b0f14; --fg:#e5e7eb; --muted:#94a3b8; --line:#1f2937; --th:#0f172a; --ok:#22c55e; --bad:#ef4444; }
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{margin:0 0 12px}
-    .muted{color:var(--muted)}
-    .toolbar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0 14px}
-    .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#0f172a;border-radius:12px;padding:6px 10px;color:var(--fg)}
-    input[type=text],input[type=number]{background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:8px;padding:6px 8px}
-    button{background:#1e293b;color:#fff;border:0;border-radius:12px;padding:8px 14px;cursor:pointer}
-    button.primary{background:#1e40af}
-    button:disabled{opacity:.6;cursor:not-allowed}
-    table{border-collapse:collapse;width:100%;margin-top:10px}
-    th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
-    th{background:var(--th)}
-    .pill{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid #334155}
-    .ok{color:var(--ok);border-color:#14532d}
-    .bad{color:var(--bad);border-color:#7f1d1d}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:8px}
-    .panel{border:1px solid var(--line);border-radius:12px;padding:12px;background:#0b1220}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-  </style>
+  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script>
+  (function () {
+    // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+    const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+    const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+
+    const CSS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common.css",
+      "./4d-common.css",
+    ];
+    const JS_CANDIDATES = [
+      PROXY_PREFIX + "/web/4d-common-style.js",
+      "./4d-common-style.js",
+    ];
+
+    function injectCSS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("link");
+      el.rel = "stylesheet"; el.href = list[i] + bust;
+      el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    function injectJS(list, i=0){
+      if (i >= list.length) return;
+      const el = document.createElement("script");
+      el.defer = true; el.src = list[i] + bust;
+      el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i+1); };
+      document.head.appendChild(el);
+    }
+    injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
+  })();
+  </script>
 </head>
 <body>
-  <h2>Camera Manager <small class="muted" id="meta"></small></h2>
+  <!-- Title -->
+  <h1 class="page-title">4DReplay V5 - Camera Manager</h1>
 
-  <div class="panel">
-    <div class="row">
-      <span class="chip">MTd Host <input id="camHost" type="text" placeholder="127.0.0.1" /></span>
-      <span class="chip">MTd Port <input id="camPort" type="number" value="19765" min="1" max="65535" /></span>
-      <span class="chip">DMPDIP <input id="camMgmt" type="text" placeholder="10.82.x.x" /></span>
-      <button id="btnRefresh" class="">ðŸ”„ Refresh</button>
-      <button id="btnRun" class="primary">ðŸš€ Camera Connect (6~9)</button>
-      <small id="busy" class="muted"></small>
-    </div>
-    <div class="row" style="margin-top:8px">
-      <label class="chip"><input type="checkbox" id="selAll"> select all</label>
-      <span class="muted">System Connect(1~5)ì´ ì„ í–‰ë˜ì–´ì•¼ í•©ë‹ˆë‹¤.</span>
-    </div>
+  <!-- Controls under title -->
+  <div class="toolbar" style="justify-content:flex-start">
+    <button id="btnRun" class="btn-secondary">🚀 Connect Cameras</button>
+    <button id="btnSwAllReboot" class="btn-secondary" title="Reboot all switches">🔁 Restart Cameras</button>
+    <label class="chip" style="margin-left:12px">
+      <input type="checkbox" id="selAll" /> Select All Cameras
+    </label>
+    <small id="busy" class="muted"></small>
   </div>
 
-  <div class="grid">
-    <div class="panel">
-      <h3 style="margin:0 0 6px">Cameras</h3>
-      <table>
-        <thead><tr><th style="width:48px">Sel</th><th>IP</th><th>Model</th></tr></thead>
-        <tbody id="tblList"></tbody>
-      </table>
-    </div>
-
-    <div class="panel">
-      <h3 style="margin:0 0 6px">Connections</h3>
-      <table>
-        <thead><tr><th>IP</th><th>Status</th></tr></thead>
-        <tbody id="tblConn"></tbody>
-      </table>
-    </div>
+  <!-- Hidden (kept for JS compatibility) -->
+  <div style="display:none">
+    <input id="camHost" type="text" value="127.0.0.1" />
+    <input id="camPort" type="number" value="19765" />
+    <input id="camMgmt" type="text" value="" />
+    <button id="btnRefresh"></button>
+    <small id="meta"></small>
   </div>
 
   <div class="panel" style="margin-top:16px">
-    <h3 style="margin:0 0 6px">Summary (Info + Video)</h3>
+    <h3 style="margin:0 0 6px; display:flex; align-items:center; justify-content:space-between;">
+      <span>Switch Details</span>
+      <span></span>
+    </h3>
     <table>
       <thead>
-        <tr>
-          <th>IP</th><th>Status</th><th>Model</th><th>FW</th>
-          <th>Format</th><th>Codec</th><th>Bitrate</th><th>GOP</th>
-          <th>WB</th><th>ISO</th><th>Shutter</th><th>Aperture</th><th>FocusMode</th>
-        </tr>
+        <tr><th>IP</th><th>Brand</th><th>Model</th><th style="width:220px">Actions</th></tr>
       </thead>
-      <tbody id="tblUnified"><tr><td colspan="13" class="muted">no data</td></tr></tbody>
+      <tbody id="tblSwitch">
+        <tr><td colspan="4" class="muted">no data</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="panel" style="margin-top:16px">
+    <h3 style="margin:0 0 6px">Camera Details</h3>
+    <table>
+      <thead id="theadUnified">
+        <!-- JS가 pre/post 단계별로 동적으로 생성 -->
+      </thead>
+      <tbody id="tblUnified">
+        <tr><td class="muted">no data</td></tr>
+      </tbody>
     </table>
   </div>
 
