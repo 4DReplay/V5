@@ -1,11 +1,11 @@
 {
   "http_host": "0.0.0.0",
   "http_port": 19777,
-  "heartbeat_interval_sec": 5,
-  "restart_ready_timeout_sec": 45.0,
+  "heartbeat_interval_sec": 3,
+  "restart_ready_timeout_sec": 45,
   "restart_poll_interval_sec": 0.25,
-  "restart_post_timeout_sec": 10.0,
-  "status_fetch_timeout_sec": 4.0,
+  "restart_post_timeout_sec": 10,
+  "status_fetch_timeout_sec": 10,
   "nodes": [
     {
       "name": "DMS-1",

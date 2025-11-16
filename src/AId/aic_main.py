@@ -12,7 +12,9 @@ import time
 import threading
 import signal
 import atexit
+import socket
 from threading import Semaphore
+from datetime import datetime
 
 # ── service/env ──────────────────────────────────────────────────────────────
 def _is_service_env():
@@ -64,7 +66,7 @@ class AIc:
         self.name = "AIc"
         self.property_data = None
         self.th = None
-        self.app_server = None   # (옵션) 외부 송신용 TCP/WS 등        
+        self.aid_server = None   # AId <-> AIc 전용 TCPServer (19738)
         self.end = False
         self.host = None
         self.msg_queue = queue.Queue()
@@ -74,6 +76,8 @@ class AIc:
         self.conf = conf  # conf 객체를 직접 할당
         self.version = self.conf._version  # conf에서 _version 가져오기
         self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
+
+        # (주의) AId와의 persistent 세션은 AId 쪽이 TCPClient, AIc는 TCPServer 역할이다.
 
     # ─────────────────────────────────────────────────────────────────────────
     # 시스템 초기화(로그 폴더 등). 실패시 False
@@ -112,23 +116,18 @@ class AIc:
             },
         )
 
-        fd_log.info(f"📄 [AIc] Load Config - Private {config_private_path}")
-        fd_log.info(f"📄 [AIc] Load Config - Public  {config_public_path}")
-
-        port = conf._aic_daemon_port        
-        fd_log.info(f"📄 [AIc] TCPService: port {port}")
-        
         try:
-            self.app_server = TCPServer("", port, self.put_data)
-            self.app_server.open()
-            fd_log.info(f"[{self.name}] listening on 0.0.0.0:{port}")
+            aid_port = conf._aic_daemon_port
+            self.aid_server = TCPServer("", aid_port, self.on_aid_msg)
+            self.aid_server.open()
+            fd_log.info(f"[{self.name}] listening for AId on 0.0.0.0:{aid_port}")
             return True
         except Exception as e:
-            fd_log.error(f"[{self.name}] TCP server start failed on {port}: {e}")
+            fd_log.error(f"[{self.name}] TCP server start failed: {e}")
             return False
 
     # ─────────────────────────────────────────────────────────────────────────
-    # def put_data
+    # def put_data (OMS/4DOMS 쪽에서 오는 메시지)
     # ─────────────────────────────────────────────────────────────────────────
     def put_data(self, data):
         with self.lock:
@@ -145,6 +144,42 @@ class AIc:
             return
         self.put_data(data)  # 큐에 넣고 worker가 처리
 
+    # ----------------------------------------------------------
+    # AId -> AIc : persistent 포트(19738)로 들어오는 메시지 처리
+    # ----------------------------------------------------------
+    def on_aid_msg(self, data):
+        """
+        TCPServer(19738)의 콜백.
+        fd_common.TCPServer 가 이미 JSON 디코딩해서 dict 로 넘겨준다고 가정.
+        """
+        if not isinstance(data, dict):
+            fd_log.warning(f"[AIc] on_aid_msg: invalid data type: {type(data)}")
+            return
+
+        sec1 = data.get("Section1")
+        sec2 = data.get("Section2")
+        sec3 = data.get("Section3")
+        state = str(data.get("SendState", "")).lower()
+
+        # version information
+        if (sec1, sec2, sec3) == ("Daemon", "Information", "Version") and state == "request":
+            fd_log.info(f"[AIc] version request : {sec1}/{sec2}/{sec3}")            
+            return self.handle_version_request_from_aid(data)
+
+        # Calibration 요청
+        if (sec1, sec2, sec3) == ("AI", "Operation", "Calibration"):
+            return self.handle_calibration(data)
+
+        # LiveEncoding 요청
+        if (sec1, sec2, sec3) == ("AI", "Operation", "LiveEncoding"):
+            return self.handle_live_encoding(data)
+
+        # Detect 요청
+        if (sec1, sec2, sec3) == ("AI", "Process", "Detect"):
+            return self.handle_detect(data)
+
+        fd_log.warning(f"[AIc] Unknown AId command: {sec1}/{sec2}/{sec3}")            
+
     # ─────────────────────────────────────────────────────────────────────────
     # 안전 종료(멱등)
     # ─────────────────────────────────────────────────────────────────────────
@@ -158,31 +193,14 @@ class AIc:
 
         self.end = True
 
-        # 인바운드 TCP 서버 종료
+        # AId <-> AIc 전용 서버 종료
         try:
-            if self.app_server:
-                self.app_server.close()
+            if self.aid_server:
+                self.aid_server.close()
         except Exception as e:
-            fd_log.warning(f"[AIc] app_server close failed: {e}")
+            fd_log.warning(f"[AIc] aid_server close failed: {e}")
         finally:
-            self.app_server = None
-
-        # (옵션) 아웃바운드 송신 소켓/서버 정리
-        srv = getattr(self, "app_server", None)
-        if srv is not None:
-            try:
-                if hasattr(srv, "shutdown"):
-                    srv.shutdown()
-                elif hasattr(srv, "close"):
-                    srv.close()
-                else:
-                    fd_log.warning("[AIc] app_server has no close/shutdown; skipping.")
-            except Exception as e:
-                fd_log.warning(f"[AIc] app_server close failed: {e}")
-            finally:
-                self.app_server = None
-        else:
-            fd_log.info("[AIc] app_server is None; nothing to close.")
+            self.aid_server = None
 
         # 워커 합류
         th = getattr(self, "th", None)
@@ -200,156 +218,64 @@ class AIc:
         fd_log.info("[AIc] stop() end..")
 
     # ─────────────────────────────────────────────────────────────────────────
-    # 워커 루프
+    # AId → AIc : Version 요청 처리(19738 포트)
     # ─────────────────────────────────────────────────────────────────────────
-    def status_task(self):
-        fd_log.info("🟢 [AIc] Message Receive Start")
-        while not self.end:
-            msg = None
-            with self.lock:
-                if not self.msg_queue.empty():
-                    msg = self.msg_queue.get(block=False)
-            if msg is not None:
-                self.classify_msg(msg)
-            time.sleep(0.01)
-        fd_log.info("🔴 [AIc] Message Receive End")
+    def handle_version_request_from_aid(self, pkt: dict) -> None:
+        """
+        AId → AIc : Version 요청
+        - conf._version, conf._release_date 를 그대로 사용
+        - AId 쪽은 SenderIP 를 굳이 믿지 않아도, TCPClient 생성 시점에 IP를 알고 있음.
+        """
+        ver = conf._version
+        date = conf._release_date
+
+        resp = {
+            "Section1": "Daemon",
+            "Section2": "Information",
+            "Section3": "Version",
+            "SendState": "response",
+            "From": "AIc",
+            "To": "AId",
+            "Token": pkt.get("Token"),
+            "Action": "set",
+            "DMPDIP": pkt.get("DMPDIP"),
+            "Version": {
+                "AIc": {
+                    "version": ver,
+                    "date": date,
+                }
+            },
+            # 선택 사항: 자기 IP를 같이 실어줌
+            "SenderIP": socket.gethostbyname(socket.gethostname()),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
+
+        if self.aid_server:
+            self.aid_server.send_msg(json.dumps(resp))
+        else:
+            fd_log.error("[AIc] aid_server is None, cannot send Version response to AId")
 
     # ─────────────────────────────────────────────────────────────────────────
     # 실행 시작
     # ─────────────────────────────────────────────────────────────────────────
     def run(self):
         fd_log.info("🟢 [AIc] run() begin..")
-        self.th = threading.Thread(target=self.status_task, daemon=True)
-        self.th.start()
 
     # ─────────────────────────────────────────────────────────────────────────
     # 메시지 라우팅(스텁)
     # ─────────────────────────────────────────────────────────────────────────
     def classify_msg(self, msg: dict) -> None:
-        _4dmsg = FDMsg()
-        _4dmsg.assign(msg)
-
-        if len(_4dmsg.data.get('From', '').strip()) == 0:
-            _4dmsg.data.update(From='4DOMS')
-
-        result_code, err_msg = 1000, ''
-        if _4dmsg.is_valid():
-            conf._result_code = 0
-            if (state := _4dmsg.get('SendState').lower()) == FDMsg.REQUEST:
-                sec1, sec2, sec3 = _4dmsg.get('Section1'), _4dmsg.get('Section2'), _4dmsg.get('Section3')
-
-                match sec1, sec2, sec3:
-                    case 'Daemon', 'Information', 'Version':
-                        _4dmsg.update(Version={
-                            AIc.name: {'version': conf._version, 'date': conf._release_date}
-                        })
-
-                    case 'AI', 'Operation', 'Calibration':
-                        conf._processing = True
-                        fd_log.info("AI → Operation → Calibration")
-                        conf._processing = False
-
-                    case 'AI', 'Operation', 'LiveEncoding':
-                        conf._processing = True
-                        fd_log.info("Start LiveEncoding")
-                        conf._processing = False
-
-                    case 'AI', 'Operation', 'PostStabil':
-                        conf._processing = True
-                        fd_log.info("AI → Operation → PostStabil")
-                        conf._processing = False
-
-                    case 'AI', 'Operation', 'StartVideo':
-                        conf._processing = True
-                        fd_log.info("AI → Operation → StartVideo")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'Multi':
-                        conf._processing = True
-                        fd_log.info("AI → Process → Multi (Calibration multi-channel)")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'LiveDetect':
-                        conf._processing = True
-                        fd_log.info("AI → Process → LiveDetect (baseball/nascar live paths)")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'UserStart':
-                        conf._processing = True
-                        fd_log.info("AI → Process → UserStart (nascar clip marking)")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'UserEnd':
-                        conf._processing = True
-                        fd_log.info("AI → Process → UserEnd (nascar clip finalize)")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'LiveEnd':
-                        conf._processing = True
-                        fd_log.info("AI → Process → LiveEnd")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'Merge':
-                        conf._processing = True
-                        fd_log.info("AI → Process → Merge (nascar merge result → reply with output)")
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'Detect':
-                        conf._processing = True
-                        fd_log.info("AI → Process → Detect (baseball clip make)")
-                        conf._processing = False
-
-            elif state == FDMsg.RESPONSE:
-                pass  # 응답 수신 시 기본 처리 없음
-
-        else:
-            fd_log.error(f'[AIc] message parsing error..\nMessage:\n{msg}')
-            conf._result_code += 100
-            _4dmsg.update(Section1="AI", Section2="Process", Section3="Multi",
-                          From="4DPD", To="AIc", ResultCode=conf._result_code,
-                          ErrorMsg=err_msg)
-            _4dmsg.toggle_status()
-
-            if conf._result_code > 100:
-                conf._result_code = 0
-                if not self.app_server:
-                    fd_log.warning("[AIc] classify_msg(error path): app_server is None; skipping send.")
-                else:
-                    self.app_server.send_msg(_4dmsg.get_json()[1])
+        # AIc는 더 이상 OMS/4DOMS 메시지를 처리하지 않음
+        return
 
     # ─────────────────────────────────────────────────────────────────────────
     # (옵션) 외부 이벤트 송신 스텁
     # ─────────────────────────────────────────────────────────────────────────
     def on_web_socket_event(self, pitch_data):
-        msg = {
-            "From": "AIc",
-            "To": "AId",
-            "SendState": "Request",
-            "Section1": "WebSocket",
-            "Section2": "Realtime",
-            "Section3": "Pitch",
-            "Data": pitch_data
-        }
-        if not self.app_server:
-            fd_log.warning("[AIc] on_web_socket_event: app_server is None; skipping send.")
-            return
-        self.app_server.send_msg(json.dumps(msg))
+        # AIc는 OMS 송신 기능 없음
+        return
 
-    def on_stabil_done_event(self, output_file):
-        msg = {
-            "From": "AIc",
-            "To": "AId",
-            "SendState": "Request",
-            "Section1": "StabilizeDone",
-            "Section2": "",
-            "Section3": "",
-            "Complete": "OK",
-            "Output": output_file
-        }
-        if not self.app_server:
-            fd_log.warning("[AIc] on_stabil_done_event: app_server is None; skipping send.")
-            return
-        self.app_server.send_msg(json.dumps(msg))
 
 
 if __name__ == '__main__':
@@ -362,7 +288,21 @@ if __name__ == '__main__':
     fd_log.info("─────────────────────────────────────────────────────────────────────────────")
     fd_log.info(f"📂 [AIc] Working directory: {conf._path_base}")
 
-    ver, date = conf.read_latest_release_from_md(f"{conf._path_base}\\AId\\aid_release.md")
+    # 1) get version from markdown
+    release_md_path = os.path.join(conf._path_base, "AId", "aic_release.md")
+    ver, _ = conf.read_latest_release_from_md(release_md_path)
+
+    # 2) get last modified time of aid_release.md as release date
+    try:
+        stat = os.stat(release_md_path)
+        dt = datetime.fromtimestamp(stat.st_mtime)
+        # Example: "Nov 11 2025 - 16:13:33"
+        date = dt.strftime("%b %d %Y - %H:%M:%S")
+    except Exception as e:
+        # Fallback when something goes wrong
+        fd_log.warning(f"[AIc] failed to read release file mtime: {e}")
+        date = ""
+
     conf._version = ver
     conf._release_date = date
 

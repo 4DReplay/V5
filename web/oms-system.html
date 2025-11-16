@@ -4,60 +4,97 @@
   <meta charset="utf-8" />
   <title>4DReplay V5 - OMs System</title>
   <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
+
   <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
   <script>
-  (function () {
-    // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
-    const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-    const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+    (function () {
+      // /proxy/<node>/... 환경에서도 동작
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now();
 
-    const CSS_CANDIDATES = [
-      PROXY_PREFIX + "/web/4d-common.css",
-      "./4d-common.css",
-    ];
-    const JS_CANDIDATES = [
-      PROXY_PREFIX + "/web/4d-common-style.js",
-      "./4d-common-style.js",
-    ];
+      const ACTIONS_CANDIDATES = [
+        PROXY + "/web/oms-actions.js",
+        "./web/oms-actions.js",
+        "./oms-actions.js",
+        "/web/oms-actions.js"
+      ];
 
-    function injectCSS(list, i=0){
-      if (i >= list.length) return;
-      const el = document.createElement("link");
-      el.rel = "stylesheet"; el.href = list[i] + bust;
-      el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i+1); };
-      document.head.appendChild(el);
-    }
-    function injectJS(list, i=0){
-      if (i >= list.length) return;
-      const el = document.createElement("script");
-      el.defer = true; el.src = list[i] + bust;
-      el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i+1); };
-      document.head.appendChild(el);
-    }
-    injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
-  })();
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true;
+        el.src = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[OMS actions miss]", list[i]);
+          injectJS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+      injectJS(ACTIONS_CANDIDATES);
+    })();
+  </script>
+  
+  <!-- e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1 -->
+  <script>
+    (function () {
+      // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+
+      const CSS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.css",
+        "./4d-common-style.css",
+      ];
+      const JS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.js",
+        "./4d-common-style.js",
+      ];
+
+      function injectCSS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("link");
+        el.rel = "stylesheet"; el.href = list[i] + bust;
+        el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i + 1); };
+        document.head.appendChild(el);
+      }
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true; el.src = list[i] + bust;
+        el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i + 1); };
+        document.head.appendChild(el);
+      }
+      injectCSS(CSS_CANDIDATES);
+      injectJS(JS_CANDIDATES);
+    })();
   </script>
 </head>
+
+
+<!----------------------------------------------------------------------------------
+BODY
+------------------------------------------------------------------------------------>
 <body>
-  <h2>
-    <span>4DReplay V5 - OMs System</span>
+  <h2 class="page-title">
+    <span id="pageTitle">4DReplay V5 - OMs System</span>
     <small id="meta"></small>
   </h2>
 
   <div class="toolbar">
-    <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
-    <button id="btnConnect">🔌 Connect</button>
-    <button id="btnReload" class="btn-secondary">🔄 Reload</button>    
-    <button id="omsRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <button id="btnToggleSeq" class="btn-secondary">⚙️ Developer</button>
+    <button id="btnDashboard" class="btn-secondary">📊 Dashboard</button>
+    <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
+    <button id="btnSysRestart" class="btn-secondary">⟳ Restart All</button>
+    <button id="btnSysConnect">🔌 Connect</button>
+    <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>    
     <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
     <span class="chip" id="hb">poll -</span>
   </div>
-
-  <div id="err"></div>
-
+  <div id="err">    
+  </div>
   <table id="grid">
     <thead>
       <tr>
@@ -70,876 +107,621 @@
     </thead>
     <tbody></tbody>
   </table>
-
   <p class="muted" style="margin-top:10px">
     Tip: Clicking the title of each node allows you to manage the system.
-  </p>
-
-  <div class="panel" id="connectPanel">
-    <h3 style="margin:0 0 8px">Connect Sequence (one-by-one via /oms/mtd-connect)</h3>
-    <div class="kv">
-      <span>MTd Host</span>
-      <input id="seqHost" type="text" placeholder="10.82.x.x or hostname">
-      <span>MTd Port</span>
-      <input id="seqPort" type="number" min="1" max="65535" value="19765">
-      <span>DMPDIP</span>
-      <input id="seqMgmtIP" type="text" placeholder="127.0.0.1">
-    </div>
-
-    <div class="btn-row" style="margin:8px 0">
-      <label class="chip"><input type="checkbox" id="seqAutoToken" checked> Auto Token</label>
-      <label class="chip"><input type="checkbox" id="seqSanitize" checked> Sanitize DaemonList</label>
-      <label class="chip"><input type="checkbox" id="seqDryRun"> Dry-Run</label>
-      <label class="chip"><input type="checkbox" id="seqVerbose"> Verbose Trace</label>
-      <button id="btnSeqFillFromList" class="btn-secondary">🧩 Fill from List</button>
-      <span class="spacer"></span>
-      <span id="seqStatus" class="pill">Idle</span>
-    </div>
-
-    <div class="kv">
-      <span>Daemon Map (JSON)</span>
-      <textarea id="seqDaemonMap" spellcheck="false" placeholder='{
-  "EMd": "10.82.104.210",
-  "CCd": "10.82.104.210",
-  "SCd": "10.82.104.210",
-  "GCd": "10.82.104.210",
-  "PCd": "10.82.104.210",
-  "SPd": "10.82.104.213",
-  "AId": "10.82.104.215"
-}'></textarea>
-    </div>
-
-    <div class="btn-row" style="margin-top:8px">
-      <button id="btnSeqStart">🚀 Run Sequence</button>
-      <button id="btnSeqAbort" class="btn-secondary">⛔ Abort</button>
-      <span class="spacer"></span>
-      <button id="btnCopySeqLog" class="btn-secondary">📋 Copy Log</button>
-      <button id="btnSaveSeqLog" class="btn-secondary">💾 Save Log</button>      
-    </div>
-
-    <h4 style="margin:12px 0 6px">Progress</h4>
-    <pre id="seqLog">-</pre>
-  </div>
-
+  </p>  
   <script>
-    const DEBUG=false;
-    const TBody=document.querySelector("#grid tbody");
-    const HB=document.getElementById("hb");
-    const META=document.getElementById("meta");
-    const PROG=document.getElementById("progressChip");
-    const ERR=document.getElementById("err");
-    const BTN_RELOAD=document.getElementById("btnReload");
-    const BTN_CONFIG=document.getElementById("btnConfig");
-    const BTN_RA=document.getElementById("omsRestartAll");
-    const BTN_CONNECT = document.getElementById("btnConnect");
-    document.getElementById('connectPanel')?.setAttribute('hidden', 'true');
-    const BTN_TOGGLE_SEQ = document.getElementById('btnToggleSeq');
-    const PANEL_SEQ = document.getElementById('connectPanel');
-    BTN_TOGGLE_SEQ?.addEventListener('click', () => {
-      const hidden = PANEL_SEQ.hasAttribute('hidden');
-      if (hidden) PANEL_SEQ.removeAttribute('hidden'); else PANEL_SEQ.setAttribute('hidden','true');
-    });
+    const DEBUG = false;
+    const TBody = document.querySelector("#grid tbody");
+    const HB = document.getElementById("hb");
+    const META = document.getElementById("meta");
+    const PROG = document.getElementById("progressChip");
+    const ERR = document.getElementById("err");
+    const BTN_DASHBOARD   = document.getElementById("btnDashboard");
+    const BTN_CONFIG      = document.getElementById("btnSysConfig");
+    const BTN_SYS_RESTART = document.getElementById("btnSysRestart");
+    const BTN_SYS_CONNECT = document.getElementById("btnSysConnect");
+    const BTN_SYS_RELOAD  = document.getElementById("btnSysReload");    
+    const PROG_LS_KEY = "oms_ra_progress"; // dashboard와 동일 키
 
-    // --- Connect Sequence refs
-    const SEQ = {
-      host: document.getElementById("seqHost"),
-      port: document.getElementById("seqPort"),
-      mgmt: document.getElementById("seqMgmtIP"),
-      autoToken: document.getElementById("seqAutoToken"),
-      sanitize: document.getElementById("seqSanitize"),
-      dryRun: document.getElementById("seqDryRun"),
-      mapArea: document.getElementById("seqDaemonMap"),
-      status: document.getElementById("seqStatus"),
-      log: document.getElementById("seqLog"),
-      btnFill: document.getElementById("btnSeqFillFromList"),
-      btnStart: document.getElementById("btnSeqStart"),
-      btnAbort: document.getElementById("btnSeqAbort"),
-      btnCopy: document.getElementById("btnCopySeqLog"),
-      btnSave: document.getElementById("btnSaveSeqLog"),
-      verbose:  document.getElementById("seqVerbose"),
-    };
-    let SEQ_ABORT=false;
+    /* ── 진행 메시지/캐시를 완전히 비우는 helper ── */
+    function clearProgressChip() {
+      try {
+        localStorage.removeItem(PROG_LS_KEY);
+      } catch (e) {
+        console.warn("clearProgressChip localStorage error", e);
+      }
+      if (PROG) {
+        PROG.textContent = "";
+        PROG.style.visibility = "hidden";
+      }
+    }
 
-    let lastData=null;
+    let lastData = null;
     let OMS_ALIAS_MAP = {};
     let POLLER = null;
-    let RA_LOCK = false;
     let POLL_MS = 3000;
-    let RA_FINAL = false;          // 완료/에러/idle 이후 true → 더 이상 덮지 않음
-    let RA_MSG_PRIORITY = 0;       // 현재 메시지 우선순위 (높을수록 강함)
-    let RA_SEEN_RUNNING = false;   // running 을 한 번이라도 본 후에만 완료 인정
-    let RA_SESSION_ID = 0;         // 재시작 세션 가드
-    const RA_IDLE_GRACE_MS = 3000; // 클릭 후 초기 idle 무시 유예
-    // 한 번 STOPPED가 되면 과거 CONNECTED 표시는 무시하기 위한 로컬 가드
-    // key = `${nodeName}::${procName}`
-    let LOST_CONN = Object.create(null);
-    
+
     /* ───────── Proxy-safe API prefix (works with /proxy/<node>/…) ───────── */
     const __PROXY_PREFIX__ = (() => {
       const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
-      return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+      return m ? "/proxy/" + encodeURIComponent(decodeURIComponent(m[1])) : "";
     })();
-    const API = __PROXY_PREFIX__ || ""; // same-origin under proxy or root
+    function api(path, init = {}) {
+      const PFX = (typeof window !== "undefined" && window.__OMS_API_PREFIX__) || __PROXY_PREFIX__ || "";
+      const url = (typeof path === "string" && path.startsWith("/")) ? (PFX + path) : path;
+      return fetch(url, { cache: "no-store", ...init }).then(async (res) => {
+        const ct = res.headers.get("content-type") || "";
+        const isJson = ct.includes("application/json");
+        const body = isJson ? await res.json().catch(() => ({})) : await res.text().catch(() => "");
+        if (!res.ok) throw new Error(isJson ? (body.error || ("HTTP " + res.status)) : (body || ("HTTP " + res.status)));
+        return body;
+      });
+    }
 
-    function startPolling(ms){
+    function showErr(m) { ERR.style.display = "block"; ERR.textContent = m; }
+    function clearErr() { ERR.style.display = "none"; ERR.textContent = ""; }
+
+    function setBusy(on) {
+      console.log("setBusy")
+      BTN_SYS_RELOAD.disabled = !!on;
+      BTN_CONFIG.disabled = !!on;
+      BTN_SYS_RESTART.disabled = !!on;
+      BTN_SYS_CONNECT.disabled = !!on;
+    }
+
+    function startPolling(ms) {
       if (typeof ms === "number" && isFinite(ms) && ms > 0) {
         POLL_MS = ms;
       }
-      stopPolling();
-      POLLER = setInterval(()=>{ if(!RA_LOCK) reloadNow().catch(()=>{}); }, POLL_MS);
+      if (POLLER) clearInterval(POLLER);
+      POLLER = setInterval(() => {
+        reloadNow({ silent: true }).catch(() => {});
+      }, POLL_MS);
       if (DEBUG) console.debug("[OMS] poll started:", POLL_MS, "ms");
     }
-    function stopPolling(){
-      if (POLLER){ clearInterval(POLLER); POLLER=null; }
-    }
-
-    // ── 진행칩 카운팅 유틸: 선택된 프로세스 중 running/stop 수 계산
-    function computeProgressFromStatus(data){
-      const nodes = Array.isArray(data && data.nodes) ? data.nodes : [];
-      let total=0, run=0, stop=0;
-      for (const n of nodes){
-        const procs = selectedProcList(n.status);
-        for (const p of procs){
-          total += 1;
-          if (p.running === true) run += 1; else stop += 1;
-        }
-      }
-      return { total, run, stop };
-    }
-
-    // ── Restart-All 중 진행칩만 갱신하는 경량 폴러
-    let RA_PROGRESS_POLLER = null;
-    async function startRaProgressPolling(){
-      stopRaProgressPolling();
-      RA_PROGRESS_POLLER = setInterval(async ()=>{
-        try{
-          const st = await api("/oms/status");
-          const { total, run, stop } = computeProgressFromStatus(st);
-          const s = await api("/oms/restart/state").catch(()=>null);
-          const base = (s && s.message) ? s.message : "Restarting…";
-          raWrite(`${base} (${run}/${total} running · ${stop}/${total} stopped)`, 1);
-        }catch(_){}
-      }, 800);
-    }
-    function stopRaProgressPolling(){
-      if (RA_PROGRESS_POLLER){ clearInterval(RA_PROGRESS_POLLER); RA_PROGRESS_POLLER=null; }
-    }
-    async function api(path, init={}) {
-      // restart/state 갱신이 멈추는 걸 방지하기 위해 proxy-safe 프리픽스 적용
-      const url = (typeof path === "string" && path.startsWith("/")) ? (API + path) : path;
-      const res = await fetch(url, { cache:"no-store", ...init });
-      const ct = res.headers.get("content-type") || "";
-      const isJson = ct.includes("application/json");
-      const body = isJson ? await res.json().catch(()=>({})) : await res.text().catch(()=> "");
-      if (!res.ok) throw new Error(isJson ? (body.error||`HTTP ${res.status}`) : (body||`HTTP ${res.status}`));
-      return body;
-    }
-    function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
-    function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
-    function setBusy(on){
-      BTN_RELOAD.disabled = on || RA_LOCK;
-      BTN_CONFIG.disabled  = on || RA_LOCK;
-      BTN_RA.disabled      = on || RA_LOCK;
-    }
-
-    // ===== Connect Sequence helpers =====
-    function seqSetStatus(text, kind="pill-warn"){
-      if (!SEQ.status) return;
-      SEQ.status.className = `pill ${kind}`;
-      SEQ.status.textContent = text;
-    }
-    function appendLog(line, obj){
-      if (!SEQ.log) return;
-      const ts = new Date().toLocaleTimeString();
-      let headStr;
-      // 1) 첫 인자가 객체/배열이면 JSON으로 변환
-      if (typeof line === "object" && line !== null){
-        try { headStr = JSON.stringify(line, null, 2); }
-        catch { headStr = String(line); }
-        obj = undefined; // 두 번째 줄은 별도 출력 안 함
-      } else {
-        headStr = String(line);
-      }
-      // 2) 두 번째 인자가 객체/배열이면 JSON으로 변환
-      let tailStr = "";
-      if (obj !== undefined){
-        try { tailStr = `\n${JSON.stringify(obj, null, 2)}`; }
-        catch { tailStr = `\n${String(obj)}`; }
-      }
-      // 3) 과도한 출력 보호(200KB 이상은 잘라냄)
-      const cap = (txt)=> (txt.length > 200_000 ? txt.slice(0, 200_000) + "\n...[truncated]..." : txt);
-      let s = `[${ts}] ${cap(headStr)}${cap(tailStr)}`;
-      if (SEQ.log.textContent === "-" || !SEQ.log.textContent) {
-        SEQ.log.textContent = s;
-      } else {
-        SEQ.log.textContent += `\n${s}`;
-      }
-      SEQ.log.scrollTop = SEQ.log.scrollHeight;
-    }
-    function parseDaemonMap(){
-      const txt = (SEQ.mapArea?.value||"").trim();
-      if (!txt) return {};
-      try { return JSON.parse(txt); } catch(e) {
-        throw new Error("Daemon Map JSON parse error: " + e.message);
+    function stopPolling() {
+      if (POLLER) {
+        clearInterval(POLLER);
+        POLLER = null;
       }
     }
-    function sanitizeDaemonMap(dm){
-      // SPd/MMd 동치 처리 + 빈 값 제거
-      const out = {};
-      for (const [k,v] of Object.entries(dm||{})){
-        if (!v) continue;
-        out[k] = v;
-      }
-      return out;
-    }
-
-    const PROG_LS_KEY = "oms_ra_progress";
-    /**
-     * 진행칩 메시지 쓰기 (우선순위 기반)
-     * @param {string} text
-     * @param {number} priority 1=progress, 2=live, 3=SSE, 10=final
-     */
-    function raWrite(text, priority=1){
-      if (RA_FINAL && priority < 10) return;            // 완료 이후엔 final만 허용
-      if (priority < RA_MSG_PRIORITY) return;           // 낮은 우선순위는 무시
-      RA_MSG_PRIORITY = priority;
-      PROG.style.visibility = "visible";
-      const msg = (text && String(text).trim()) ? text : (PROG.textContent.trim() || "Working…");
-      if (PROG.textContent !== msg) PROG.textContent = msg;
-      try { localStorage.setItem(PROG_LS_KEY, msg); } catch {}
-    }
-    function raClear(){
-      // 시작 시 초기화 (완료 메시지는 유지)
-      RA_FINAL = false;
-      RA_MSG_PRIORITY = 0;
-      RA_SEEN_RUNNING = false;
-    }
-    new MutationObserver(()=>{
-      // 완료 잠금 시 외부 복구 시도 무시
-      if (RA_FINAL) return;
-      if (!PROG.textContent || !PROG.textContent.trim()){
-        const cached = localStorage.getItem(PROG_LS_KEY);
-        if (cached && cached.trim()) PROG.textContent = cached;
-        else PROG.textContent = "Working…";
-      }
-    }).observe(PROG, {characterData:true, childList:true, subtree:true});
-    window.addEventListener("storage", (e)=>{
-      // 완료 잠금 시 외부 탭 갱신 무시
-      if (RA_FINAL) return;
-      if (e.key === PROG_LS_KEY && typeof e.newValue === "string"){
-        PROG.style.visibility = "visible";
-        if (e.newValue.trim()) PROG.textContent = e.newValue;
-      }
-    });
-    (function(){ const cached = localStorage.getItem(PROG_LS_KEY); if (cached) { PROG.style.visibility="visible"; PROG.textContent=cached; }})();
-
-    function toProcList(status){
+    function toProcList(status) {
       if (!status) return [];
-      if (status.data && typeof status.data==="object") return Object.values(status.data);
+      if (status.data && typeof status.data === "object") return Object.values(status.data);
       if (Array.isArray(status.processes)) return status.processes;
       if (Array.isArray(status.executables)) return status.executables;
       return [];
     }
-    
-    // dms-system과 동일 규칙: "executables"의 select=true가 표 대상,
-    // running은 processes.running(없으면 executables.status 문자열)로 판단
-    // 선택된(executables.select=true) 프로세스만 표시하되,
-    // 실행/연결 상태는 processes/executables/data 를 모두 병합해서 판단
-    function selectedProcList(status){
+    // 선택 대상 프로세스 리스트 (dms-system 규칙과 동일하게 executables.select=true 기준)
+    function selectedProcList(status) {
       if (!status) return [];
       const execs = Array.isArray(status.executables) ? status.executables : [];
       const procs = Array.isArray(status.processes) ? status.processes : [];
       const dataObjs = (status.data && typeof status.data === "object") ? Object.values(status.data) : [];
 
-      // 상태 병합 맵 구성 (name 단위로 가장 풍부한 필드가 남도록 덮어쓰기)
       const stateMap = Object.create(null);
-      const ingest = (arr)=> {
-        for (const x of (arr||[])){
-          if (!x || !x.name) continue;
-          stateMap[x.name] = { ...(stateMap[x.name]||{}), ...x };
+      const ingest = (arr) => {
+        for (const x of (arr || [])) {
+          if (!x) continue;
+          const nm = x.name || x.proc || x.id;
+          if (!nm) continue;
+          stateMap[nm] = { ...(stateMap[nm] || {}), ...x, name: nm };
         }
       };
-      ingest(procs);      // 보통 여기에 running(boolean)이 있음
-      ingest(execs);      // 일부 배포에선 status 문자열이 여기 존재
-      ingest(dataObjs);   // 구버전/커스텀 배포에서 여기에 상태가 섞여 있음
+      ingest(procs);
+      ingest(execs);
+      ingest(dataObjs);
 
-      const normRunning = (v)=>{
+      const normRunning = (v) => {
         if (typeof v === "boolean") return v;
-        const s = String(v||"").trim().toLowerCase();
-        // 다양한 표현 대응
-        return s === "running" || s === "started" || s === "ok" || s === "online";
+        const s = String(v || "").trim().toLowerCase();
+        return s === "running" || s === "started";
       };
 
-      // executables 중 선택된 것만, 병합된 상태로 반환
-      return execs
-        .filter(e => e && e.select === true)
+      const base = execs.length ? execs : (procs.length ? procs : dataObjs);
+      return base
+        .filter(e => e && (e.select !== false))
         .map(e => {
-          const ref = stateMap[e.name] || {};
-          const running = normRunning(
-            ref.running ?? ref.status ?? e.running ?? e.status
-          );
+          const nm = e.name || e.proc || e.id;
+          const ref = stateMap[nm] || {};
+          const running = normRunning(ref.running ?? ref.status ?? e.running ?? e.status);
           return {
-            name: e.name,
+            name: nm,
             alias: e.alias || ref.alias || "",
-            select: true,
+            select: e.select !== false,
             running,
             connection_state: ref.connection_state || e.connection_state || null,
-            // 버전/날짜가 다른 곳에 있다면 이후 applyOverlays에서 덮임
+            version: ref.version || e.version,
+            version_date: ref.version_date || e.version_date,
           };
         });
     }
-    // 노드 셀: 프로세스 기준 인덱스/총계 표기로 변경 (예: 10.82.104.201:19776 (1/9))
-    function nodeCellHtml(n, procIndex, procTotal){
-      const href = `/proxy/${encodeURIComponent(n.name)}/dms-system.html`;
-      const suffix = (typeof procIndex === "number" && typeof procTotal === "number" && procTotal>0)
-        ? ` (${procIndex+1}/${procTotal})` : "";
-      return `<a class="node" href="${href}" target="_blank">${(n.alias||n.name)}</a><br><span class="muted">${n.host}:${n.port}${suffix}</span>`;
+    function nodeCellHtml(n, procIndex, procTotal) {
+      const href = "/proxy/" + encodeURIComponent(n.name) + "/dms-system.html";
+      const suffix = (typeof procIndex === "number" && typeof procTotal === "number" && procTotal > 0)
+        ? " (" + (procIndex + 1) + "/" + procTotal + ")" : "";
+      return '<a class="node" href="' + href + '" target="_blank">' + (n.alias || n.name) + '</a><br>' +
+             '<span class="muted">' + n.host + ":" + n.port + suffix + "</span>";
     }
+    function applyOverlays(data) {
+      const extra = (data && data.extra) || {};
+      const verMap = extra.versions || {};
+      const presdVer = extra.presd_versions || {};
+      const conn = extra.connected_daemons || {};
+      const presdIps = extra.presd_ips || [];
+      const nodes = Array.isArray(data.nodes) ? data.nodes : [];
 
-    function applyOverlays(data){
-      const extra   = (data && data.extra) || {};
-      const verMap  = extra.versions || {};
-      const presdVer= extra.presd_versions || {};
-      const conn    = extra.connected_daemons || {};
-      const presdIps= extra.presd_ips || [];
-      const nodes   = Array.isArray(data.nodes) ? data.nodes : [];
-
-      const ipFromHost = (s)=>{
-        const m = String(s||"").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
-        return m ? m[0] : String(s||"");
+      const ipFromHost = (s) => {
+        const m = String(s || "").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
+        return m ? m[0] : String(s || "");
       };
-      const toList = (status)=>{
+      const listFromStatus = (status) => {
         if (!status) return [];
-        if (status.data && typeof status.data==="object") return Object.values(status.data);
+        if (status.data && typeof status.data === "object") return Object.values(status.data);
         if (Array.isArray(status.processes)) return status.processes;
         if (Array.isArray(status.executables)) return status.executables;
         return [];
       };
-      const hasNonDash = v => (typeof v === "string") ? v.trim() !== "-" && v.trim() !== "" : !!v;
 
-      for (const n of nodes){
+      for (const n of nodes) {
         const nodeIp = ipFromHost(n.host);
-        const procs = toList(n.status);
-        for (const p of procs){
+        const procs = listFromStatus(n.status);
+        for (const p of procs) {
           if (!p || !p.name) continue;
 
-          // ---- (1) 버전 오버레이 ----
-          if (p.name === "PreSd"){
+          // 버전 오버레이
+          if (p.name === "PreSd") {
             const src =
               presdVer[nodeIp] ||
               (verMap.PreSd && (verMap.PreSd[nodeIp] || (verMap.PreSd.byIp && verMap.PreSd.byIp[nodeIp]))) ||
               null;
-            if (src){
+            if (src) {
               p.version = src.version || "-";
               p.version_date = src.date || "-";
             } else if (verMap.PreSd && verMap.PreSd.version) {
-              // fallback (집계형)
               p.version = verMap.PreSd.version || "-";
               p.version_date = verMap.PreSd.date || "-";
             }
-          } else if (p.name === "MMd" && verMap.MMd){
-            p.version = verMap.MMd.version || "-";
-            p.version_date = verMap.MMd.date || "-";
-          } else if (verMap[p.name]){
-            p.version = verMap[p.name].version || "-";
-            p.version_date = verMap[p.name].date || "-";
+          } else if (verMap[p.name]) {
+            p.version = verMap[p.name].version || p.version || "-";
+            p.version_date = verMap[p.name].date || p.version_date || "-";
           }
 
-          // ---- (2) PCd connect 응답 기반 CONNECTED 판정만 적용 ----
-          // 일반 데몬
-          if (conn && typeof conn === "object" && conn[p.name] === true){
-            p.connection_state = "CONNECTED";
-          }
-          // PreSd는 IP별 허용 목록
-          if (p.name === "PreSd" && conn && conn.PreSd === true){
-            if (!presdIps.length || presdIps.includes(nodeIp)){
+          // CONNECTED 오버레이 (PCd / PreSd)
+          if (conn && conn[p.name] === true) {
+            if (p.name === "PreSd") {
+              const ipOk = !presdIps.length || presdIps.includes(nodeIp);
+              if (ipOk) p.connection_state = "CONNECTED";
+            } else {
               p.connection_state = "CONNECTED";
             }
           }
         }
       }
+
+      // alias_map 전달
+      OMS_ALIAS_MAP = extra.alias_map || {};
     }
-    function render(data){
+    function effectiveStateOf(procObj) {
+      if (!procObj) return "STOPPED";
+      const running = !!procObj.running;
+      const conn = String(procObj.connection_state || "").toUpperCase();
+      if (!running) return "STOPPED";
+      if (conn === "CONNECTED") return "CONNECTED";
+      return "RUNNING";
+    }
+    function render(data) {
+      if (!data) return;
       applyOverlays(data);
-      OMS_ALIAS_MAP = (data && data.extra && data.extra.alias_map) || {};
-      lastData=data;
+      lastData = data;
 
       const hbSecRaw = Number(data && data.heartbeat_interval_sec);
-
-      // A안: versions / presd_versions를 한 번 꺼내서 표 렌더링에 사용
-      const VERS = (data && data.extra && data.extra.versions) || {};
-      const PRESD_VERS = (data && data.extra && data.extra.presd_versions) || {};
-      // 폴백용 전역 저장(선택)
-      window.__omsLastState = window.__omsLastState || {};
-      window.__omsLastState.versions = VERS;
-      window.__omsLastState.presd_versions = PRESD_VERS;
-      // 노드의 host 문자열에서 IP만 추출
-      const ipOf = (s)=>{
-        const m = String(s||"").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
-        return m ? m[0] : String(s||"");
-      };
+      const nodes = Array.isArray(data.nodes) ? data.nodes : [];
+      let procTotal = 0;
+      let connectedTotal = 0;
+      let runningTotal = 0;
+      let stoppedTotal = 0;
 
       if (!Number.isNaN(hbSecRaw) && hbSecRaw > 0) {
         const nextMs = Math.max(800, Math.min(10000, Math.floor(hbSecRaw * 1000)));
-        if (!RA_LOCK && nextMs !== POLL_MS) {
-          startPolling(nextMs);
-        }
-        HB.textContent = `poll ${hbSecRaw}s`;
+        if (nextMs !== POLL_MS) startPolling(nextMs);
+        HB.textContent = "poll " + hbSecRaw + "s";
       } else {
         HB.textContent = "poll -";
       }
 
-      const nodes = Array.isArray(data.nodes)? data.nodes : [];
-      // 전체 선택된 프로세스 개수 계산 (executables.select 기준)
-      let procTotal = 0;
-      for (const _n of nodes){
-        const _sel = selectedProcList(_n.status);
-        procTotal += _sel.length;
+      TBody.innerHTML = "";
+      if (nodes.length === 0) {
+        const bullet = "\u2022";
+        META.textContent = "nodes: 0 " + bullet + " processes: 0 " + bullet + " connected: 0";
+        TBody.innerHTML = '<tr class="other"><td colspan="5" class="muted">no nodes</td></tr>';
+        return;
       }
-      const bullet = "\u2022";
-      META.textContent = `nodes: ${nodes.length} ${bullet} processes: ${procTotal}`;
-      TBody.innerHTML="";
-      if (nodes.length===0){
-        TBody.innerHTML = `<tr class="other"><td colspan="5" class="muted">no nodes</td></tr>`; return;
-      }
-      for(let i=0;i<nodes.length;i++){
-        const n=nodes[i];
-        const shown = selectedProcList(n.status);
-        if (!n.status){
-          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,0,0)}</td><td colspan="4" class="muted">unreachable</td></tr>`); continue;
+
+      const VERS = (data && data.extra && data.extra.versions) || {};
+      const PRESD_VERS = (data && data.extra && data.extra.presd_versions) || {};
+      const ipOf = (s) => {
+        const m = String(s || "").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
+        return m ? m[0] : String(s || "");
+      };
+
+      for (let i = 0; i < nodes.length; i++) {
+        const n = nodes[i];
+        let shown = selectedProcList(n.status);
+        procTotal += shown.length;
+
+        if (!n.status) {
+          TBody.insertAdjacentHTML("beforeend",
+            '<tr class="other"><td>' + nodeCellHtml(n, 0, 0) + '</td><td colspan="4" class="muted">unreachable</td></tr>');
+          continue;
         }
-        if (shown.length===0){
-          TBody.insertAdjacentHTML("beforeend", `<tr class="other"><td>${nodeCellHtml(n,0,0)}</td><td colspan="4" class="muted">no selected processes</td></tr>`); continue;
+
+        if (shown.length === 0) {
+          const fallback = toProcList(n.status).map(x => ({
+            name: (x && (x.name || x.proc || x.id)) || "-",
+            alias: (x && x.alias) || "",
+            running: !!(x && (x.running || String(x.status || "").toLowerCase() === "running")),
+            connection_state: (x && x.connection_state) || null,
+            select: true
+          }));
+          if (fallback.length > 0) {
+            shown = fallback;
+          } else {
+            TBody.insertAdjacentHTML("beforeend",
+              '<tr class="other"><td>' + nodeCellHtml(n, 0, 0) + '</td><td colspan="4" class="muted">no processes</td></tr>');
+            continue;
+          }
         }
-        for(let j=0;j<shown.length;j++){
+
+        for (let j = 0; j < shown.length; j++) {
           const p = shown[j];
-          const running = !!p.running;
-          // A안: 행마다 버전 텍스트를 versions 맵에서 계산
           const nodeIp = ipOf(n.host);
-          // NOTE: PreSd는 IP별 버전이므로 외부 resolveVersion을 쓰지 않고 로컬 맵을 직접 참조한다.
+
           const _rv = (proc, ip) => {
-            // applyOverlays에서 p.version/p.version_date를 넣어줬다면 그것을 최우선 사용
             if (p && typeof p.version === "string" && p.version.trim()) return p.version;
             if (proc === "PreSd") {
               return (PRESD_VERS[ip]?.version)
-                   || (VERS.PreSd?.[ip]?.version)
-                   || (VERS.PreSd?.byIp?.[ip]?.version)
-                   || (VERS.PreSd?.version)
-                   || "-";
+                || (VERS.PreSd?.[ip]?.version)
+                || (VERS.PreSd?.byIp?.[ip]?.version)
+                || (VERS.PreSd?.version)
+                || "-";
             }
             return (VERS[proc]?.version) || "-";
-          };   
-          // ---- 상태 우선순위 + STOPPED 후 CONNECTED 무시 규칙
-          const conn = String(p.connection_state || "").toUpperCase();
-          const key  = `${n.name}::${p.name}`;
+          };
 
-          // 실행 안 됨 => STOPPED로 확정하고, 이후 CONNECTED 기억을 무시
-          if (!running) {
-            LOST_CONN[key] = true;
-          }
+          const eff = effectiveStateOf(p);
+          if (eff === "CONNECTED") connectedTotal += 1;
+          else if (eff === "RUNNING") runningTotal += 1;
+          else stoppedTotal += 1;
 
-          // 기본 우선순위: STOPPED > CONNECTED > RUNNING
-          // 단, STOPPED를 한 번이라도 본 프로세스는 재가동되더라도
-          // CONNECTED 표시는 무시하고 RUNNING 으로만 표시(Connect 시퀀스 전까지).
-          let effective;
-          if (!running) {
-            effective = "STOPPED";
-          } else if (conn === "CONNECTED" && !LOST_CONN[key]) {
-            effective = "CONNECTED";
-          } else {
-            effective = "RUNNING";
-          }
           const badge =
-            effective === "STOPPED"   ? `<span class="pill bad">STOPPED</span>` :
-            effective === "CONNECTED" ? `<span class="pill connected">CONNECTED</span>` :
-                                        `<span class="pill ok">RUNNING</span>`;
-          const rowCls = (effective === "STOPPED") ? "stopped" : "running";
+            eff === "STOPPED" ? '<span class="pill bad">STOPPED</span>' :
+            eff === "CONNECTED" ? '<span class="pill connected">CONNECTED</span>' :
+            '<span class="pill ok">RUNNING</span>';
+
+          const rowCls = (eff === "STOPPED") ? "stopped" : "running";
           const verText = _rv(p.name, nodeIp);
           const dateText = (p && typeof p.version_date === "string" && p.version_date.trim())
             ? p.version_date
             : (p.name === "PreSd"
-                ? (PRESD_VERS[nodeIp]?.date
-                   || VERS.PreSd?.[nodeIp]?.date
-                   || VERS.PreSd?.byIp?.[nodeIp]?.date
-                   || VERS.PreSd?.date
-                   || "-")
-                : (VERS[p.name]?.date || "-"));
-          const verHtml = `${verText}<br><span class="muted">${dateText}</span>`;
+              ? (PRESD_VERS[nodeIp]?.date
+                || VERS.PreSd?.[nodeIp]?.date
+                || VERS.PreSd?.byIp?.[nodeIp]?.date
+                || VERS.PreSd?.date
+                || "-")
+              : (VERS[p.name]?.date || "-"));
+          const verHtml = verText + '<br><span class="muted">' + (dateText || "-") + "</span>";
+
           const dmsAlias = (p.alias || "").trim();
           const omsAlias = (OMS_ALIAS_MAP[p.name] || "").trim();
           let aliasHtml = "";
           if (dmsAlias && omsAlias && dmsAlias !== omsAlias) {
-            aliasHtml = `<br><span class="muted" title="OMS alias: ${omsAlias}">${dmsAlias}</span>`;
+            aliasHtml = '<br><span class="muted" title="OMS alias: ' + omsAlias + '">' + dmsAlias + "</span>";
           } else {
             const a = dmsAlias || omsAlias;
-            aliasHtml = a ? `<br><span class="muted">${a}</span>` : "";
+            aliasHtml = a ? '<br><span class="muted">' + a + "</span>" : "";
           }
 
-          TBody.insertAdjacentHTML("beforeend", `
-            <tr class="${rowCls}">
-              <td>${nodeCellHtml(n, j, shown.length)}</td>
-              <td>${p.name||"-"}${aliasHtml}</td>
-              <td>${verHtml}</td>
-              <td>${badge}</td>
-              <td>
-                <button class="btn-secondary" data-a="logs"  data-node="${n.name}" data-proc="${p.name}">📜 Logs</button>
-              </td>
-            </tr>`);
+          TBody.insertAdjacentHTML("beforeend",
+            '<tr class="' + rowCls + '">' +
+              '<td>' + nodeCellHtml(n, j, shown.length) + "</td>" +
+              '<td>' + (p.name || "-") + aliasHtml + "</td>" +
+              '<td>' + verHtml + "</td>" +
+              '<td>' + badge + "</td>" +
+              '<td><button class="btn-secondary" data-a="logs" data-node="' +
+                n.name + '" data-proc="' + p.name + '">📜 Logs</button></td>' +
+            "</tr>");
         }
       }
-    }
 
-    async function reloadNow(){
-      try{
-        if (!RA_LOCK) setBusy(true);
-        clearErr();
-        render(await api("/oms/status"));
-      }catch(e){
-        showErr(e.message||e);
-      }finally{
-        if (!RA_LOCK) setBusy(false);
+      const bullet = "\u2022";
+      const nodesCount = nodes.length;
+      const processesCount = procTotal;
+      const connectedCount = connectedTotal;
+      const runningCount = runningTotal;
+      const stoppedCount = stoppedTotal;
+
+      META.textContent =
+        `nodes: ${nodesCount} • processes: ${processesCount} ( connected: ${connectedCount} / running: ${runningCount} / stopped: ${stoppedCount} )`;
+
+      const OSM_SUMMARY = {
+        nodes: nodesCount,
+        processes: processesCount,
+        connected: connectedCount,
+        running: runningCount,
+        stopped: stoppedCount,
+        ts: Date.now(),
+        source: "oms-system"
+      };
+      try {
+        window.OMS = window.OMS || {};
+        window.OMS.summary = OSM_SUMMARY;
+        window.dispatchEvent(new CustomEvent("oms:summary", { detail: OSM_SUMMARY }));
+      } catch (e) {
+        if (DEBUG) console.warn("oms:summary dispatch failed", e);
       }
     }
-
-    document.querySelector("#grid tbody").addEventListener("click", ev=>{
-      const b=ev.target.closest("button"); if(!b) return;
-      if (b.dataset.a==="logs"){
-        const url = `/web/log-viewer.html?node=${encodeURIComponent(b.dataset.node)}&name=${encodeURIComponent(b.dataset.proc)}`;
-        window.open(url,"_blank");
+    async function reloadNow(opts = {}) {
+      const silent = !!opts.silent;
+      try {
+        if (!silent) setBusy(true);
+        clearErr();
+        const data = await api("/oms/status");
+        render(data);
+      } catch (e) {
+        showErr(e.message || String(e));
+      } finally {
+        if (!silent) setBusy(false);
+      }
+    }
+    document.querySelector("#grid tbody").addEventListener("click", ev => {
+      const b = ev.target.closest("button"); if (!b) return;
+      if (b.dataset.a === "logs") {
+        const url = "/web/log-viewer.html?node=" +
+          encodeURIComponent(b.dataset.node) +
+          "&name=" + encodeURIComponent(b.dataset.proc);
+        window.open(url, "_blank");
       }
     });
 
-    // ==== Restart-All 진행 카운팅 & 라이브 진행칩 갱신 ====
-    function pluckProcs(status){
-      if (!status) return [];
-      if (status.data && typeof status.data==="object") return Object.values(status.data);
-      if (Array.isArray(status.processes)) return status.processes;
-      if (Array.isArray(status.executables)) return status.executables;
-      return [];
-    }
-    function calcProgressFromOmsStatus(omsStatus){
-      const nodes = Array.isArray(omsStatus && omsStatus.nodes) ? omsStatus.nodes : [];
-      let total=0, run=0, stop=0;
-      for (const n of nodes){
-        const list = selectedProcList(n && n.status);
-        for (const p of list){
-          total += 1;
-          if (p.running) run += 1; else stop += 1;
+    // ========================================================================
+    // Button Action
+    // ========================================================================
+    
+    // ─ [Button] Reload ──────────────────────────────────────────────────────
+    BTN_SYS_RELOAD.onclick = () => reloadNow({ silent: false });
+    // ─ [Button] Restart ──────────────────────────────────────────────────────
+    BTN_SYS_RESTART.onclick = () => {
+        // ✅ Restart 시작 전에 지난 진행 메시지 완전히 삭제
+        console.log("BTN_SYS_RESTART.onclick")
+        clearProgressChip();
+
+        window.OMS = window.OMS || {};
+        window.OMS.Actions = window.OMS.Actions || {};
+        const Actions = window.OMS.Actions;
+    
+        // JS helper가 있으면 그걸 먼저 사용
+        if (Actions && typeof Actions.sysRestart === "function") {
+            Actions.sysRestart().catch(e => {
+                const msg = String(e?.message || e || "");
+                alert("Restart-All failed: " + msg);
+            });
+            return;
         }
-      }
-      return { total, run, stop, unknown: 0 };
-    }
-    const sleep = (ms)=>new Promise(r=>setTimeout(r, ms));
-
-    let RA_LIVE = null;
-    async function startRaLiveProgressLoop(){
-      stopRaLiveProgressLoop();
-      RA_LIVE = setInterval(async ()=>{
-        try{
-          const data = await api("/oms/status");
-          const p = calcProgressFromOmsStatus(data);
-          const sec = Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000);
-          if (p.total > 0){
-            raWrite(`Restarting… (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${sec}s)`, 2);
-          }else{
-            raWrite(`Restarting… (discovering · ${sec}s)`, 2);
-          }
-        }catch{}
-      }, 600);
-    }
-    function stopRaLiveProgressLoop(){
-      if (RA_LIVE){ clearInterval(RA_LIVE); RA_LIVE = null; }
-    }
-
-    // ==== SSE & 폴백 폴링 ====
-    let evtSrc=null, sseTimer=null, statePoller=null;
-    function closeSSE(){ if(evtSrc){evtSrc.close(); evtSrc=null;} if(sseTimer){clearInterval(sseTimer); sseTimer=null;} }
-    function onProgressState(s){
-      if (!s) return;
-      if (s.message) raWrite(s.message, 3);
-      // running 신호 감지 → 이후에만 완료 인정
-      if (s.state === "running") {
-        RA_SEEN_RUNNING = true;
-        return;
-      }
-
-      // 클릭 직후 idle은 조기 완료로 오인될 수 있으므로 유예
-      if (s.state === "idle" && !RA_SEEN_RUNNING) {
-        const elapsed = performance.now() - (window.__raStartTs || performance.now());
-        if (elapsed < RA_IDLE_GRACE_MS) {
-          // 조용히 무시하거나 가벼운 대기 메시지
-          raWrite(`Waiting to start… (${Math.max(1, Math.round((RA_IDLE_GRACE_MS - elapsed)/1000))}s)`, 2);
-          return;
-        }
-        // 유예 후에도 running을 못 봤다면 "진행 없음"으로 안내만 하고 완료 처리하지 않음
-        raWrite("No restart in progress (idle).", 2);
-        return;
-      }
-      if (s.state==="done" || s.state==="error" || (s.state==="idle" && RA_SEEN_RUNNING)){         
-        // 완료 처리: 모든 작성자 정지 + 최종 메시지 고정
-        RA_FINAL = true;
-        stopRaProgressPolling();
-        stopRaLiveProgressLoop();
-        closeSSE();
-
-        RA_LOCK = false; setBusy(false);
-        // 서버 요약 우선
-        if (s.summary && typeof s.summary === "object"){
-          const sum = s.summary;
-          const took = (sum.elapsedSec!=null) ? `${Math.round(sum.elapsedSec)}s`
-                    : `${Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000)}s`;
-          const stopOk = sum.stop?.ok ?? 0, stopFail = sum.stop?.fail ?? 0;
-          const startOk = sum.start?.ok ?? 0, startFail = sum.start?.fail ?? 0;
-          raWrite(`Restart-All done: stop ok ${stopOk}, fail ${stopFail}; start ok ${startOk}, fail ${startFail}; elapsed ${took}`, 10);
-          if ((sum.stop?.fail||0) + (sum.start?.fail||0) > 0 && Array.isArray(sum.failedNames) && sum.failedNames.length){
-            showErr("Restart-All partial failures: " + sum.failedNames.join(", "));
-          }
+      
+        // fallback: 직접 API 호출
+        api("/oms/sys-restart/all", { method: "POST" })
+            .catch(e => {
+                const msg = String(e?.message || e || "");
+                alert("Restart-All failed: " + msg);
+            });
+    };
+    // ─ [Button] Connect ──────────────────────────────────────────────────────
+    BTN_SYS_CONNECT.onclick = () => {
+      // ✅ Connect 시작 시에도 지난 메시지 clear
+      clearProgressChip();
+      // 진행칩은 actions.js에서 chipMsg로 관리하므로 여기서는 단순 트리거만
+      try {
+        if (window.OMS && window.OMS.Actions && typeof window.OMS.Actions.sysConnect === "function") {
+          window.OMS.Actions.sysConnect();
         } else {
-          // 서버 요약이 없으면 라이브 스냅샷으로 임시 요약
-          (async ()=>{
-            try{
-              const snap = await api("/oms/status");
-              const p = calcProgressFromOmsStatus(snap);
-              const took = `${Math.round((performance.now() - (window.__raStartTs||performance.now()))/1000)}s`;
-              const fails = Math.max(0, p.total - p.run);
-              const label = RA_SEEN_RUNNING ? "Restart-All done (live)" : "Restart-All finished (no activity)";
-              raWrite(`${label}: start ok ${p.run}, fail ${fails}; elapsed ${took}`, 10);
-              if (fails > 0){
-                // 실패 구체 목록은 서버에서 제공되지 않으므로 생략(원하면 /oms/restart/state 확장 필요)
-              }
-            }catch{
-              raWrite("Restart-All done", 10);
-            }
-          })();
+          // 필요 없으면 fallback 완전히 제거하거나,
+          // "지원되지 않는 환경" 정도만 로그로 남기기
+          console.error("sysConnect not available");
         }
-
-        startPolling(POLL_MS);
-        if (statePoller){ clearInterval(statePoller); statePoller=null; }
-        reloadNow().catch(()=>{});
-      }
-    }
-    function startSSE(){
-      closeSSE();
-      if ("EventSource" in window){
-        evtSrc = new EventSource(API + "/oms/restart/stream");
-        // 서버는 event: progress 사용 → 정확 이벤트 리스너
-        const handler = (e)=>{ try{ onProgressState(JSON.parse(e.data)); }catch{} };
-        evtSrc.addEventListener("progress", handler);
-        // 혹시 배포에 따라 기본 onmessage로 올 수도 있어서 백업 유지
-        evtSrc.onmessage = handler;
-        evtSrc.onerror = ()=>{ startStatePolling(); };
-      } else {
-        startStatePolling();
-      }
-    }
-    function startStatePolling(){
-      // 항상 보조 폴러를 켠다(= SSE 유무와 무관)
-      if (statePoller) clearInterval(statePoller);
-      statePoller = setInterval(async ()=>{
-        try{
-          const [s, st] = await Promise.all([
-            api("/oms/restart/state"),
-            api("/oms/status").catch(()=>null)
-          ]);
-          // 상태 숫자 붙여서 강제 진행 문구 출력
-          if (st){
-            const p = calcProgressFromOmsStatus(st);
-            const base = (s && s.message) ? s.message : "Restarting…";
-            raWrite(`${base} (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped)`, 3);
-          }else if (s && s.message){
-            raWrite(s.message, 3);
-          }
-          onProgressState(s);
-        }catch(_){}
-      }, 700);
-    }
-
-    if (BTN_CONNECT) {
-      BTN_CONNECT.onclick = async () => {
-        try {
-          // 중복 클릭 방지
-          BTN_CONNECT.disabled = true;
-          // 새 Connect 시퀀스 시작: 과거 STOPPED로 인해 잠긴 CONNECTED 무시 플래그 초기화
-          // (연결을 새로 맺었으니 CONNECTED 표기를 다시 허용)
-          LOST_CONN = Object.create(null);
-          // Fill이 현재 그리드(lastData)에 의존하므로, 없으면 한 번만 상태 로드
-          if (!lastData) {
-            try { await reloadNow(); } catch (_) {}
-          }
-
-          // 진행 칩에 간단 안내(기존 raWrite 유틸 재사용, 없어도 무방)
-          raWrite("Connect… filling from list", 1);
-
-          // 1) Fill from List
-          SEQ.btnFill?.click();
-
-          // UI 값 반영 틱 대기 (textarea 갱신 → 곧바로 Run에서 읽게)
-          await new Promise(r => setTimeout(r, 50));
-
-          raWrite("Connect… running sequence", 2);
-
-          // 2) Run Sequence
-          SEQ.btnStart?.click();
-        } catch (e) {
-          showErr(String(e));
-        } finally {
-          // 약간의 딜레이 후 버튼 복구(즉시 복구해도 됨)
-          setTimeout(() => { BTN_CONNECT.disabled = false; }, 300);
-        }
-      };
-    }
-
-    BTN_RELOAD.onclick = reloadNow;
-    BTN_CONFIG.onclick = ()=> location.href="oms-config.html";
-    BTN_RA.onclick = async ()=>{
-      const mySession = ++RA_SESSION_ID;
-      RA_LOCK = true;
-      RA_FINAL = false;
-      RA_MSG_PRIORITY = 0;
-      RA_SEEN_RUNNING = false;
-      stopPolling();
-      clearErr(); setBusy(true);
-      raWrite("Restarting… preparing", 1);
-      window.__raStartTs = performance.now();
-      try{
-        await api("/oms/restart/all", {method:"POST"});
-        startStatePolling();
-        // 서버가 state=running 으로 전환할 유예
-        setTimeout(() => {
-          if (mySession !== RA_SESSION_ID) return; // 오래된 세션 보호
-          startRaLiveProgressLoop();
-          startSSE();
-          startRaProgressPolling();
-          // 만약 SSE가 조용하면(메시지 미수신) 폴백 상태 폴링을 자동 시작
-          setTimeout(() => {
-            if (mySession !== RA_SESSION_ID || RA_FINAL) return;            
-          }, 1200);
-        }, 250);
-      }catch(e){
-        showErr(e.message||e);
-        RA_LOCK=false; setBusy(false); startPolling(POLL_MS);
-        stopRaProgressPolling();
-        stopRaLiveProgressLoop();
-        if (statePoller){ clearInterval(statePoller); statePoller=null; }
+      } catch (e) {
+        console.error(e);
       }
     };
+    // ─ [Button] Dashboard ────────────────────────────────────────────────────
+    BTN_DASHBOARD.onclick = () => {
+      const base = __PROXY_PREFIX__ || "";
+      window.location.href = base + "/dashboard";
+    };
+    // ─ [Button] Config ──────────────────────────────────────────────────────
+    BTN_CONFIG.onclick = () => {
+      const base = __PROXY_PREFIX__ || "";
+      window.location.href = base + "/web/oms-config.html";
+    };
 
-    // ===== Connect Sequence bindings =====
-    if (SEQ?.btnFill){
-      SEQ.btnFill.onclick = ()=>{
-        try{
-          if (!lastData) { appendLog("No status yet. Click Reload first."); return; }
-          const dm = {};
-          // 가장 단순한 채우기: 각 프로세스 이름의 최초 등장 노드의 host를 매핑
-          for (const n of (lastData.nodes||[])){
-            const host = n.host;
-            const list = (n.status && (n.status.data ? Object.values(n.status.data)
-                              : (n.status.processes || n.status.executables))) || [];
-            for (const p of (list||[])){
-              if (!p?.name) continue;
-              if (dm[p.name]) continue;
-              dm[p.name] = host;
-            }
+    // 페이지가 준비되면 actions 레이어에 hook과 ui를 넘겨준다
+    function mountActionsOnce() {
+      if (!(window.OMS && window.OMS.Actions)) return;
+      try {
+        window.OMS.Actions.mountPage({
+          hooks: {
+            reloadNow: (opts) => reloadNow(opts),
+            render: (data) => render(data)
           }
-          SEQ.mapArea.value = JSON.stringify(dm, null, 2);
-          appendLog("Filled Daemon Map from current list.", dm);
-        }catch(e){ appendLog("Fill failed", {error:String(e)}); }
-      };
-    }
-    if (SEQ?.btnStart){
-      SEQ.btnStart.onclick = async ()=>{
-        SEQ_ABORT = false;
-        try{
-          SEQ.log.textContent = "-";
-          seqSetStatus("Running", "pill-ok");
-          appendLog("== step1: EMd connect(run) ==");
-          const dm0 = parseDaemonMap();
-          const dm  = SEQ.sanitize?.checked ? sanitizeDaemonMap(dm0) : sanitizeDaemonMap(dm0);
-          const payload = {
-            mtd_host: (SEQ.host?.value||"").trim(),
-            mtd_port: Number(SEQ.port?.value||19765),
-            dmpdip:   (SEQ.mgmt?.value||"").trim(),
-            daemon_map: dm,
-            trace: !!SEQ.verbose?.checked,   // 기본 false
-            return_partial: true,
-            dry_run: !!SEQ.dryRun?.checked
-          };
-          const res = await api("/oms/connect/sequence", {
-            method:"POST",
-            headers:{ "Content-Type":"application/json" },
-            body: JSON.stringify(payload)
-          });
-          if (res?.events){
-            for (const ev of res.events){
-              if (SEQ_ABORT) break;
-              const head = ev.step || "(step)";
-              if (ev.error){
-                appendLog(`${head} -> ERROR`, ev.error);
-              }else{
-                appendLog(`${head} -> OK`, ev.response ?? ev);
-              }
-            }
-            appendLog("Sequence finished.", {ok:true});
-            seqSetStatus("Done", "pill-ok");
-            LOST_CONN = Object.create(null);
-          }else{
-            appendLog("No events returned.", res);
-            seqSetStatus("Done", "pill-warn");
-          }
-        }catch(e){
-          appendLog("Sequence failed", {error:String(e)});
-          seqSetStatus("Error", "pill-bad");
+        });
+        if (window.OMS.__ui && typeof window.OMS.Actions.setUi === "function") {
+          window.OMS.Actions.setUi(window.OMS.__ui);
         }
-      };
+      } catch (e) {
+        console.error("mountPage failed", e);
+      }
     }
-    if (SEQ?.btnAbort){
-      SEQ.btnAbort.onclick = ()=>{ SEQ_ABORT = true; appendLog("Abort requested."); seqSetStatus("Aborted","pill-warn"); };
-    }
-    if (SEQ?.btnCopy){
-      SEQ.btnCopy.onclick = async ()=>{
-        try{
-          await navigator.clipboard.writeText(SEQ.log.textContent||"");
-          appendLog("Copied log to clipboard.");
-        }catch(e){ appendLog("Copy failed", {error:String(e)}); }
-      };
-    }
-    if (SEQ?.btnSave){
-      SEQ.btnSave.onclick = ()=>{
-        const blob = new Blob([SEQ.log.textContent||""], {type:"text/plain;charset=utf-8"});
-        const a = document.createElement("a");
-        a.href = URL.createObjectURL(blob);
-        a.download = `connect_sequence_${Date.now()}.log`;
-        document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(()=>URL.revokeObjectURL(a.href), 1000);
-        appendLog("Saved log file.");
-      };
-    }    
+    // 초기 부팅: 한 번만 명시적으로 호출
+    (function bootstrap() {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          reloadNow({ silent: false }).catch(e => console.error(e));
+          startPolling(POLL_MS);
+        });
+      } else {
+        reloadNow({ silent: false }).catch(e => console.error(e));
+        startPolling(POLL_MS);
+      }
 
-    (async function(){
-      try{
-        const s = await api("/oms/restart/state");
-        if (s && s.state === "running"){
-          RA_LOCK=true; setBusy(true);
-          raWrite(s.message || "Working…", 3);
-          window.__raStartTs = performance.now();
-          startRaLiveProgressLoop();
-          startSSE();
-          RA_SEEN_RUNNING = true;
+      // Summary 이벤트로 Title 옆 meta도 즉시 업데이트
+      window.addEventListener("oms:summary", (ev) => {
+          const d = ev.detail || {};
+          const bullet = "\u2022";
+          META.textContent =
+            "nodes: " + (d.nodes || 0) + " " + bullet +
+            " processes: " + (d.processes || 0) +
+            " ( connected: " + (d.connected || 0) +
+            " / running: " + (d.running || 0) +
+            " / stopped: " + (d.stopped || 0) + " )";
+      });
+
+    })();
+
+    // ─ Restart Lock 
+    (function syncRestartLock() {
+      console.log("syncRestartLock")
+      function applyLock(locked) {
+        const on = !!locked;
+        if (BTN_SYS_RESTART) BTN_SYS_RESTART.disabled = on;
+        if (BTN_SYS_CONNECT) BTN_SYS_CONNECT.disabled = on;
+      }
+
+      // 페이지 진입 시 현재 lock 상태 한 번 반영
+      try {
+        if (window.OMS && window.OMS.Actions && typeof window.OMS.Actions.isSysRestartLocked === "function") {
+          applyLock(window.OMS.Actions.isSysRestartLocked());
         }
-      }catch{}
-      await reloadNow();
-      startPolling(POLL_MS);
+      } catch { }
+
+      // BroadcastChannel 로 실시간 동기화
+      try {
+        const bc = new BroadcastChannel("oms-restart-lock");
+        bc.onmessage = (e) => {
+          if (!e || !e.data) return;
+          applyLock(!!e.data.locked);
+        };
+      } catch { }
+    })();
+
+    // ─────────── Unified Progress Poller & Chip Sync ───────────
+
+    function getTitleChipEl() {
+      // oms-system의 chip은 progressChip 이다
+      return document.getElementById("progressChip");
+    }
+
+    (function unifiedProgressManager() {
+      const KEY = PROG_LS_KEY;
+      const INTERVAL = 1000;
+
+      function applyLockFromMessage(msgRaw) {
+
+        console.log("applyLockFromMessage", msgRaw)
+
+        const msg = String(msgRaw || "").trim().toLowerCase();
+        if (!msg.startsWith("[system][restart]")) 
+          return;
+
+        BTN_SYS_RESTART.disabled = true;
+        BTN_SYS_CONNECT.disabled = true;
+        
+        if (
+          msg.includes("finished") ||
+          /\b(finished|done|complete)\b/.test(msg) ||
+          msg.includes("restart-all done") ||
+          msg.includes("restart-all failed")
+        ) {
+          BTN_SYS_RESTART.disabled = false;
+          BTN_SYS_CONNECT.disabled = false;
+        }
+      }
+
+      // 최초 캐시 UI 반영
+      try {
+        const cached = localStorage.getItem(KEY);
+        if (cached && PROG) {
+          const msg = cached.trim();
+
+          // debug
+          console.log("unifiedProgressManager",msg)
+          PROG.textContent = msg;
+          PROG.style.visibility = msg ? "visible" : "hidden";
+          applyLockFromMessage(msg);
+        }
+      } catch {}
+
+      // 다른 탭 sync
+      window.addEventListener("storage", (e) => {
+        if (e.key !== KEY || typeof e.newValue !== "string") return;
+        const msg = e.newValue.trim();
+        PROG.textContent = msg;
+        PROG.style.visibility = msg ? "visible" : "hidden";
+        applyLockFromMessage(msg);
+      });
     })();
   </script>
 
-  <script src="/web/oms-system.js" defer></script>
+  <!-- Common Title -->
   <script>
-    window.addEventListener('DOMContentLoaded', () => {
-      if (typeof window.initOmsSystem !== 'function') {
-        console.error('initOmsSystem not found'); return;
+    (function () {
+      function applyCommonConfig(cfg) {
+        if (!cfg || typeof cfg !== "object") return;
+        var appName = cfg.appName || "4DReplay";
+        var version = cfg.version || "V5";
+        var pageCfg = (cfg.pages && cfg.pages.omsSystem) || {};
+
+        // 1) HTML <title>
+        if (pageCfg.htmlTitle) {
+          document.title = pageCfg.htmlTitle;
+        } else {
+          document.title = appName + " " + version + " - OMs System";
+        }
+        // 2) 화면 상단 H2 안의 타이틀 텍스트
+        var h = document.getElementById("pageTitle");
+        if (h && pageCfg.pageTitle) {
+          h.textContent = pageCfg.pageTitle;
+        }
+        // 3) favicon (공통)
+        if (cfg.faviconHref) {
+          var link = document.querySelector('link[rel="icon"]');
+          if (!link) {
+            link = document.createElement("link");
+            link.rel = "icon";
+            link.type = "image/x-icon";
+            document.head.appendChild(link);
+          }
+          link.href = cfg.faviconHref;
+        }
       }
-      window.initOmsSystem({});
-    });
+      function init() {
+        // 이미 로딩돼 있으면 즉시 한 번 적용
+        if (window.OmsCommonConfig) {
+          applyCommonConfig(window.OmsCommonConfig);
+        }
+        // 4d-common-style.js에서 oms:config-ready 이벤트 쏘니까 그것도 구독
+        try {
+          window.addEventListener("oms:config-ready", function (e) {
+            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
+          });
+        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
+      }
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
   </script>
 </body>
 </html>

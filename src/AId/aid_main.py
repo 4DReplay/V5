@@ -7,12 +7,14 @@
 import os
 import sys
 import json
+import struct
 import queue
 import time
 import threading
 import shutil
 import signal
 import atexit
+import socket
 from threading import Semaphore
 from datetime import datetime
 
@@ -36,7 +38,9 @@ sys.path.insert(0, common_path)
 
 # ── imports (project) ────────────────────────────────────────────────────────
 from fd_common.msg               import FDMsg
-from fd_common.tcp_server        import TCPServer
+from fd_common.tcp_server        import TCPServer   # communication with MTd
+from fd_common.tcp_client        import TCPClient   # communication with AIc
+
 from fd_utils.fd_config_manager  import setup, conf, get
 from fd_utils.fd_logging         import fd_log
 from fd_utils.fd_file_edit       import fd_clean_up
@@ -76,6 +80,16 @@ class AId:
         self.conf = conf  # conf 객체를 직접 할당
         self.version = self.conf._version  # conf에서 _version 가져오기
         self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
+
+        # AIc 연결 관리 (persistent AId -> AIc)
+        #  - aic_name_ip_map : MTd에서 받은 이름 → IP 매핑
+        #  - aic_ip_name_map : IP → 이름 매핑
+        #  - aic_sessions    : IP 별 TCPClient 세션
+        #  - aic_version_cache: IP 별 버전 응답 캐시
+        self.aic_name_ip_map: dict[str, str] = {}
+        self.aic_ip_name_map: dict[str, str] = {}
+        self.aic_sessions = {}        # { ip: TCPClient }
+        self.aic_version_cache = {}   # { ip: {"name":..,"ip":..,"version":..,"date":..} }
 
     # ─────────────────────────────────────────────────────────────────────────
     # 시스템 초기화(로그 폴더 등). 실패시 False
@@ -130,6 +144,34 @@ class AId:
         except Exception as e:
             fd_log.error(f"[{self.name}] TCP server start failed on {port}: {e}")
             return False
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # AIc 연결 상태 체크 (단순 TCP connect 기반)
+    # ─────────────────────────────────────────────────────────────────────────
+    def check_aic_connectivity(self, ip: str, timeout: float = 1.0) -> bool:
+        """Check connectivity to an AIc daemon by trying a TCP connect.
+
+        Returns True if connection succeeds, False otherwise.
+        """
+        port = getattr(conf, "_aic_daemon_port", None)
+        if not port:
+            fd_log.error("[AId] _aic_daemon_port is not configured.")
+            return False
+
+        sock = None
+        try:
+            fd_log.info(f"[AId] checking AIc connectivity: {ip}:{port}")
+            sock = socket.create_connection((ip, port), timeout=timeout)
+            return True
+        except Exception as e:
+            fd_log.warning(f"[AId] AIc connectivity check failed for {ip}:{port} - {e}")
+            return False
+        finally:
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
 
     # ─────────────────────────────────────────────────────────────────────────
     # 구(舊) 속성 로더(호환 유지)
@@ -230,14 +272,149 @@ class AId:
             time.sleep(0.01)
         fd_log.info("🔴 [AId] Message Receive End")
 
+    # ------------------------------------------------------------
+    # AIc → AId : persistent TCPClient 콜백
+    # ------------------------------------------------------------
+    def on_aic_msg(self, text: str, src_ip: str) -> None:
+        """
+        TCPClient(message_callback)에 연결되는 콜백.
+        AIc 에서 들어오는 Version 응답 등을 수집한다.
+        """
+        try:
+            data = json.loads(text)
+        except Exception as e:
+            fd_log.warning(f"[AId] on_aic_msg JSON parse error from {src_ip}: {e}")
+            return
+
+        sec1 = data.get("Section1")
+        sec2 = data.get("Section2")
+        sec3 = data.get("Section3")
+        state = str(data.get("SendState", "")).lower()
+
+        if (sec1, sec2, sec3) == ("Daemon", "Information", "Version") and state == "response":
+            ver_map = data.get("Version", {})
+            aic_info = ver_map.get("AIc", {})
+
+            name = self.aic_ip_name_map.get(src_ip, src_ip)
+            self.aic_version_cache[src_ip] = {
+                "name": name,
+                "ip": src_ip,
+                "version": aic_info.get("version", ""),
+                "date": aic_info.get("date", ""),
+            }
+            fd_log.info(f"[AId] <- AIc Version from {src_ip}: {self.aic_version_cache[src_ip]}")
+        else:
+            # 현재는 Version 응답만 수집. 필요하면 여기서 추가 분기 가능.
+            fd_log.debug(f"[AId] on_aic_msg: ignore msg from {src_ip} : {data}")
+
+    ###########################################################################
+    # 추가: AId → AIc persistent recv loop (TCPServer와 동일한 프로토콜 적용)
+    ###########################################################################
+    def _start_aic_recv_thread(self, sess, ip):
+        th = threading.Thread(
+            target=self._aic_recv_loop,
+            args=(sess, ip),
+            daemon=True
+        )
+        th.start()
+
+    def _aic_recv_loop(self, sess, ip):
+        sock = sess.sock
+        try:
+            while not self.end:
+                header = sock.recv(5)
+                if not header or len(header) < 5:
+                    break
+                
+                body_len, flag = struct.unpack("<IB", header)
+                body = sock.recv(body_len).decode("utf-8", errors="ignore")
+                self.on_aic_msg(body, ip)
+
+        except Exception as e:
+            fd_log.error(f"[AId] AIC recv loop error for {ip}: {e}")
+
+        fd_log.warning(f"[AId] AIC connection closed for {ip}")
+        if ip in self.aic_sessions:
+            del self.aic_sessions[ip]
+
     # ─────────────────────────────────────────────────────────────────────────
-    # 실행 시작
+    # AId 서비스 시작
     # ─────────────────────────────────────────────────────────────────────────
     def run(self):
         fd_log.info("🟢 [AId] run() begin..")
         self.th = threading.Thread(target=self.status_task, daemon=True)
         self.th.start()
 
+    def find_aic_name(self, ip: str) -> str:
+        return self.aic_ip_name_map.get(ip, ip)
+
+    # ------------------------------------------------------------
+    # AId → AIc : Version 요청 후 응답 수집
+    # ------------------------------------------------------------
+    def request_aic_versions(self, expect_ips, dmpdip, token, wait_sec: int = 5):
+        """
+        AId → AIc persistent TCP 세션을 사용하여 version 요청을 보내고
+        응답을 수집하여 리스트로 반환한다.
+        """
+        results = []
+        if not expect_ips:
+            fd_log.warning("[AId] request_aic_versions: expect_ips is empty")
+            return results
+
+        # 응답 수집용
+        pending = {ip: None for ip in expect_ips}
+
+        # 요청 패킷
+        def build_packet():
+            return {
+                "Section1": "AIc",
+                "Section2": "Information",
+                "Section3": "Version",
+                "SendState": "request",
+                "From": "AId",
+                "To": "AIc",
+                "Token": token,
+                "Action": "get",
+                "DMPDIP": dmpdip,
+            }
+
+        # 1) 요청 보내기
+        for ip, sess in self.aic_sessions.items():
+            if ip in pending:
+                try:
+                    sess.send_msg(json.dumps(build_packet()))
+                    fd_log.info(f"[AId] → AIc({ip}) Version request sent")
+                except Exception as e:
+                    fd_log.error(f"[AId] Version request send failed to {ip}: {e}")
+
+        # 2) 응답 기다리기 (최대 wait_sec)
+        deadline = time.time() + wait_sec
+
+        while time.time() < deadline:
+            for ip in expect_ips:
+                if pending[ip] is not None:
+                    continue
+                if ip in self.aic_version_cache:
+                    pending[ip] = self.aic_version_cache[ip]
+            if all(pending[ip] is not None for ip in expect_ips):
+                break
+            time.sleep(0.05)
+
+        # 3) 결과 구성
+        for ip, ver_info in pending.items():
+            if ver_info is None:
+                fd_log.warning(f"[AId] No Version response from AIc({ip})")
+                continue
+
+            # AIc는 version/date 포함한 dict로 응답
+            results.append({
+                "name": self.aic_ip_name_map.get(ip, ip),
+                "ip": ip,
+                "version": ver_info.get("version"),
+                "date": ver_info.get("date"),
+            })
+
+        return results
     # ─────────────────────────────────────────────────────────────────────────
     # 메시지 라우팅
     # ─────────────────────────────────────────────────────────────────────────
@@ -250,19 +427,69 @@ class AId:
         # From 필드 보정
         if len(_4dmsg.data.get('From', '').strip()) == 0:
             _4dmsg.data.update(From='4DOMS')
-
         result_code, err_msg = 1000, ''
         if _4dmsg.is_valid():
             conf._result_code = 0
             if (state := _4dmsg.get('SendState').lower()) == FDMsg.REQUEST:
                 sec1, sec2, sec3 = _4dmsg.get('Section1'), _4dmsg.get('Section2'), _4dmsg.get('Section3')
-
                 match sec1, sec2, sec3:
+                                        
+                    case 'AIc', 'connect', _:
+                        # MTd → AId: AIc 연결 상태 점검 요청
+                        aic_list = _4dmsg.get('AIcList', {})
+                        if not isinstance(aic_list, dict):
+                            fd_log.warning(f"[AId] invalid AIcList type: {type(aic_list)}")
+                            aic_list = {}
+
+                        result_map = {}
+                        all_ok = True
+                        for name, ip in aic_list.items():
+                            status = "OK" if self.check_aic_connectivity(str(ip)) else "FAIL"
+                            if status != "OK":
+                                all_ok = False
+                            result_map[str(name)] = {
+                                "IP": str(ip),
+                                "Status": status,
+                            }
+                        
+                        # MTd에서 내려준 AIc 이름/IP 저장
+                        self.aic_name_ip_map = dict(aic_list)
+                        self.aic_ip_name_map = {str(ip): str(name) for name, ip in aic_list.items()}
+                        fd_log.info(f"[AId] Save AIc list: {self.aic_name_ip_map}")
+
+                        # 각 AIc 와 persistent 연결 생성 (포트 19738)
+                        for name, ip in aic_list.items():
+                            ip = str(ip)
+                            if ip in self.aic_sessions:
+                                continue
+                            try:
+                                sess = TCPClient()
+                                sess.connect(ip, conf._aic_daemon_port)
+                                # persistent recv loop 시작 (TCPServer와 동일한 프로토콜)
+                                self._start_aic_recv_thread(sess, ip)
+                                self.aic_sessions[ip] = sess
+                                fd_log.info(f"[AId] Connected persistent session → AIc {name} ({ip})")
+                                # 🔥 recv loop 시작
+                                self._start_aic_recv_thread(sess, ip)
+                            except Exception as e:
+                                fd_log.error(f"[AId] AIc connect failed {ip}: {e}")
+
+                        # 응답 형식:
+                        # "AIcList": {
+                        #   "AI Client [#1]": {"IP": "...", "Status": "OK"},
+                        #   ...
+                        # }
+
+                        _4dmsg.update(AIcList=result_map)
+                        # 모든 AIc가 OK일 때만 성공 코드 유지, 아니면 에러 코드로 교체
+                        if not all_ok:
+                            result_code = 1100                    
 
                     case 'Daemon', 'Information', 'Version':
-                        _4dmsg.update(Version={
-                            AId.name: {'version': self.version, 'date': self.release_date}
-                        })
+                        # MTd → AId : Version 요청
+                        # FDMsg 경로 대신, 직접 handle_version_request 에서 응답 송신.
+                        self.handle_version_request(_4dmsg.data)
+                        return  # 여기서 종료 (아래 공통 응답 처리 X)
 
                     case 'AI', 'Operation', 'Calibration':
                         conf._processing = True
@@ -540,6 +767,10 @@ class AId:
                     self.app_server.send_msg(_4dmsg.get_json()[1])
 
             elif state == FDMsg.RESPONSE:
+                # AIc → AId : Version 응답 수신 처리
+                sender_ip = msg.get("SenderIP")
+                if sender_ip:
+                    self._aic_version_cache[sender_ip] = msg
                 pass  # PD 응답 수신 시 기본 처리 없음
 
         else:
@@ -602,6 +833,61 @@ class AId:
         fd_log.info(f"Start Video {path}")
         if conf._live_player:
             conf._live_player_widget.load_video_to_buffer(path)
+
+    def handle_version_request(self, pkt: dict) -> None:
+        """
+        4DOMS(MTd) → AId : Version 요청 처리
+        - AId 자신의 버전(conf._version, conf._release_date)
+        - AIc 들의 버전 (AIcList / Expect.AIc 기준)
+        을 모아 최종 응답을 4DOMS 로 전송한다.
+        """
+        token = pkt.get("Token")
+        dmpdip = pkt.get("DMPDIP")
+
+        # AId 자체 버전/날짜는 main 에서 conf._version,_release_date 로 세팅되어 있음
+        aid_info = {
+            "version": conf._version,
+            "date": conf._release_date,
+        }
+        
+        expect = pkt.get("Expect", {}) or {}
+        expect_ips = expect.get("AIc", []) or []
+
+        # --------------------------------------------------------
+        # Expect.AIc 가 비어 있으면 (MTd가 안 준 경우) → fallback
+        # 현재 AId가 알고 있는 AIc 리스트에서 가져오기
+        # --------------------------------------------------------
+        if not expect_ips:
+            expect_ips = list(self.aic_ip_name_map.keys())
+            fd_log.warning("[AId] Using fallback AIc list from mapping")
+
+        wait_sec = int(expect.get("wait_sec", 5) or 5)
+
+        # AIc Version 수집
+        aic_versions = self.request_aic_versions(expect_ips, dmpdip, token, wait_sec)
+
+        # 최종 응답 패킷
+        resp = {
+            "Section1": "Daemon",
+            "Section2": "Information",
+            "Section3": "Version",
+            "SendState": "response",
+            "From": "AId",
+            "To": pkt.get("From", "4DOMS"),
+            "Token": token,
+            "Action": "set",
+            "ResultCode": 1000,
+            "ErrorMsg": "",
+            "Version": {
+                "AId": aid_info,
+                "AIc": aic_versions,
+            },
+        }
+
+        if self.app_server:
+            self.app_server.send_msg(json.dumps(resp))
+        else:
+            fd_log.error("[AId] app_server is None, cannot send Version response")
 
     def ai_live_player(self, type_target, folder_output, rtsp_url):
         fd_log.info(f"ai_live_player Thread begin.. rtsp url:{rtsp_url}")
@@ -713,7 +999,21 @@ if __name__ == '__main__':
     fd_log.info("─────────────────────────────────────────────────────────────────────────────")
     fd_log.info(f"📂 [AId] Working directory: {conf._path_base}")
 
-    ver, date = conf.read_latest_release_from_md(f"{conf._path_base}\\AId\\aid_release.md")
+    # 1) get version from markdown
+    release_md_path = os.path.join(conf._path_base, "AId", "aid_release.md")
+    ver, _ = conf.read_latest_release_from_md(release_md_path)
+
+    # 2) get last modified time of aid_release.md as release date
+    try:
+        stat = os.stat(release_md_path)
+        dt = datetime.fromtimestamp(stat.st_mtime)
+        # Example: "Nov 11 2025 - 16:13:33"
+        date = dt.strftime("%b %d %Y - %H:%M:%S")
+    except Exception as e:
+        # Fallback when something goes wrong
+        fd_log.warning(f"[AId] failed to read release file mtime: {e}")
+        date = ""
+
     conf._version = ver
     conf._release_date = date
 

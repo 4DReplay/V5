@@ -1,64 +1,43 @@
 {
-  "10.82.104.210": {
+  "127.0.0.1": {
     "connected_daemons": {
-      "MTd": true,
+      "PreSd": true,
+      "AIc": true,
       "EMd": true,
-      "CCd": true,
       "SCd": true,
+      "CCd": true,
       "PCd": true,
       "MMd": true,
       "AId": true,
-      "MMcs": true,
-      "PreSd": true
+      "MTd": true
     },
     "versions": {
-      "EMd": {
-        "version": "4.3.0.3",
-        "date": "Jul 20 2023 - 10:53:26"
-      },
       "CCd": {
         "version": "4.3.0.8",
         "date": "Dec 17 2024 - 17:59:29"
       },
-      "SCd": {
-        "version": "4.2.0.1",
-        "date": "Aug 12 2024 - 13:48:56"
+      "EMd": {
+        "version": "4.3.0.3",
+        "date": "Jul 20 2023 - 10:53:26"
+      },
+      "MTd": {
+        "version": "5.0.0.1",
+        "date": "Nov 11 2025 - 16:13:33"
       },
       "PCd": {
         "version": "4.2.0.2",
         "date": "Aug 12 2024 - 13:48:12"
       },
+      "SCd": {
+        "version": "4.2.0.1",
+        "date": "Aug 12 2024 - 13:48:56"
+      },
       "MMd": {
-        "version": "4.2.0.9",
-        "date": "-"
-      },
-      "AId": {
-        "version": "5.0.0.0",
-        "date": "2025-10-20"
-      },
-      "MTd": {
-        "version": "5.0.0.0",
-        "date": "Oct 28 2025 - 15:57:48"
-      },
-      "PreSd": {
-        "version": "-",
-        "date": "-"
+        "version": "4.2.0.11",
+        "date": "Nov 11 2025 - 16:49:13"
       }
     },
-    "presd_versions": {
-      "10.82.104.210": {
-        "version": "4.3.0.5",
-        "date": "Aug 12 2024 - 13:48:39"
-      },
-      "10.82.104.211": {
-        "version": "4.3.0.5",
-        "date": "Aug 12 2024 - 13:48:39"
-      },
-      "10.82.104.212": {
-        "version": "4.3.0.5",
-        "date": "Aug 12 2024 - 13:48:39"
-      }
-    },
+    "presd_versions": {},
     "presd": [
       {
         "IP": "10.82.104.210",
@@ -113,45 +92,54 @@
       {
         "Index": 1,
         "IP": "10.82.104.11",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.210",
+        "SCdIP": "10.82.104.232"
       },
       {
         "Index": 2,
         "IP": "10.82.104.12",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.210",
+        "SCdIP": "10.82.104.232"
       },
       {
         "Index": 3,
         "IP": "10.82.104.13",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.211",
+        "SCdIP": "10.82.104.232"
       },
       {
         "Index": 4,
         "IP": "10.82.104.14",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.211",
+        "SCdIP": "10.82.104.232"
       },
       {
         "Index": 5,
         "IP": "10.82.104.15",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.212",
+        "SCdIP": "10.82.104.232"
       },
       {
         "Index": 6,
         "IP": "10.82.104.16",
-        "CameraModel": "BGH1"
+        "CameraModel": "BGH1",
+        "PreSdIP": "10.82.104.212",
+        "SCdIP": "10.82.104.232"
       }
     ],
-    "updated_at": 1762745473.388141,
-    "mtd_host": "127.0.0.1",
-    "mtd_port": 19765,
+    "updated_at": 1763280444.7960114,
     "daemon_map": {
-      "EMd": "10.82.104.210",
-      "CCd": "10.82.104.210",
-      "SCd": "10.82.104.210",
-      "GCd": "10.82.104.210",
-      "PCd": "10.82.104.210",
-      "SPd": "10.82.104.210",
-      "AId": "10.82.104.210"
+      "EMd": "127.0.0.1",
+      "SCd": "10.82.104.232",
+      "CCd": "127.0.0.1",
+      "PCd": "127.0.0.1",
+      "SPd": "127.0.0.1",
+      "AId": "127.0.0.1"
     }
   }
 }

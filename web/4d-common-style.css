@@ -1,0 +1,392 @@
+﻿/* 4d-common.css — Pure CSS fallback for the 4DReplay dark theme */
+:root {
+  --bg: #0b0f14;
+  --fg: #eef2f7;
+  --muted: #94a3b8;
+  --card: #0b1220;
+  --line: #243045;
+  --line2: #1f2937;
+  --btn: #1e40af;
+  --btn2: #334155;
+  --ok: #16a34a;
+  --bad: #ef4444;
+  /* Row state accents */
+  --row-run: #0c2411;
+  /* running row bg */
+  --row-stop: #24110f;
+  /* stopped row bg */
+  --row-dis: #141820;
+  /* disabled row bg */
+}
+
+html,
+body {
+  height: 100%
+}
+
+body {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  font: 14px/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+  margin: 24px
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 600
+}
+
+h2 {
+  font-size: 28px;
+  margin: 0 0 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px
+}
+
+h2 small {
+  font-size: 14px;
+  opacity: .8
+}
+
+.page-title {
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: .2px;
+  margin: 6px 4px 18px;
+  color: var(--text-primary);
+  position: relative;
+}
+
+.right {
+  margin-left: auto
+}
+
+.sep {
+  height: 1px;
+  background: var(--line2);
+  margin: 12px 0
+}
+
+.muted {
+  color: var(--muted)
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line2);
+  border-radius: 10px
+}
+
+.container {
+  max-width: 1300px;
+  margin: 0 auto
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 10px 0 14px
+}
+
+button {
+  background: var(--btn);
+  color: #fff;
+  border: 0;
+  border-radius: 10px;
+  padding: 8px 12px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: filter .2s ease
+}
+
+button:hover {
+  filter: brightness(1.15)
+}
+
+button[disabled] {
+  opacity: .55;
+  cursor: not-allowed
+}
+
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: #e5e7eb
+}
+
+.btn-secondary {
+  background: var(--btn2)
+}
+
+.btn-danger {
+  background: var(--bad)
+}
+
+.btn-success {
+  background: var(--ok)
+}
+
+.pill {
+  display: inline-block;
+  border: 1px solid var(--line);
+  background: #0f172a;
+  border-radius: 999px;
+  font-size: 12px;
+  padding: 2px 10px
+}
+
+/* 재시작 중(진행중) 강조 */
+.pill.restarting {
+  background: #ff9900 !important; /* 따뜻한 주황색 */
+  color: #fff !important;
+  animation: pulseRestart 1.2s ease-in-out infinite;
+  font-weight: bold;
+}
+
+@keyframes pulseRestart {
+  0%   { transform: scale(1);   opacity: 1; }
+  50%  { transform: scale(1.08); opacity: 0.75; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+/* Support both .pill-ok and .pill.ok style names */
+.pill-ok,
+.pill.ok {
+  border-color: var(--ok);
+  color: #a7f3d0;
+  background: #0d3b1a
+}
+
+.pill-bad,
+.pill.bad {
+  border-color: var(--bad);
+  color: #fecaca;
+  background: #3b0d0d
+}
+
+.pill.off {
+  border-color: #6b7280;
+  color: #d1d5db;
+  background: #111827
+}
+
+.pill-ok {
+  border-color: var(--ok);
+  color: #a7f3d0;
+  background: #0d3b1a
+}
+
+.pill-bad {
+  border-color: var(--bad);
+  color: #fecaca;
+  background: #3b0d0d
+}
+
+.ico {
+  width: 16px;
+  height: 16px;
+  display: inline-block;
+  vertical-align: -2px;
+  fill: currentColor
+}
+
+input[type="text"],
+input[type="number"],
+textarea,
+select {
+  width: 100%;
+  box-sizing: border-box;
+  background: #0b1220;
+  color: #e5e7eb;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 6px;
+  font: 13px ui-monospace, monospace
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #9aa4b2
+}
+
+textarea {
+  height: 36px;
+  resize: none
+}
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  max-width: 1300px
+}
+
+th,
+td {
+  border: 1px solid var(--line2);
+  padding: 4px 6px;
+  vertical-align: middle
+}
+
+th {
+  background: #0f172a;
+  text-align: left;
+  position: sticky;
+  top: 0;
+  z-index: 1
+}
+
+tbody tr:nth-child(odd) {
+  background: #0c121b
+}
+
+/* Row state backgrounds (match JS: running|stopped|disabled) */
+tr.running td {
+  background: var(--row-run)
+}
+
+tr.stopped td {
+  background: var(--row-stop)
+}
+
+tr.disabled td {
+  background: var(--row-dis);
+  opacity: .9
+}
+
+tr.other td {
+  background: #0b1119
+}
+
+.col-narrow {
+  width: 90px
+}
+
+.col-btns {
+  white-space: nowrap
+}
+
+.ghost-panel {
+  background: #0c121b;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 10px
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 10px;
+  align-items: center
+}
+
+/* OMs page extras */
+.panel {
+  background: var(--card);
+  border: 1px solid var(--line2);
+  border-radius: 10px;
+  padding: 12px;
+  margin-top: 14px
+}
+
+.kv {
+  display: grid;
+  grid-template-columns: 160px 1fr 120px 1fr 120px 1fr;
+  gap: 8px;
+  align-items: center
+}
+
+.chip {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid var(--line2);
+  background: #0f172a;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: var(--fg)
+}
+
+.badge-connected {
+  border-color: var(--ok);
+  color: #a7f3d0;
+  background: #0d3b1a
+}
+
+.badge-running {
+  border-color: var(--ok);
+  color: #a7f3d0;
+  background: #0d3b1a
+}
+
+.badge-bad {
+  border-color: var(--bad);
+  color: #fecaca;
+  background: #3b0d0d
+}
+
+.spacer {
+  flex: 1 1 auto
+}
+
+.node {
+  color: #93c5fd
+}
+
+/* CONNECTED pill 강조: 흰색 + bold (RUNNING과 시각적으로 구분) */
+.pill.connected {
+  border-color: var(--ok);
+  background: #0d3b1a;
+  /* 기존 ok 톤 유지 */
+  color: #fff;
+  /* 하얀 텍스트 */
+  font-weight: 700;
+  /* 굵게 */
+  box-shadow: 0 0 0 1px rgba(22, 163, 74, .35) inset;
+  /* 살짝 더 도드라짐 */
+  letter-spacing: .2px;
+}
+
+/* --- Camera Manager shared status mapping --- */
+.pill.on {
+  border-color: var(--ok);
+  color: #a7f3d0;
+  background: #0d3b1a;
+}
+
+.pill.off {
+  border-color: var(--bad);
+  color: #fecaca;
+  background: #3b0d0d;
+}
+
+a {
+  color: #93c5fd;
+  text-decoration: none
+}
+
+a:hover {
+  text-decoration: underline
+}
+
+code {
+  background: #111827;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 2px 6px
+}
+
+pre {
+  background: #0b1220;
+  border: 1px solid var(--line2);
+  border-radius: 8px;
+  padding: 10px;
+  overflow: auto
+}

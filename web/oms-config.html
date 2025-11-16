@@ -1,79 +1,286 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>4DReplay V5 - OMs Config Editor</title>
   <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
+  <script>
+    (function () {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now();
+
+      const CSS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.css",
+        "./4d-common-style.css",
+      ];
+      const JS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.js",
+        "./4d-common-style.js",
+      ];
+
+      function injectCSS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("link");
+        el.rel = "stylesheet";
+        el.href = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[CSS miss]", list[i]);
+          injectCSS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true;
+        el.src = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[JS miss]", list[i]);
+          injectJS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      injectCSS(CSS_CANDIDATES);
+      injectJS(JS_CANDIDATES);
+    })();
+  </script>
   <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#243045; --line2:#1f2937;
-      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444;
+    :root {
+      --bg: #0b0f14;
+      --fg: #eef2f7;
+      --muted: #94a3b8;
+      --card: #0b1220;
+      --line: #243045;
+      --line2: #1f2937;
+      --btn: #1e40af;
+      --btn2: #334155;
+      --ok: #16a34a;
+      --bad: #ef4444;
     }
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
-    h2 small{font-size:14px;opacity:.8}
-    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px}
-    .toolbar .note{color:var(--muted);font-size:13px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:filter .2s ease}
-    button:hover{filter:brightness(1.15)}
-    button[disabled]{opacity:.55;cursor:not-allowed}
-    .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
-    .btn-secondary{background:var(--btn2)}
-    .pill{display:inline-block;border:1px solid var(--line);background:#0f172a;border-radius:999px;font-size:12px;padding:2px 10px}
-    .pill-ok{border-color:var(--ok);color:#a7f3d0;background:#0d3b1a}
-    .pill-bad{border-color:var(--bad);color:#fecaca;background:#3b0d0d}
-    table{border-collapse:collapse;width:100%;max-width:1300px}
-    th,td{border:1px solid var(--line2);padding:4px 6px;vertical-align:middle}
-    th{background:#0f172a;text-align:left;position:sticky;top:0}
-    tbody tr:nth-child(odd){background:#0c121b}
-    input[type="text"], input[type="number"], textarea, select{
-      width:100%;box-sizing:border-box;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);
-      border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;
+
+    html,
+    body {
+      height: 100%
     }
-    textarea{height:36px;resize:none}
-    .col-btns{white-space:nowrap}
-    .muted{color:var(--muted)}
-    .right{margin-left:auto}
-    .global-settings{margin:14px 0;padding:10px;background:#0c121b;border:1px solid var(--line2);border-radius:8px;max-width:600px}
-    .global-settings label{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .global-settings input{flex:1}
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 24px
+    }
+
+    h2 {
+      font-size: 28px;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    h2 small {
+      font-size: 14px;
+      opacity: .8
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0 14px
+    }
+
+    .toolbar .note {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    button {
+      background: var(--btn);
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: filter .2s ease
+    }
+
+    button:hover {
+      filter: brightness(1.15)
+    }
+
+    button[disabled] {
+      opacity: .55;
+      cursor: not-allowed
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: #e5e7eb
+    }
+
+    .btn-secondary {
+      background: var(--btn2)
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 2px 10px
+    }
+
+    .pill-ok {
+      border-color: var(--ok);
+      color: #a7f3d0;
+      background: #0d3b1a
+    }
+
+    .pill-bad {
+      border-color: var(--bad);
+      color: #fecaca;
+      background: #3b0d0d
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 1300px
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line2);
+      padding: 4px 6px;
+      vertical-align: middle
+    }
+
+    th {
+      background: #0f172a;
+      text-align: left;
+      position: sticky;
+      top: 0
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #0c121b
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0b1220;
+      color: #e5e7eb;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 4px 6px;
+      font: 13px ui-monospace, monospace;
+    }
+
+    textarea {
+      height: 36px;
+      resize: none
+    }
+
+    .col-btns {
+      white-space: nowrap
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .right {
+      margin-left: auto
+    }
+
+    .global-settings {
+      margin: 14px 0;
+      padding: 10px;
+      background: #0c121b;
+      border: 1px solid var(--line2);
+      border-radius: 8px;
+      max-width: 600px
+    }
+
+    .global-settings label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px
+    }
+
+    .global-settings input {
+      flex: 1
+    }
+
     /* icon */
-    .ico{width:16px;height:16px;display:inline-block;vertical-align:-2px;fill:currentColor}
- 
+    .ico {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      vertical-align: -2px;
+      fill: currentColor
+    }
   </style>
 </head>
+
 <body>
-  <h2>
-    <span>4DReplay V5 - OMs Config Editor</span>
+  <h2 class="page-title">
+    <span id="pageTitle">4DReplay V5 - OMs Config Editor</span>
     <small id="titleHost"></small>
   </h2>
 
   <div class="toolbar">
     <button id="btnGoDashboard" class="btn-secondary" title="Back to OMS System">
       <!-- compass -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm4.6 4.6-3.2 7.2-7.2 3.2 3.2-7.2 7.2-3.2Zm-6.4 6.4 1.6-3.6 3.6-1.6-1.6 3.6-3.6 1.6Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm4.6 4.6-3.2 7.2-7.2 3.2 3.2-7.2 7.2-3.2Zm-6.4 6.4 1.6-3.6 3.6-1.6-1.6 3.6-3.6 1.6Z" />
+      </svg>
       <span>OMS System</span>
     </button>
-    <button id="btnReload" class="btn-secondary">
+    <button id="btnSysReload" class="btn-secondary">
       <!-- refresh -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-6.65Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-6.65Z" />
+      </svg>
       <span>Reload</span>
     </button>
     <button id="btnFormat" class="btn-ghost">
       <!-- magic/format -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21 14 10l1 1L4 22H3v-1Zm11-9 2-2 5 5-2 2-5-5Zm3-9 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 21 14 10l1 1L4 22H3v-1Zm11-9 2-2 5 5-2 2-5-5Zm3-9 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z" />
+      </svg>
       <span>Format</span>
     </button>
     <button id="btnAdd" class="btn-ghost">
       <!-- plus -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+      </svg>
       <span>Add</span>
     </button>
     <button id="btnSave">
       <!-- save -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm0 2.5L19.5 8H17V5.5ZM7 5h7v6H7V5Zm0 8h10v6H7v-6Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm0 2.5L19.5 8H17V5.5ZM7 5h7v6H7V5Zm0 8h10v6H7v-6Z" />
+      </svg>
       <span>Save</span>
     </button>
     <span id="saveState" class="pill">Idle</span>
@@ -109,191 +316,249 @@
     Tip: <b>Heartbeat Interval (sec)</b> changes apply immediately; <b>HTTP Port</b> changes require a service restart.
   </p>
 
-<script>
-/* ───── API core ───── */
-async function api(path, method="GET", body=null){
-  const opt = { method, cache:"no-store", headers:{} };
-  if (body !== null){
-    if (typeof body === "string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
-    else { opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
-  }
-  const r = await fetch(path, opt);
-  const ct = r.headers.get("content-type") || "";
-  const isJson = ct.includes("application/json");
-  if (!r.ok){
-    let msg = r.statusText;
-    try{ msg = isJson ? (await r.json()).error || r.statusText : await r.text(); }catch{}
-    throw new Error(msg || `HTTP ${r.status}`);
-  }
-  return isJson ? await r.json() : await r.text();
-}
-
-async function saveConfigText(text){
-  try {
-    return await api("/config","POST",text);
-  } catch (e){
-    const m = String(e.message||"").toLowerCase();
-    if (m.includes("not found") || m.includes("404")){
-      return await api("/oms/config","POST",text);
+  <script>
+    /* ───── API core ───── */
+    async function api(path, method = "GET", body = null) {
+      const opt = { method, cache: "no-store", headers: {} };
+      if (body !== null) {
+        if (typeof body === "string") { opt.headers["Content-Type"] = "text/plain; charset=utf-8"; opt.body = body; }
+        else { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+      }
+      const r = await fetch(path, opt);
+      const ct = r.headers.get("content-type") || "";
+      const isJson = ct.includes("application/json");
+      if (!r.ok) {
+        let msg = r.statusText;
+        try { msg = isJson ? (await r.json()).error || r.statusText : await r.text(); } catch { }
+        throw new Error(msg || `HTTP ${r.status}`);
+      }
+      return isJson ? await r.json() : await r.text();
     }
-    throw e;
-  }
-}
 
-async function getWithFallback(primary,fallback,method="GET",body=null){
-  try{ return await api(primary,method,body); }
-  catch(e){
-    const m = String(e.message||"").toLowerCase();
-    if (m.includes("not found") || m.includes("404")){
-      return await api(fallback,method,body);
+    async function saveConfigText(text) {
+      try {
+        return await api("/config", "POST", text);
+      } catch (e) {
+        const m = String(e.message || "").toLowerCase();
+        if (m.includes("not found") || m.includes("404")) {
+          return await api("/oms/config", "POST", text);
+        }
+        throw e;
+      }
     }
-    throw e;
-  }
-}
 
-/* ───── DOM ───── */
-const TBody=document.querySelector("#grid tbody");
-const SaveTag=document.getElementById("saveState");
-const HB_EL=document.getElementById("hb");
-const M_PATH=document.getElementById("metaPath");
-const M_SIZE=document.getElementById("metaSize");
-const M_TIME=document.getElementById("metaMtime");
-const TITLE=document.getElementById("titleHost");
-if(TITLE) TITLE.textContent=`(${location.hostname||"-"})`;
+    async function getWithFallback(primary, fallback, method = "GET", body = null) {
+      try { return await api(primary, method, body); }
+      catch (e) {
+        const m = String(e.message || "").toLowerCase();
+        if (m.includes("not found") || m.includes("404")) {
+          return await api(fallback, method, body);
+        }
+        throw e;
+      }
+    }
 
-/* ───── endpoints ───── */
-const EP={
-  status:()=>getWithFallback(`/status`,`/oms/status`),
-  config:()=>getWithFallback(`/config`,`/oms/config`),
-  configMeta:()=>getWithFallback(`/config/meta`,`/oms/config/meta`),
-  configFormat:(t)=>getWithFallback(`/config/format`,`/oms/config/format`,"POST",t),
-  saveConfig:(t)=>getWithFallback(`/config`,`/oms/config`,"POST",t),
-  apply: () => getWithFallback(`/config/apply`, `/oms/config/apply`, "POST", {}),
-}
+    /* ───── DOM ───── */
+    const TBody = document.querySelector("#grid tbody");
+    const SaveTag = document.getElementById("saveState");
+    const HB_EL = document.getElementById("hb");
+    const M_PATH = document.getElementById("metaPath");
+    const M_SIZE = document.getElementById("metaSize");
+    const M_TIME = document.getElementById("metaMtime");
+    const TITLE = document.getElementById("titleHost");
+    if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
 
-/* ───── state ───── */
-let CONFIG=null; let POLL=null; let POLL_MS=1500; let IS_SAVING=false;
+    /* ───── endpoints ───── */
+    const EP = {
+      status: () => getWithFallback(`/status`, `/oms/status`),
+      config: () => getWithFallback(`/config`, `/oms/config`),
+      configMeta: () => getWithFallback(`/config/meta`, `/oms/config/meta`),
+      configFormat: (t) => getWithFallback(`/config/format`, `/oms/config/format`, "POST", t),
+      saveConfig: (t) => getWithFallback(`/config`, `/oms/config`, "POST", t),
+      apply: () => getWithFallback(`/config/apply`, `/oms/config/apply`, "POST", {}),
+    }
 
-/* ───── helpers ───── */
-function ensureOmsShape(cfg){
-  cfg=cfg||{};
-  if(!Array.isArray(cfg.nodes)) cfg.nodes=[];
-  cfg.nodes=cfg.nodes.map(n=>({name:n?.name??"",alias:n?.alias??"",host:n?.host??"",port:Number(n?.port??19776)}));
-  return cfg;
-}
-function uniqueNodeName(base){
-  const used=new Set((CONFIG.nodes||[]).map(n=>n.name));
-  if(!used.has(base)) return base;
-  let i=2; while(used.has(`${base}_${i}`)) i++; return `${base}_${i}`;
-}
-function touchDirty(text="Edited"){SaveTag.textContent=text;SaveTag.className="pill";}
+    /* ───── state ───── */
+    let CONFIG = null; let POLL = null; let POLL_MS = 1500; let IS_SAVING = false;
 
-/* ───── UI Render ───── */
-function rowNode(node,idx){
-  const tr=document.createElement("tr");
-  tr.innerHTML=`
-    <td><input type="text" data-k="name" value="${node.name||""}"></td>
-    <td><input type="text" data-k="alias" value="${node.alias||""}"></td>
-    <td><input type="text" data-k="host" value="${node.host||""}"></td>
-    <td><input type="text" data-k="port" value="${node.port??19776}"></td>
+    /* ───── helpers ───── */
+    function ensureOmsShape(cfg) {
+      cfg = cfg || {};
+      if (!Array.isArray(cfg.nodes)) cfg.nodes = [];
+      cfg.nodes = cfg.nodes.map(n => ({ name: n?.name ?? "", alias: n?.alias ?? "", host: n?.host ?? "", port: Number(n?.port ?? 19776) }));
+      return cfg;
+    }
+    function uniqueNodeName(base) {
+      const used = new Set((CONFIG.nodes || []).map(n => n.name));
+      if (!used.has(base)) return base;
+      let i = 2; while (used.has(`${base}_${i}`)) i++; return `${base}_${i}`;
+    }
+    function touchDirty(text = "Edited") { SaveTag.textContent = text; SaveTag.className = "pill"; }
+
+    /* ───── UI Render ───── */
+    function rowNode(node, idx) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+    <td><input type="text" data-k="name" value="${node.name || ""}"></td>
+    <td><input type="text" data-k="alias" value="${node.alias || ""}"></td>
+    <td><input type="text" data-k="host" value="${node.host || ""}"></td>
+    <td><input type="text" data-k="port" value="${node.port ?? 19776}"></td>
     <td class="col-btns">
       <button data-a="up" class="btn-ghost">▲</button>
       <button data-a="down" class="btn-ghost">▼</button>
       <button data-a="dup" class="btn-ghost">Duplicate</button>
       <button data-a="del" class="btn-secondary">Delete</button>
     </td>`;
-  tr.addEventListener("change",ev=>{
-    const t=ev.target,k=t.getAttribute("data-k"); if(!k)return;
-    let v=t.value; if(k==="port") v=Math.max(1,parseInt(v||"19776",10));
-    CONFIG.nodes[idx][k]=v; touchDirty("Edited");
-  });
-  tr.addEventListener("click",ev=>{
-    const b=ev.target.closest("button"); if(!b)return;
-    const a=b.getAttribute("data-a"),arr=CONFIG.nodes;
-    if(a==="up"&&idx>0){[arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]];render();}
-    else if(a==="down"&&idx<arr.length-1){[arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]];render();}
-    else if(a==="dup"){const copy=JSON.parse(JSON.stringify(arr[idx]));copy.name=uniqueNodeName(copy.name||"NewNode");arr.splice(idx+1,0,copy);render();}
-    else if(a==="del"){if(confirm("Delete this node?")){arr.splice(idx,1);render();}}
-  });
-  return tr;
-}
-
-function render(){
-  CONFIG=ensureOmsShape(CONFIG);
-  document.getElementById("inputHttpHost").value=CONFIG.http_host||"0.0.0.0";
-  document.getElementById("inputHttpPort").value=CONFIG.http_port||19777;
-  document.getElementById("inputHeartbeat").value=CONFIG.heartbeat_interval_sec||3;
-  TBody.innerHTML="";
-  CONFIG.nodes.forEach((n,i)=>TBody.appendChild(rowNode(n,i)));
-}
-
-/* ───── meta & heartbeat ───── */
-async function loadMeta(){
-  try{
-    const m=await EP.configMeta();
-    if(m&&typeof m==="object"){
-      M_PATH.textContent=m.path||"-";M_SIZE.textContent=String(m.size??"-");M_TIME.textContent=m.mtime||"-";
+      tr.addEventListener("change", ev => {
+        const t = ev.target, k = t.getAttribute("data-k"); if (!k) return;
+        let v = t.value; if (k === "port") v = Math.max(1, parseInt(v || "19776", 10));
+        CONFIG.nodes[idx][k] = v; touchDirty("Edited");
+      });
+      tr.addEventListener("click", ev => {
+        const b = ev.target.closest("button"); if (!b) return;
+        const a = b.getAttribute("data-a"), arr = CONFIG.nodes;
+        if (a === "up" && idx > 0) { [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; render(); }
+        else if (a === "down" && idx < arr.length - 1) { [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]]; render(); }
+        else if (a === "dup") { const copy = JSON.parse(JSON.stringify(arr[idx])); copy.name = uniqueNodeName(copy.name || "NewNode"); arr.splice(idx + 1, 0, copy); render(); }
+        else if (a === "del") { if (confirm("Delete this node?")) { arr.splice(idx, 1); render(); } }
+      });
+      return tr;
     }
-  }catch{M_PATH.textContent="(meta error)";}
-}
-async function loadHeartbeat(){
-  try{
-    const s=await EP.status();
-    const hb=Number(s&&s.heartbeat_interval_sec);
-    if(!isNaN(hb)&&hb>0){HB_EL.textContent=hb;const next=Math.max(1000,Math.floor(hb*1000));if(next!==POLL_MS){POLL_MS=next;restartPolling();}}
-  }catch{HB_EL.textContent="-";}
-}
-function restartPolling(){if(POLL){clearInterval(POLL);POLL=null;}POLL=setInterval(()=>Promise.allSettled([loadMeta(),loadHeartbeat()]),POLL_MS);}
 
-/* ───── load/save/format ───── */
-async function loadConfigObj(){
-  const raw=await EP.config();
-  if(typeof raw==="string"){try{return JSON.parse(raw);}catch{const fm=await EP.configFormat(raw).catch(()=>null);return fm&&fm.text?JSON.parse(fm.text):JSON.parse(raw);}}
-  return raw;
-}
-async function saveConfig(){
-  if(IS_SAVING)return;
-  IS_SAVING=true;
-  try{
-    CONFIG.http_host=document.getElementById("inputHttpHost").value||"0.0.0.0";
-    CONFIG.http_port=parseInt(document.getElementById("inputHttpPort").value||"19777",10);
-    CONFIG.heartbeat_interval_sec=parseFloat(document.getElementById("inputHeartbeat").value||"3");
-    const txt=JSON.stringify(CONFIG,null,2);
-    const res=await saveConfigText(txt);
-    await EP.apply(); // ← 런타임 적용 트리거
-    SaveTag.textContent="Saved";SaveTag.className="pill pill-ok";
+    function render() {
+      CONFIG = ensureOmsShape(CONFIG);
+      document.getElementById("inputHttpHost").value = CONFIG.http_host || "0.0.0.0";
+      document.getElementById("inputHttpPort").value = CONFIG.http_port || 19777;
+      document.getElementById("inputHeartbeat").value = CONFIG.heartbeat_interval_sec || 3;
+      TBody.innerHTML = "";
+      CONFIG.nodes.forEach((n, i) => TBody.appendChild(rowNode(n, i)));
+    }
 
-    await reloadConfig();await loadMeta();
-  }catch(e){
-    alert("Save failed: "+(e.message||e));SaveTag.textContent="Save failed";SaveTag.className="pill pill-bad";
-  }finally{IS_SAVING=false;}
-}
-async function reloadConfig(){
-  SaveTag.textContent="Loading...";SaveTag.className="pill";
-  CONFIG=await loadConfigObj();CONFIG=ensureOmsShape(CONFIG);
-  render();SaveTag.textContent="Loaded";SaveTag.className="pill";
-  await Promise.allSettled([loadMeta(),loadHeartbeat()]);
-}
+    /* ───── meta & heartbeat ───── */
+    async function loadMeta() {
+      try {
+        const m = await EP.configMeta();
+        if (m && typeof m === "object") {
+          M_PATH.textContent = m.path || "-"; M_SIZE.textContent = String(m.size ?? "-"); M_TIME.textContent = m.mtime || "-";
+        }
+      } catch { M_PATH.textContent = "(meta error)"; }
+    }
+    async function loadHeartbeat() {
+      try {
+        const s = await EP.status();
+        const hb = Number(s && s.heartbeat_interval_sec);
+        if (!isNaN(hb) && hb > 0) { HB_EL.textContent = hb; const next = Math.max(1000, Math.floor(hb * 1000)); if (next !== POLL_MS) { POLL_MS = next; restartPolling(); } }
+      } catch { HB_EL.textContent = "-"; }
+    }
+    function restartPolling() { if (POLL) { clearInterval(POLL); POLL = null; } POLL = setInterval(() => Promise.allSettled([loadMeta(), loadHeartbeat()]), POLL_MS); }
 
-/* ───── buttons ───── */
-document.getElementById("btnGoDashboard").addEventListener("click",()=>{location.href="oms-system.html";});
-document.getElementById("btnReload").addEventListener("click",reloadConfig);
-document.getElementById("btnFormat").addEventListener("click",async()=>{
-  const txt=JSON.stringify(CONFIG);
-  try{const r=await EP.configFormat(txt);if(r&&r.text)CONFIG=JSON.parse(r.text);}catch{}
-  render();touchDirty("Formatted");
-});
-document.getElementById("btnAdd").addEventListener("click",()=>{
-  CONFIG=ensureOmsShape(CONFIG);
-  CONFIG.nodes.push({name:uniqueNodeName("DMS-NEW"),alias:"",host:"",port:19776});
-  render();touchDirty("Edited");
-});
-document.getElementById("btnSave").addEventListener("click",(ev)=>{ev.preventDefault();saveConfig();});
+    /* ───── load/save/format ───── */
+    async function loadConfigObj() {
+      const raw = await EP.config();
+      if (typeof raw === "string") { try { return JSON.parse(raw); } catch { const fm = await EP.configFormat(raw).catch(() => null); return fm && fm.text ? JSON.parse(fm.text) : JSON.parse(raw); } }
+      return raw;
+    }
+    async function saveConfig() {
+      if (IS_SAVING) return;
+      IS_SAVING = true;
+      try {
+        CONFIG.http_host = document.getElementById("inputHttpHost").value || "0.0.0.0";
+        CONFIG.http_port = parseInt(document.getElementById("inputHttpPort").value || "19777", 10);
+        CONFIG.heartbeat_interval_sec = parseFloat(document.getElementById("inputHeartbeat").value || "3");
+        const txt = JSON.stringify(CONFIG, null, 2);
+        const res = await saveConfigText(txt);
+        await EP.apply(); // ← 런타임 적용 트리거
+        SaveTag.textContent = "Saved"; SaveTag.className = "pill pill-ok";
 
-/* ───── init ───── */
-(async function init(){await reloadConfig();})();
+        await reloadConfig(); await loadMeta();
+      } catch (e) {
+        alert("Save failed: " + (e.message || e)); SaveTag.textContent = "Save failed"; SaveTag.className = "pill pill-bad";
+      } finally { IS_SAVING = false; }
+    }
+    async function reloadConfig() {
+      SaveTag.textContent = "Loading..."; SaveTag.className = "pill";
+      CONFIG = await loadConfigObj(); CONFIG = ensureOmsShape(CONFIG);
+      render(); SaveTag.textContent = "Loaded"; SaveTag.className = "pill";
+      await Promise.allSettled([loadMeta(), loadHeartbeat()]);
+    }
 
- 
-</script>
+    /* ───── buttons ───── */
+    document.getElementById("btnGoDashboard").addEventListener("click", () => { location.href = "oms-system.html"; });
+    document.getElementById("btnSysReload").addEventListener("click", reloadConfig);
+    document.getElementById("btnFormat").addEventListener("click", async () => {
+      const txt = JSON.stringify(CONFIG);
+      try { const r = await EP.configFormat(txt); if (r && r.text) CONFIG = JSON.parse(r.text); } catch { }
+      render(); touchDirty("Formatted");
+    });
+    document.getElementById("btnAdd").addEventListener("click", () => {
+      CONFIG = ensureOmsShape(CONFIG);
+      CONFIG.nodes.push({ name: uniqueNodeName("DMS-NEW"), alias: "", host: "", port: 19776 });
+      render(); touchDirty("Edited");
+    });
+    document.getElementById("btnSave").addEventListener("click", (ev) => { ev.preventDefault(); saveConfig(); });
+
+    /* ───── init ───── */
+    (async function init() { await reloadConfig(); })();
+
+
+  </script>
+  <!-- Common Title -->
+  <script>
+    (function () {
+      function applyCommonConfig(cfg) {
+        if (!cfg || typeof cfg !== "object") return;
+        // 공통 prefix (원하면 사용)
+        var appName = cfg.appName || "4DReplay";
+        var version = cfg.version || "V5";
+        var pageCfg = (cfg.pages && cfg.pages.omsConfig) || {};
+
+        // 1) HTML <title>
+        if (pageCfg.htmlTitle) {
+          document.title = pageCfg.htmlTitle;
+        } else {
+          // json에 없으면 기본 규칙 사용
+          document.title = appName + " " + version + " - Dashboard";
+        }
+
+        // 2) 화면 내 H1 타이틀
+        var h1 = document.getElementById("pageTitle");
+        if (h1 && pageCfg.pageTitle) {
+          h1.textContent = pageCfg.pageTitle;
+        }
+
+        // 3) favicon (link[rel=icon] 교체)
+        if (cfg.faviconHref) {
+          var existing = document.querySelector('link[rel="icon"]');
+          if (!existing) {
+            existing = document.createElement("link");
+            existing.rel = "icon";
+            existing.type = "image/x-icon";
+            document.head.appendChild(existing);
+          }
+          existing.href = cfg.faviconHref;
+        }
+      }
+
+      function init() {
+        // 이미 로딩돼 있으면 바로 적용
+        if (window.OmsCommonConfig) {
+          applyCommonConfig(window.OmsCommonConfig);
+        }
+
+        // 나중에 로딩될 수도 있으니 이벤트도 구독
+        try {
+          window.addEventListener("oms:config-ready", function (e) {
+            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
+          });
+        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>

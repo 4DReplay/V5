@@ -1,65 +1,248 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>4DReplay V5 - DMs Config Editor</title>
   <meta http-equiv="Cache-Control" content="no-store" />
+  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
+  <script>
+    (function () {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now();
+
+      const CSS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.css",
+        "./4d-common-style.css",
+      ];
+      const JS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.js",
+        "./4d-common-style.js",
+      ];
+
+      function injectCSS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("link");
+        el.rel = "stylesheet";
+        el.href = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[CSS miss]", list[i]);
+          injectCSS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true;
+        el.src = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[JS miss]", list[i]);
+          injectJS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      injectCSS(CSS_CANDIDATES);
+      injectJS(JS_CANDIDATES);
+    })();
+  </script>
   <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#243045; --line2:#1f2937;
-      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444;
+    :root {
+      --bg: #0b0f14;
+      --fg: #eef2f7;
+      --muted: #94a3b8;
+      --card: #0b1220;
+      --line: #243045;
+      --line2: #1f2937;
+      --btn: #1e40af;
+      --btn2: #334155;
+      --ok: #16a34a;
+      --bad: #ef4444;
     }
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
-    h2 small{font-size:14px;opacity:.8}
-    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px}
-    .toolbar .note{color:var(--muted);font-size:13px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:filter .2s ease}
-    button:hover{filter:brightness(1.15)}button[disabled]{opacity:.55;cursor:not-allowed}
-    .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
-    .btn-secondary{background:var(--btn2)}
-    .pill{display:inline-block;border:1px solid var(--line);background:#0f172a;border-radius:999px;font-size:12px;padding:2px 10px}
-    .pill-ok{border-color:var(--ok);color:#a7f3d0;background:#0d3b1a}
-    .pill-bad{border-color:var(--bad);color:#fecaca;background:#3b0d0d}
 
-    table{border-collapse:collapse;width:100%;max-width:1300px}
-    th, td {
-  border: 1px solid var(--line2);
-  padding: 4px 6px;             /* 기존 8px → 줄임 */
-  vertical-align: middle;       /* 가운데 정렬 */
-}
-    th{background:#0f172a;text-align:left;position:sticky;top:0}
-    tbody tr:nth-child(odd){background:#0c121b}
-    input[type="text"], textarea, select {
-  width: 100%;
-  box-sizing: border-box;
-  background: #0b1220;
-  color: #e5e7eb;
-  border: 1px solid var(--line);
-  border-radius: 6px;           /* 약간 줄임 */
-  padding: 4px 6px;             /* 내부 여백 줄임 */
-  font: 13px ui-monospace, monospace;
-}
+    html,
+    body {
+      height: 100%
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 24px
+    }
+
+    h2 {
+      font-size: 28px;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    h2 small {
+      font-size: 14px;
+      opacity: .8
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0 14px
+    }
+
+    .toolbar .note {
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    button {
+      background: var(--btn);
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: filter .2s ease
+    }
+
+    button:hover {
+      filter: brightness(1.15)
+    }
+
+    button[disabled] {
+      opacity: .55;
+      cursor: not-allowed
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: #e5e7eb
+    }
+
+    .btn-secondary {
+      background: var(--btn2)
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 2px 10px
+    }
+
+    .pill-ok {
+      border-color: var(--ok);
+      color: #a7f3d0;
+      background: #0d3b1a
+    }
+
+    .pill-bad {
+      border-color: var(--bad);
+      color: #fecaca;
+      background: #3b0d0d
+    }
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 1300px
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line2);
+      padding: 4px 6px;
+      /* 기존 8px → 줄임 */
+      vertical-align: middle;
+      /* 가운데 정렬 */
+    }
+
+    th {
+      background: #0f172a;
+      text-align: left;
+      position: sticky;
+      top: 0
+    }
+
+    tbody tr:nth-child(odd) {
+      background: #0c121b
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0b1220;
+      color: #e5e7eb;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      /* 약간 줄임 */
+      padding: 4px 6px;
+      /* 내부 여백 줄임 */
+      font: 13px ui-monospace, monospace;
+    }
+
     textarea {
-  height: 36px;                 /* 기존 70px → 36px으로 축소 */
-  resize: none;                 /* 유동 크기 조절 제거 */
-}
-    .col-narrow{width:90px}
-    .col-btns{white-space:nowrap}
-    .muted{color:var(--muted)}
-    .help{margin-top:10px;color:var(--muted);font-size:13px}
-    .sep{height:1px;background:var(--line2);margin:12px 0}
-    .right{margin-left:auto}
-    /* icon */
-    .ico{width:16px;height:16px;display:inline-block;vertical-align:-2px;fill:currentColor}
+      height: 36px;
+      /* 기존 70px → 36px으로 축소 */
+      resize: none;
+      /* 유동 크기 조절 제거 */
+    }
 
+    .col-narrow {
+      width: 90px
+    }
+
+    .col-btns {
+      white-space: nowrap
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .help {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px
+    }
+
+    .sep {
+      height: 1px;
+      background: var(--line2);
+      margin: 12px 0
+    }
+
+    .right {
+      margin-left: auto
+    }
+
+    /* icon */
+    .ico {
+      width: 16px;
+      height: 16px;
+      display: inline-block;
+      vertical-align: -2px;
+      fill: currentColor
+    }
   </style>
 </head>
+
 <body>
-  <h2>
-    <span>4DReplay V5 - DMs Config Editor</span>
+  <h2 class="page-title">
+    <span id="pageTitle">4DReplay V5 - DMs Config Editor</span>
     <small id="titleHost"></small>
   </h2>
 
@@ -70,42 +253,56 @@
     <div style="display:grid;grid-template-columns:240px 1fr;gap:10px;align-items:center">
       <label>Heartbeat Interval (sec):</label>
       <input id="inputHeartbeat" type="number" placeholder="3" min="1" max="60"
-             style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
+        style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
 
       <label>Service Port:</label>
       <input id="inputPort" type="number" placeholder="19776" min="1" max="65535"
-             style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
+        style="background:#0b1220;color:#e5e7eb;border:1px solid var(--line);border-radius:6px;padding:4px 6px;font:13px ui-monospace,monospace;">
     </div>
-    <div class="muted" style="margin-top:8px">• 포트 키 자동 감지( port | listen_port | service_port | dms_port ). 존재하는 키가 없으면 <code>port</code>로 저장합니다.</div>
+    <div class="muted" style="margin-top:8px">• 포트 키 자동 감지( port | listen_port | service_port | dms_port ). 존재하는 키가 없으면
+      <code>port</code>로 저장합니다.</div>
   </div>
   <div class="toolbar">
     <button id="btnGoDashboard" class="btn-secondary" title="Back to System">
       <!-- compass -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm4.6 4.6-3.2 7.2-7.2 3.2 3.2-7.2 7.2-3.2Zm-6.4 6.4 1.6-3.6 3.6-1.6-1.6 3.6-3.6 1.6Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M12 2a10 10 0 1 0 .001 20.001A10 10 0 0 0 12 2Zm0 2a8 8 0 1 1 0 16 8 8 0 0 1 0-16Zm4.6 4.6-3.2 7.2-7.2 3.2 3.2-7.2 7.2-3.2Zm-6.4 6.4 1.6-3.6 3.6-1.6-1.6 3.6-3.6 1.6Z" />
+      </svg>
       <span>System</span>
     </button>
-    <button id="btnReload" class="btn-secondary">
+    <button id="btnSysReload" class="btn-secondary">
       <!-- refresh -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-6.65Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M17.65 6.35A7.95 7.95 0 0 0 12 4V1L7 6l5 5V8a5 5 0 1 1-5 5H5a7 7 0 1 0 12.65-6.65Z" />
+      </svg>
       <span>Reload</span>
     </button>
     <button id="btnFormat" class="btn-ghost">
       <!-- magic/format -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 21 14 10l1 1L4 22H3v-1Zm11-9 2-2 5 5-2 2-5-5Zm3-9 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M3 21 14 10l1 1L4 22H3v-1Zm11-9 2-2 5 5-2 2-5-5Zm3-9 1 3 3 1-3 1-1 3-1-3-3-1 3-1 1-3Z" />
+      </svg>
       <span>Format</span>
     </button>
     <button id="btnAdd" class="btn-ghost">
       <!-- plus -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M11 5h2v6h6v2h-6v6h-2v-6H5v-2h6V5Z" />
+      </svg>
       <span>Add</span>
     </button>
     <button id="btnSave">
       <!-- save -->
-      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm0 2.5L19.5 8H17V5.5ZM7 5h7v6H7V5Zm0 8h10v6H7v-6Z"/></svg>
+      <svg class="ico" viewBox="0 0 24 24" aria-hidden="true">
+        <path
+          d="M17 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V7l-4-4Zm0 2.5L19.5 8H17V5.5ZM7 5h7v6H7V5Zm0 8h10v6H7v-6Z" />
+      </svg>
       <span>Save</span>
     </button>
     <span id="saveState" class="pill">Idle</span>
-    <span class="right note">File: <span id="metaPath">-</span> (<span id="metaSize">-</span> bytes, mtime <span id="metaMtime">-</span>) • Agent heartbeat: <span id="hb">-</span>s</span>
+    <span class="right note">File: <span id="metaPath">-</span> (<span id="metaSize">-</span> bytes, mtime <span
+        id="metaMtime">-</span>) • Agent heartbeat: <span id="hb">-</span>s</span>
   </div>
 
   <table id="grid">
@@ -125,196 +322,197 @@
   </table>
 
   <div class="help">
-    • Saving with <code>select:false</code> will make the Agent terminate that process on the next tick.<br/>
-    • <code>heartbeat_interval_sec</code> is the Agent’s internal cycle, and this page automatically reflects meta/heartbeat polling intervals.
+    • Saving with <code>select:false</code> will make the Agent terminate that process on the next tick.<br />
+    • <code>heartbeat_interval_sec</code> is the Agent’s internal cycle, and this page automatically reflects
+    meta/heartbeat polling intervals.
   </div>
 
   <div class="sep"></div>
 
-<script>
-/* ───────────────────────── proxy  ───────────────────────── */
-// ① /proxy/<node>/ 접두사 감지
-const __PROXY_PREFIX__ = (() => {
-  const m = location.pathname.match(/^\/proxy\/([^\/]+)\//);
-  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
-})();
+  <script>
+    /* ───────────────────────── proxy  ───────────────────────── */
+    // ① /proxy/<node>/ 접두사 감지
+    const __PROXY_PREFIX__ = (() => {
+      const m = location.pathname.match(/^\/proxy\/([^\/]+)\//);
+      return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+    })();
 
-// ② <base> 주입: 상대경로를 /proxy/<node>/ 기준으로 해석
-(function ensureBase(){
-  if (!__PROXY_PREFIX__) return;
-  const base = document.createElement("base");
-  base.href = __PROXY_PREFIX__ + "/";
-  document.head.prepend(base);
-})();
+    // ② <base> 주입: 상대경로를 /proxy/<node>/ 기준으로 해석
+    (function ensureBase() {
+      if (!__PROXY_PREFIX__) return;
+      const base = document.createElement("base");
+      base.href = __PROXY_PREFIX__ + "/";
+      document.head.prepend(base);
+    })();
 
-// ③ fetch 패치: "/config" 같은 절대경로 앞에 /proxy/<node> 자동 부착
-(function patchFetch(){
-  if (!__PROXY_PREFIX__) return;
-  const orig = window.fetch;
-  window.fetch = function(input, init){
-    let url = input;
-    if (typeof input !== "string" && input && input.url) url = input.url;
+    // ③ fetch 패치: "/config" 같은 절대경로 앞에 /proxy/<node> 자동 부착
+    (function patchFetch() {
+      if (!__PROXY_PREFIX__) return;
+      const orig = window.fetch;
+      window.fetch = function (input, init) {
+        let url = input;
+        if (typeof input !== "string" && input && input.url) url = input.url;
 
-    if (typeof url === "string") {
-      if (url.startsWith("/") && !url.startsWith("/proxy/")) {
-        url = __PROXY_PREFIX__ + url; // 핵심
+        if (typeof url === "string") {
+          if (url.startsWith("/") && !url.startsWith("/proxy/")) {
+            url = __PROXY_PREFIX__ + url; // 핵심
+          }
+        }
+        if (typeof input !== "string" && input && input.url) {
+          return orig(new Request(url, input), init);
+        }
+        return orig(url, init);
+      };
+    })();
+
+    // (옵션) XHR를 쓰는 코드가 있다면 같이 패치
+    (function patchXHR() {
+      if (!__PROXY_PREFIX__) return;
+      const origOpen = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, url, async, user, pass) {
+        let u = url;
+        if (typeof u === "string" && u.startsWith("/") && !u.startsWith("/proxy/")) {
+          u = __PROXY_PREFIX__ + u;
+        }
+        return origOpen.call(this, method, u, async !== false, user, pass);
+      };
+    })();
+
+    /* ───────────────────────── 공통 유틸 ───────────────────────── */
+    (function setTitleHost() {
+      try {
+        const host = (window.DASHBOARD_HOST && String(window.DASHBOARD_HOST).trim()) || (location && location.hostname) || "";
+        const el = document.getElementById("titleHost"); if (el && host) el.textContent = `(${host})`;
+      } catch (_) { }
+    })();
+
+    // ===== 공통 fetch 래퍼 =====
+    async function api(path, method = "GET", body = null) {
+      const opt = { method, cache: "no-store", headers: {} };
+      if (body !== null) {
+        if (typeof body === "string") { opt.headers["Content-Type"] = "text/plain; charset=utf-8"; opt.body = body; }
+        else { opt.headers["Content-Type"] = "application/json"; opt.body = JSON.stringify(body); }
+      }
+      const r = await fetch(path, opt);
+      const ct = r.headers.get("content-type") || "";
+      const isJson = ct.includes("application/json");
+      if (!r.ok) {
+        let msg = r.statusText;
+        try { msg = isJson ? (await r.json()).error || r.statusText : await r.text(); } catch { }
+        throw new Error(msg || `HTTP ${r.status}`);
+      }
+      return isJson ? await r.json() : await r.text();
+    }
+
+    /* ────────────────── /config 로드/저장 (+json5 허용) ───────────────── */
+    async function loadConfigText() { return api("/config", "GET"); }
+    // ===== /config 우선, 실패 시 /oms/config 폴백 =====
+    async function saveConfigText(text) {
+      try {
+        return await api("/config", "POST", text);     // 루트 우선
+      } catch (e) {
+        const m = String(e.message || "").toLowerCase();
+        if (m.includes("not found") || m.includes("404")) {
+          return await api("/oms/config", "POST", text); // 폴백
+        }
+        throw e;
       }
     }
-    if (typeof input !== "string" && input && input.url) {
-      return orig(new Request(url, input), init);
+
+    // 서버가 /config-format 또는 /config/format 둘 중 하나만 있을 수 있어 둘 다 시도
+    async function formatOnServer(text) {
+      try { return await api("/config-format", "POST", text); }
+      catch (_) { return await api("/config/format", "POST", text); }
     }
-    return orig(url, init);
-  };
-})();
-
-// (옵션) XHR를 쓰는 코드가 있다면 같이 패치
-(function patchXHR(){
-  if (!__PROXY_PREFIX__) return;
-  const origOpen = XMLHttpRequest.prototype.open;
-  XMLHttpRequest.prototype.open = function(method, url, async, user, pass){
-    let u = url;
-    if (typeof u === "string" && u.startsWith("/") && !u.startsWith("/proxy/")) {
-      u = __PROXY_PREFIX__ + u;
+    async function loadConfigObj() {
+      const raw = await loadConfigText();
+      // 먼저 JSON으로 시도
+      try {
+        return JSON.parse(raw);
+      } catch (_) {
+        // 서버 포맷터로 교정 후 파싱
+        const fr = await formatOnServer(raw);
+        return JSON.parse(fr.text);
+      }
     }
-    return origOpen.call(this, method, u, async !== false, user, pass);
-  };
-})();
 
-/* ───────────────────────── 공통 유틸 ───────────────────────── */
-(function setTitleHost(){
-  try{
-    const host=(window.DASHBOARD_HOST&&String(window.DASHBOARD_HOST).trim())||(location&&location.hostname)||"";
-    const el=document.getElementById("titleHost"); if(el&&host) el.textContent=`(${host})`;
-  }catch(_){}
-})();
+    /* ───────────────────────── 화면 요소 ───────────────────────── */
+    const TBody = document.querySelector("#grid tbody");
+    const SaveTag = document.getElementById("saveState");
+    const HB_EL = document.getElementById("hb");
+    const INPUT_HB = document.getElementById("inputHeartbeat");
+    const INPUT_PORT = document.getElementById("inputPort");
+    const M_PATH = document.getElementById("metaPath");
+    const M_SIZE = document.getElementById("metaSize");
+    const M_TIME = document.getElementById("metaMtime");
 
-// ===== 공통 fetch 래퍼 =====
-async function api(path, method="GET", body=null){
-  const opt = { method, cache:"no-store", headers:{} };
-  if (body !== null){
-    if (typeof body === "string"){ opt.headers["Content-Type"]="text/plain; charset=utf-8"; opt.body=body; }
-    else { opt.headers["Content-Type"]="application/json"; opt.body=JSON.stringify(body); }
-  }
-  const r = await fetch(path, opt);
-  const ct = r.headers.get("content-type") || "";
-  const isJson = ct.includes("application/json");
-  if (!r.ok){
-    let msg = r.statusText;
-    try{ msg = isJson ? (await r.json()).error || r.statusText : await r.text(); }catch{}
-    throw new Error(msg || `HTTP ${r.status}`);
-  }
-  return isJson ? await r.json() : await r.text();
-}
+    let CONFIG = null;
+    let POLL = null, POLL_MS = 1500;
+    let IS_SAVING = false;
 
-/* ────────────────── /config 로드/저장 (+json5 허용) ───────────────── */
-async function loadConfigText(){ return api("/config","GET"); }
-// ===== /config 우선, 실패 시 /oms/config 폴백 =====
-async function saveConfigText(text){
-  try {
-    return await api("/config", "POST", text);     // 루트 우선
-  } catch (e){
-    const m = String(e.message||"").toLowerCase();
-    if (m.includes("not found") || m.includes("404")){
-      return await api("/oms/config", "POST", text); // 폴백
+    /* ───── endpoints (apply 추가) ───── */
+    const EP = {
+      apply: async () => {
+        try {
+          return await api("/config/apply", "POST", {});  // DMS 런타임 적용
+        } catch (_) { /* 일부 에이전트에 없을 수 있음 → 무시 */ }
+      }
+    };
+
+    /* ─────────────── 포트 키 헬퍼: 기존 스키마 자동 감지 ─────────────── */
+    const PORT_KEYS = ["port", "listen_port", "service_port", "dms_port"];
+    function detectPortKey(cfg) {
+      if (!cfg || typeof cfg !== 'object') return null;
+      for (const k of PORT_KEYS) { if (k in cfg) return k; }
+      return null; // 없으면 저장 시 port 사용
     }
-    throw e;
-  }
-}
+    function readPort(cfg) {
+      const k = detectPortKey(cfg);
+      return (k && typeof cfg[k] !== 'undefined') ? Number(cfg[k]) : NaN;
+    }
+    function writePort(cfg, value) {
+      const k = detectPortKey(cfg) || 'port';
+      cfg[k] = value;
+    }
 
-// 서버가 /config-format 또는 /config/format 둘 중 하나만 있을 수 있어 둘 다 시도
-async function formatOnServer(text){
-  try{ return await api("/config-format","POST",text); }
-  catch(_){ return await api("/config/format","POST",text); }
-}
-async function loadConfigObj(){
-  const raw=await loadConfigText();
-  // 먼저 JSON으로 시도
-  try{
-    return JSON.parse(raw);
-  }catch(_){
-    // 서버 포맷터로 교정 후 파싱
-    const fr=await formatOnServer(raw);
-    return JSON.parse(fr.text);
-  }
-}
+    /* ───────────────────── 행/필드 렌더링 ───────────────────── */
+    function parseArgs(val) {
+      if (!val) return [];
+      const s = String(val).trim();
+      if (!s) return [];
+      try {
+        const j = JSON.parse(s);
+        return Array.isArray(j) ? j : (j ? String(j).split(/\s+/) : []);
+      } catch (_) {
+        return s.split(/\s+/);
+      }
+    }
+    function argsToText(arr) {
+      if (!arr) return "";
+      try { return JSON.stringify(arr); } catch { return String(arr); }
+    }
+    function ensureConfigShape(cfg) {
+      cfg = cfg || {};
+      if (!Array.isArray(cfg.executables)) cfg.executables = [];
+      return cfg;
+    }
+    function uniqueName(base) {
+      const used = new Set((CONFIG.executables || []).map(e => e.name));
+      if (!used.has(base)) return base;
+      let i = 2; while (used.has(`${base}_${i}`)) i++;
+      return `${base}_${i}`;
+    }
 
-/* ───────────────────────── 화면 요소 ───────────────────────── */
-const TBody   = document.querySelector("#grid tbody");
-const SaveTag = document.getElementById("saveState");
-const HB_EL   = document.getElementById("hb");
-const INPUT_HB= document.getElementById("inputHeartbeat");
-const INPUT_PORT = document.getElementById("inputPort");
-const M_PATH  = document.getElementById("metaPath");
-const M_SIZE  = document.getElementById("metaSize");
-const M_TIME  = document.getElementById("metaMtime");
-
-let CONFIG=null;
-let POLL=null, POLL_MS=1500;
-let IS_SAVING=false;
-
-/* ───── endpoints (apply 추가) ───── */
-const EP = {
-  apply: async () => {
-    try{
-      return await api("/config/apply","POST",{});  // DMS 런타임 적용
-    }catch(_){ /* 일부 에이전트에 없을 수 있음 → 무시 */ }
-  }
-};
-
-/* ─────────────── 포트 키 헬퍼: 기존 스키마 자동 감지 ─────────────── */
-const PORT_KEYS = ["port","listen_port","service_port","dms_port"];
-function detectPortKey(cfg){
-  if (!cfg || typeof cfg !== 'object') return null;
-  for (const k of PORT_KEYS){ if (k in cfg) return k; }
-  return null; // 없으면 저장 시 port 사용
-}
-function readPort(cfg){
-  const k = detectPortKey(cfg);
-  return (k && typeof cfg[k] !== 'undefined') ? Number(cfg[k]) : NaN;
-}
-function writePort(cfg, value){
-  const k = detectPortKey(cfg) || 'port';
-  cfg[k] = value;
-}
-
-/* ───────────────────── 행/필드 렌더링 ───────────────────── */
-function parseArgs(val){
-  if(!val) return [];
-  const s=String(val).trim();
-  if(!s) return [];
-  try{
-    const j=JSON.parse(s);
-    return Array.isArray(j)?j:(j?String(j).split(/\s+/):[]);
-  }catch(_){
-    return s.split(/\s+/);
-  }
-}
-function argsToText(arr){
-  if(!arr) return "";
-  try{ return JSON.stringify(arr); }catch{ return String(arr); }
-}
-function ensureConfigShape(cfg){
-  cfg = cfg||{};
-  if(!Array.isArray(cfg.executables)) cfg.executables=[];
-  return cfg;
-}
-function uniqueName(base){
-  const used=new Set((CONFIG.executables||[]).map(e=>e.name));
-  if(!used.has(base)) return base;
-  let i=2; while(used.has(`${base}_${i}`)) i++;
-  return `${base}_${i}`;
-}
-
-function row(exe, idx){
-  const tr=document.createElement("tr");
-  tr.innerHTML = `
-    <td><input type="checkbox" data-k="select" ${exe.select===true?"checked":""}></td>
-    <td><input type="text" data-k="name" value="${exe.name||""}" placeholder="e.g. MTd"></td>
-    <td><input type="text" data-k="alias" value="${exe.alias||""}" placeholder="Message Transport - main"></td>
-    <td><input type="text" data-k="path" value="${exe.path||""}" placeholder="daemon/MTd/MTd.exe"></td>
-    <td><textarea data-k="args" placeholder='["--foo","bar"] or "--foo bar"'>${argsToText(exe.args||[])}</textarea></td>
-    <td style="text-align:center"><input type="checkbox" data-k="auto_restart" ${exe.auto_restart!==false?"checked":""}></td>
-    <td style="text-align:center"><input type="checkbox" data-k="start_on_boot" ${exe.start_on_boot? "checked":""}></td>
+    function row(exe, idx) {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+    <td><input type="checkbox" data-k="select" ${exe.select === true ? "checked" : ""}></td>
+    <td><input type="text" data-k="name" value="${exe.name || ""}" placeholder="e.g. MTd"></td>
+    <td><input type="text" data-k="alias" value="${exe.alias || ""}" placeholder="Message Transport - main"></td>
+    <td><input type="text" data-k="path" value="${exe.path || ""}" placeholder="daemon/MTd/MTd.exe"></td>
+    <td><textarea data-k="args" placeholder='["--foo","bar"] or "--foo bar"'>${argsToText(exe.args || [])}</textarea></td>
+    <td style="text-align:center"><input type="checkbox" data-k="auto_restart" ${exe.auto_restart !== false ? "checked" : ""}></td>
+    <td style="text-align:center"><input type="checkbox" data-k="start_on_boot" ${exe.start_on_boot ? "checked" : ""}></td>
     <td class="col-btns">
       <button data-a="up"   class="btn-ghost">▲</button>
       <button data-a="down" class="btn-ghost">▼</button>
@@ -323,182 +521,239 @@ function row(exe, idx){
     </td>
   `;
 
-  tr.addEventListener("change",(ev)=>{
-    const t=ev.target; const k=t.getAttribute("data-k"); if(!k) return;
-    const v=(t.type==="checkbox")?t.checked:(k==="args"?parseArgs(t.value):t.value);
-    CONFIG.executables[idx][k]=v;
-    touchDirty("Edited");
-  });
+      tr.addEventListener("change", (ev) => {
+        const t = ev.target; const k = t.getAttribute("data-k"); if (!k) return;
+        const v = (t.type === "checkbox") ? t.checked : (k === "args" ? parseArgs(t.value) : t.value);
+        CONFIG.executables[idx][k] = v;
+        touchDirty("Edited");
+      });
 
-  tr.addEventListener("click",(ev)=>{
-    const b=ev.target.closest("button"); if(!b) return;
-    const a=b.getAttribute("data-a"); const arr=CONFIG.executables;
-    if(a==="up" && idx>0){ [arr[idx-1],arr[idx]]=[arr[idx],arr[idx-1]]; render(); }
-    else if(a==="down" && idx<arr.length-1){ [arr[idx+1],arr[idx]]=[arr[idx],arr[idx+1]]; render(); }
-    else if(a==="dup"){ const copy=JSON.parse(JSON.stringify(arr[idx])); copy.name=uniqueName(copy.name||"New"); arr.splice(idx+1,0,copy); render(); }
-    else if(a==="del"){ if(confirm("Delete this row?")){ arr.splice(idx,1); render(); } }
-  });
+      tr.addEventListener("click", (ev) => {
+        const b = ev.target.closest("button"); if (!b) return;
+        const a = b.getAttribute("data-a"); const arr = CONFIG.executables;
+        if (a === "up" && idx > 0) { [arr[idx - 1], arr[idx]] = [arr[idx], arr[idx - 1]]; render(); }
+        else if (a === "down" && idx < arr.length - 1) { [arr[idx + 1], arr[idx]] = [arr[idx], arr[idx + 1]]; render(); }
+        else if (a === "dup") { const copy = JSON.parse(JSON.stringify(arr[idx])); copy.name = uniqueName(copy.name || "New"); arr.splice(idx + 1, 0, copy); render(); }
+        else if (a === "del") { if (confirm("Delete this row?")) { arr.splice(idx, 1); render(); } }
+      });
 
-  return tr;
-}
-
-function render(){
-  CONFIG = ensureConfigShape(CONFIG);
-  TBody.innerHTML="";
-  CONFIG.executables.forEach((e,i)=>TBody.appendChild(row(e,i)));
-  // heartbeat 필드 채우기 (없으면 3s 기본)
-  try{
-    const hb = Number(CONFIG.heartbeat_interval_sec);
-    INPUT_HB.value = (!isNaN(hb) && hb>0) ? hb : 3;
-  }catch(_){
-    INPUT_HB.value = 3;
-  }
-  // port 필드: 자동 감지 후 표시
-  try{
-    const p = readPort(CONFIG);
-    INPUT_PORT.value = (!isNaN(p) && p>0) ? p : '';
-  }catch(_){ INPUT_PORT.value=''; }
-}
-function touchDirty(text="Edited"){
-  SaveTag.textContent=text; SaveTag.className="pill";
-}
-
-/* ───────────────────── 메타/하트비트 폴링 ───────────────────── */
-async function loadMeta(){
-  try{
-    const m=await api("/config/meta","GET");
-    M_PATH.textContent=m.path||"-";
-    M_SIZE.textContent=String(m.size??"-");
-    M_TIME.textContent=m.mtime||"-";
-  }catch(_){ M_PATH.textContent="(meta error)"; }
-}
-async function loadHeartbeat(){
-  try{
-    const s=await api("/status","GET");
-    // /status 형식이 map일 수 있으므로 hb는 config에서 보완
-    if(typeof s.heartbeat_interval_sec==="number"){
-      const hb=s.heartbeat_interval_sec;
-      HB_EL.textContent=hb;
-      POLL_MS=Math.max(1000, Math.min(3000, Math.floor(hb*1000)));
+      return tr;
     }
-  }catch(_){ HB_EL.textContent="-"; }
-  if(POLL){clearInterval(POLL); POLL=null;}
-  POLL=setInterval(()=>Promise.allSettled([loadMeta(),loadHeartbeat()]), POLL_MS);
-}
-async function loadHeartbeatLite(){
-  try{
-    const s = await api("/status-lite", "GET");
-    if (s && typeof s.heartbeat_interval_sec !== "undefined"){
-      const hb = Number(s.heartbeat_interval_sec);
-      if (!isNaN(hb) && hb > 0){
-        HB_EL.textContent = hb;
-        const next = Math.max(1000, Math.floor(hb*1000));
-        if (next !== POLL_MS){ POLL_MS = next; restartPolling(); }
+
+    function render() {
+      CONFIG = ensureConfigShape(CONFIG);
+      TBody.innerHTML = "";
+      CONFIG.executables.forEach((e, i) => TBody.appendChild(row(e, i)));
+      // heartbeat 필드 채우기 (없으면 3s 기본)
+      try {
+        const hb = Number(CONFIG.heartbeat_interval_sec);
+        INPUT_HB.value = (!isNaN(hb) && hb > 0) ? hb : 3;
+      } catch (_) {
+        INPUT_HB.value = 3;
+      }
+      // port 필드: 자동 감지 후 표시
+      try {
+        const p = readPort(CONFIG);
+        INPUT_PORT.value = (!isNaN(p) && p > 0) ? p : '';
+      } catch (_) { INPUT_PORT.value = ''; }
+    }
+    function touchDirty(text = "Edited") {
+      SaveTag.textContent = text; SaveTag.className = "pill";
+    }
+
+    /* ───────────────────── 메타/하트비트 폴링 ───────────────────── */
+    async function loadMeta() {
+      try {
+        const m = await api("/config/meta", "GET");
+        M_PATH.textContent = m.path || "-";
+        M_SIZE.textContent = String(m.size ?? "-");
+        M_TIME.textContent = m.mtime || "-";
+      } catch (_) { M_PATH.textContent = "(meta error)"; }
+    }
+    async function loadHeartbeat() {
+      try {
+        const s = await api("/status", "GET");
+        // /status 형식이 map일 수 있으므로 hb는 config에서 보완
+        if (typeof s.heartbeat_interval_sec === "number") {
+          const hb = s.heartbeat_interval_sec;
+          HB_EL.textContent = hb;
+          POLL_MS = Math.max(1000, Math.min(3000, Math.floor(hb * 1000)));
+        }
+      } catch (_) { HB_EL.textContent = "-"; }
+      if (POLL) { clearInterval(POLL); POLL = null; }
+      POLL = setInterval(() => Promise.allSettled([loadMeta(), loadHeartbeat()]), POLL_MS);
+    }
+    async function loadHeartbeatLite() {
+      try {
+        const s = await api("/status-lite", "GET");
+        if (s && typeof s.heartbeat_interval_sec !== "undefined") {
+          const hb = Number(s.heartbeat_interval_sec);
+          if (!isNaN(hb) && hb > 0) {
+            HB_EL.textContent = hb;
+            const next = Math.max(1000, Math.floor(hb * 1000));
+            if (next !== POLL_MS) { POLL_MS = next; restartPolling(); }
+          }
+        }
+      } catch { HB_EL.textContent = "-"; }
+    }
+
+    /* ───────────────────── 버튼 액션 ───────────────────── */
+    async function reloadConfig() {
+      const obj = await loadConfigObj();
+      CONFIG = ensureConfigShape(obj);
+      render();
+      SaveTag.textContent = "Loaded"; SaveTag.className = "pill";
+      await Promise.allSettled([loadMeta(), loadHeartbeat()]);
+    }
+    async function formatConfig() {
+      const txt = JSON.stringify(CONFIG);
+      const r = await formatOnServer(txt);
+      try { CONFIG = JSON.parse(r.text); } catch { }
+      render();
+      SaveTag.textContent = "Formatted"; SaveTag.className = "pill";
+    }
+    async function saveConfig() {
+      if (IS_SAVING) return;
+      IS_SAVING = true;
+      try {
+        console.log("[DMS] Save clicked");
+        SaveTag.textContent = "Saving..."; SaveTag.className = "pill";
+        // ── Global Settings → CONFIG 반영
+        try {
+          const hb = Number(INPUT_HB.value || "");
+          if (!isNaN(hb) && hb > 0) {
+            CONFIG.heartbeat_interval_sec = hb;
+          } else {
+            delete CONFIG.heartbeat_interval_sec;
+          }
+        } catch (_) { }
+
+        // ── Port 반영 (자동 키 감지)
+        try {
+          const pv = Number(INPUT_PORT.value || "");
+          if (!isNaN(pv) && pv > 0 && pv <= 65535) {
+            writePort(CONFIG, pv);
+          } else {
+            // 입력이 비어있으면 아무 것도 하지 않음 (기존 값 유지)
+          }
+        } catch (_) { }
+
+        const txt = JSON.stringify(CONFIG, null, 2);
+
+        // 실제 저장
+        const res = await saveConfigText(txt);
+        console.log("[OMS] Save response:", res);
+        await EP.apply().catch(() => { });
+
+        // 사용자 피드백
+        SaveTag.textContent = `Saved (${(res && res.bytes) ? res.bytes : txt.length}B)`;
+        SaveTag.className = "pill pill-ok";
+
+        // 저장 반영 재로딩
+        await reloadConfig();
+        await loadMeta();
+      } catch (e) {
+        console.error("[DMS] Save failed:", e);
+        alert("Save failed: " + (e.message || e));
+        SaveTag.textContent = "Save failed"; SaveTag.className = "pill pill-bad";
+      } finally {
+        IS_SAVING = false;
       }
     }
-  }catch{ HB_EL.textContent="-"; }
-}
 
-/* ───────────────────── 버튼 액션 ───────────────────── */
-async function reloadConfig(){
-  const obj=await loadConfigObj();
-  CONFIG=ensureConfigShape(obj);
-  render();
-  SaveTag.textContent="Loaded"; SaveTag.className="pill";
-  await Promise.allSettled([loadMeta(), loadHeartbeat()]);
-}
-async function formatConfig(){
-  const txt=JSON.stringify(CONFIG);
-  const r=await formatOnServer(txt);
-  try{ CONFIG=JSON.parse(r.text); }catch{}
-  render();
-  SaveTag.textContent="Formatted"; SaveTag.className="pill";
-}
-async function saveConfig(){
-  if (IS_SAVING) return;
-  IS_SAVING = true;
-  try{
-    console.log("[DMS] Save clicked");
-    SaveTag.textContent="Saving..."; SaveTag.className="pill";
-    // ── Global Settings → CONFIG 반영
-    try{
-      const hb = Number(INPUT_HB.value||"");
-      if (!isNaN(hb) && hb > 0){
-        CONFIG.heartbeat_interval_sec = hb;
-      }else{
-        delete CONFIG.heartbeat_interval_sec;
+
+    // ===== 버튼 이벤트가 반드시 한 번만 걸리도록 정리 =====
+    const BTN_SAVE = document.getElementById("btnSave");
+    BTN_SAVE.onclick = null;
+    BTN_SAVE.replaceWith(BTN_SAVE.cloneNode(true)); // 리스너 초기화
+    const BTN_SAVE2 = document.getElementById("btnSave");
+    BTN_SAVE2.addEventListener("click", (ev) => { ev.preventDefault(); saveConfig(); });
+
+
+    document.getElementById("btnGoDashboard").addEventListener("click", () => {
+      location.href = "dms-system.html";
+    });
+    document.getElementById("btnSysReload").addEventListener("click", reloadConfig);
+    document.getElementById("btnFormat").addEventListener("click", formatConfig);
+    document.getElementById("btnAdd").addEventListener("click", () => {
+      CONFIG = ensureConfigShape(CONFIG);
+      CONFIG.executables.push({
+        name: uniqueName("New"),
+        alias: "",
+        path: "",
+        args: [],
+        select: false,
+        auto_restart: true,
+        start_on_boot: false
+      });
+      render(); touchDirty("Edited");
+    });
+
+    /* ───────────────────────── 초기화 ───────────────────────── */
+    (async function init() {
+      await reloadConfig();
+      // meta/heartbeat 폴링 시작
+      try {
+        await loadHeartbeat();
+      } catch (_) { }
+    })();
+  </script>
+  <!-- Common Title -->
+  <script>
+    (function () {
+      function applyCommonConfig(cfg) {
+        if (!cfg || typeof cfg !== "object") return;
+        // 공통 prefix (원하면 사용)
+        var appName = cfg.appName || "4DReplay";
+        var version = cfg.version || "V5";
+        var pageCfg = (cfg.pages && cfg.pages.dmsConfig) || {};
+
+        // 1) HTML <title>
+        if (pageCfg.htmlTitle) {
+          document.title = pageCfg.htmlTitle;
+        } else {
+          // json에 없으면 기본 규칙 사용
+          document.title = appName + " " + version + " - Dashboard";
+        }
+
+        // 2) 화면 내 H1 타이틀
+        var h1 = document.getElementById("pageTitle");
+        if (h1 && pageCfg.pageTitle) {
+          h1.textContent = pageCfg.pageTitle;
+        }
+
+        // 3) favicon (link[rel=icon] 교체)
+        if (cfg.faviconHref) {
+          var existing = document.querySelector('link[rel="icon"]');
+          if (!existing) {
+            existing = document.createElement("link");
+            existing.rel = "icon";
+            existing.type = "image/x-icon";
+            document.head.appendChild(existing);
+          }
+          existing.href = cfg.faviconHref;
+        }
       }
-    }catch(_){}
 
-    // ── Port 반영 (자동 키 감지)
-    try{
-      const pv = Number(INPUT_PORT.value||"");
-      if (!isNaN(pv) && pv>0 && pv<=65535){
-        writePort(CONFIG, pv);
-      }else{
-        // 입력이 비어있으면 아무 것도 하지 않음 (기존 값 유지)
+      function init() {
+        // 이미 로딩돼 있으면 바로 적용
+        if (window.OmsCommonConfig) {
+          applyCommonConfig(window.OmsCommonConfig);
+        }
+        // 나중에 로딩될 수도 있으니 이벤트도 구독
+        try {
+          window.addEventListener("oms:config-ready", function (e) {
+            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
+          });
+        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
       }
-    }catch(_){}
-
-    const txt = JSON.stringify(CONFIG, null, 2);
-
-    // 실제 저장
-    const res = await saveConfigText(txt);
-    console.log("[OMS] Save response:", res);
-    await EP.apply().catch(()=>{});
-
-    // 사용자 피드백
-    SaveTag.textContent = `Saved (${(res && res.bytes) ? res.bytes : txt.length}B)`;
-    SaveTag.className="pill pill-ok";
-
-    // 저장 반영 재로딩
-    await reloadConfig();
-    await loadMeta();
-  }catch(e){
-    console.error("[DMS] Save failed:", e);
-    alert("Save failed: " + (e.message||e));
-    SaveTag.textContent="Save failed"; SaveTag.className="pill pill-bad";
-  }finally{
-    IS_SAVING = false;
-  }
-}
-
-
-// ===== 버튼 이벤트가 반드시 한 번만 걸리도록 정리 =====
-const BTN_SAVE = document.getElementById("btnSave");
-BTN_SAVE.onclick = null;
-BTN_SAVE.replaceWith(BTN_SAVE.cloneNode(true)); // 리스너 초기화
-const BTN_SAVE2 = document.getElementById("btnSave");
-BTN_SAVE2.addEventListener("click",(ev)=>{ ev.preventDefault(); saveConfig(); });
- 
-
-document.getElementById("btnGoDashboard").addEventListener("click", ()=>{
-  location.href = "dms-system.html";
-});
-document.getElementById("btnReload").addEventListener("click", reloadConfig);
-document.getElementById("btnFormat").addEventListener("click", formatConfig);
-document.getElementById("btnAdd").addEventListener("click", ()=>{
-  CONFIG=ensureConfigShape(CONFIG);
-  CONFIG.executables.push({
-    name: uniqueName("New"),
-    alias:"",
-    path:"",
-    args:[],
-    select:false,
-    auto_restart:true,
-    start_on_boot:false
-  });
-  render(); touchDirty("Edited");
-});
-
-/* ───────────────────────── 초기화 ───────────────────────── */
-(async function init(){
-  await reloadConfig();
-  // meta/heartbeat 폴링 시작
-  try{
-    await loadHeartbeat();
-  }catch(_){}
-})();
-</script>
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
+
 </html>

@@ -91,16 +91,16 @@ code{background:#111827;border:1px solid var(--line);border-radius:6px;padding:2
 pre{background:#0b1220;border:1px solid var(--line2);border-radius:8px;padding:10px;overflow:auto}
 `;
 
-  function rootOf(target){
+  function rootOf(target) {
     if (!target) return document;
     if (target instanceof Document || target instanceof ShadowRoot) return target;
     if (target && target.getRootNode) return target.getRootNode();
     return document;
   }
-  function hasStyle(where){
+  function hasStyle(where) {
     return !!(where && where.querySelector && where.querySelector(`#${STYLE_ID}`));
   }
-  function inject(target){
+  function inject(target) {
     const root = rootOf(target);
     const where = root === document ? document.head : root;
     if (!where) return false;
@@ -111,22 +111,84 @@ pre{background:#0b1220;border:1px solid var(--line2);border-radius:8px;padding:1
     where.appendChild(el);
     return true;
   }
-  function remove(target){
+  function remove(target) {
     const root = rootOf(target);
     const where = root === document ? document.head : root;
     const el = where && where.querySelector && where.querySelector(`#${STYLE_ID}`);
-    if (el && el.parentNode){ el.parentNode.removeChild(el); return true; }
+    if (el && el.parentNode) { el.parentNode.removeChild(el); return true; }
     return false;
   }
 
   // Expose API
   const api = { inject, ensure: inject, remove, version: VERSION };
-  if (typeof module !== 'undefined' && module.exports){ module.exports = api; } else { global.FourDCommon = api; }
+  if (typeof module !== 'undefined' && module.exports) { module.exports = api; } else { global.FourDCommon = api; }
 
   // Auto-inject on load (in case user forgets to call inject())
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ try{ inject(); }catch(e){ console && console.warn('[4D] style inject failed', e); } });
+    document.addEventListener('DOMContentLoaded', function () { try { inject(); } catch (e) { console && console.warn('[4D] style inject failed', e); } });
   } else {
-    try{ inject(); }catch(e){ console && console.warn('[4D] style inject failed', e); }
+    try { inject(); } catch (e) { console && console.warn('[4D] style inject failed', e); }
   }
 })(typeof window !== 'undefined' ? window : globalThis);
+
+(function () {
+  // 페이지 경로에 따라 4d-common.json 위치 자동 결정
+  const path = location.pathname.toLowerCase();
+  let CONFIG_URL;
+
+  if (path.includes("/web/")) {
+    // /web/xxx.html 로 열리는 페이지
+    // 예: /web/oms-dashboard.html, /proxy/DMS-1/web/oms-system.html
+    // → 같은 폴더에 4d-common.json
+    CONFIG_URL = "4d-common.json";
+  } else {
+    // /web 바깥에서 열리는 페이지
+    // 예: /dms-system.html, /proxy/DMS-1/dms-system.html
+    // → /web/4d-common.json 을 바라보게 함
+    CONFIG_URL = "web/4d-common.json";
+  }
+
+  const BUST = "?v=" + Date.now(); // 캐시 방지
+
+  // 전역으로 노출
+  window.OmsCommonConfig = window.OmsCommonConfig || null;
+  window.OmsCommonConfigPromise = window.OmsCommonConfigPromise || (async function () {
+    try {
+      const res = await fetch(CONFIG_URL + BUST, { cache: "no-store" });
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      const json = await res.json();
+      window.OmsCommonConfig = json;
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent("oms:config-ready", { detail: json })
+        );
+      } catch (e) {}
+
+      return json;
+    } catch (e) {
+      console.warn("[OmsCommonConfig] load failed:", e);
+      window.OmsCommonConfig = {};
+      return {};
+    }
+  })();
+})();
+
+// ─────────────────────────────────────────────
+// HTML Title & Favicon 자동 적용
+// ─────────────────────────────────────────────
+window.OmsCommonConfigPromise.then(cfg => {
+  if (!cfg) return;
+
+  // --- Favicon 적용만 남김 ---
+  if (cfg.faviconHref) {
+    let link = document.querySelector("link[rel='icon']");
+    if (!link) {
+      link = document.createElement("link");
+      link.rel = "icon";
+      document.head.appendChild(link);
+    }
+    link.href = cfg.faviconHref;
+  }
+
+});

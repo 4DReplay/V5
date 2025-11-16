@@ -1,51 +1,258 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>4DReplay V5 - OMs Command</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" href="images/4dmain.ico" type="image/x-icon">
+  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">    
+  <script>
+    (function () {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now();
+
+      const CSS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.css",
+        "./4d-common-style.css",
+      ];
+      const JS_CANDIDATES = [
+        PROXY_PREFIX + "/web/4d-common-style.js",
+        "./4d-common-style.js",
+      ];
+
+      function injectCSS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("link");
+        el.rel = "stylesheet";
+        el.href = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[CSS miss]", list[i]);
+          injectCSS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true;
+        el.src = list[i] + bust;
+        el.onerror = () => {
+          console.warn("[JS miss]", list[i]);
+          injectJS(list, i + 1);
+        };
+        document.head.appendChild(el);
+      }
+
+      injectCSS(CSS_CANDIDATES);
+      injectJS(JS_CANDIDATES);
+    })();
+  </script>
   <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#243045; --line2:#1f2937;
-      --btn:#1e40af; --btn2:#334155; --ok:#16a34a; --bad:#ef4444; --warn:#f59e0b;
+    :root {
+      --bg: #0b0f14;
+      --fg: #eef2f7;
+      --muted: #94a3b8;
+      --card: #0b1220;
+      --line: #243045;
+      --line2: #1f2937;
+      --btn: #1e40af;
+      --btn2: #334155;
+      --ok: #16a34a;
+      --bad: #ef4444;
+      --warn: #f59e0b;
     }
-    html,body{height:100%}
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{font-size:28px;margin:0 0 12px;display:flex;align-items:center;gap:10px}
-    h2 small{font-size:14px;opacity:.8}
-    .toolbar{display:flex;gap:10px;align-items:center;margin:10px 0 14px;flex-wrap:wrap}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:8px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease}
-    button:hover{filter:brightness(1.08)}
-    .btn-ghost{background:transparent;border:1px solid var(--line);color:#e5e7eb}
-    .btn-secondary{background:var(--btn2)}
-    .pill{display:inline-block;border:1px solid var(--line);background:#0f172a;border-radius:999px;font-size:12px;padding:3px 10px}
-    .pill-ok{border-color:var(--ok);color:#a7f3d0;background:#0d3b1a}
-    .pill-bad{border-color:var(--bad);color:#fecaca;background:#3b0d0d}
-    .pill-warn{border-color:var(--warn);color:#fde68a;background:#3b2a0d}
-    .row{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
-    .col{flex:1 1 520px;min-width:320px}
-    .card{background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:12px}
-    label{display:flex;align-items:center;gap:8px;margin:6px 0}
-    input[type="text"], input[type="number"], textarea{
-      width:100%;box-sizing:border-box;background:#0b1220;color:#e5e7eb;border:1px solid var(--line);
-      border-radius:8px;padding:8px;font:13px ui-monospace,monospace;
+
+    html,
+    body {
+      height: 100%
     }
-    textarea{height:240px;resize:vertical}
-    pre{white-space:pre-wrap;word-break:break-word;background:#0b1220;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:520px;overflow:auto}
-    .muted{color:var(--muted)}
-    .right{margin-left:auto}
-    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    .hint{font-size:12px;color:#cbd5e1}
-    .err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
-    .kv{display:grid;grid-template-columns:140px 1fr;gap:8px;align-items:center}
-    code{background:transparent;color:#93c5fd}
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      margin: 24px
+    }
+
+    h2 {
+      font-size: 28px;
+      margin: 0 0 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    h2 small {
+      font-size: 14px;
+      opacity: .8
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin: 10px 0 14px;
+      flex-wrap: wrap
+    }
+
+    button {
+      background: var(--btn);
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: filter .2s ease
+    }
+
+    button:hover {
+      filter: brightness(1.08)
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: #e5e7eb
+    }
+
+    .btn-secondary {
+      background: var(--btn2)
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 3px 10px
+    }
+
+    .pill-ok {
+      border-color: var(--ok);
+      color: #a7f3d0;
+      background: #0d3b1a
+    }
+
+    .pill-bad {
+      border-color: var(--bad);
+      color: #fecaca;
+      background: #3b0d0d
+    }
+
+    .pill-warn {
+      border-color: var(--warn);
+      color: #fde68a;
+      background: #3b2a0d
+    }
+
+    .row {
+      display: flex;
+      gap: 14px;
+      align-items: stretch;
+      flex-wrap: wrap
+    }
+
+    .col {
+      flex: 1 1 520px;
+      min-width: 320px
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line2);
+      border-radius: 12px;
+      padding: 12px
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 6px 0
+    }
+
+    input[type="text"],
+    input[type="number"],
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0b1220;
+      color: #e5e7eb;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px;
+      font: 13px ui-monospace, monospace;
+    }
+
+    textarea {
+      height: 240px;
+      resize: vertical
+    }
+
+    pre {
+      white-space: pre-wrap;
+      word-break: break-word;
+      background: #0b1220;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px;
+      max-height: 520px;
+      overflow: auto
+    }
+
+    .muted {
+      color: var(--muted)
+    }
+
+    .right {
+      margin-left: auto
+    }
+
+    .grid2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #cbd5e1
+    }
+
+    .err {
+      display: none;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      background: #3b0d0d;
+      border: 1px solid #ef4444;
+      color: #ffe0e0;
+      white-space: pre-wrap
+    }
+
+    .kv {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px;
+      align-items: center
+    }
+
+    code {
+      background: transparent;
+      color: #93c5fd
+    }
   </style>
 </head>
+
 <body>
-  <h2>
-    <span>4DReplay V5 - OMs Command</span>
+  <h2 class="page-title">
+    <span id="pageTitle">4DReplay V5 - OMs Command</span>
     <small id="metaHost"></small>
   </h2>
 
@@ -68,7 +275,7 @@
           <input id="inputPort" type="number" min="1" max="65535" value="19765">
         </div>
         <p class="hint" style="margin-top:8px">
-          HTTP는 <code>/oms/mtd-connect</code>로 보내며, 서버가 TCP로 MTd에 중계합니다.
+          HTTP request is sent to <code>/oms/mtd-connect</code>, and the server relays it to MTd via TCP.
         </p>
       </div>
 
@@ -121,282 +328,340 @@
     </div>
   </div>
 
-<script>
-/* ───── Proxy prefix (proxy/<node>/...) 호환 ───── */
-const __PROXY_PREFIX__ = (() => {
-  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
-  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
-})();
-(function ensureBase(){
-  if (!__PROXY_PREFIX__) return;
-  const base = document.createElement("base");
-  base.href = __PROXY_PREFIX__ + "/";
-  document.head.prepend(base);
-})();
-(function patchFetch(){
-  if (!__PROXY_PREFIX__) return;
-  const orig = window.fetch;
-  window.fetch = function(input, init){
-    let url = input;
-    if (typeof input !== "string" && input && input.url) url = input.url;
-    if (typeof url === "string") {
-      if (url.startsWith("/") && !url.startsWith("/proxy/")) url = __PROXY_PREFIX__ + url;
-    }
-    if (typeof input !== "string" && input && input.url) {
-      return orig(new Request(url, input), init);
-    }
-    return orig(url, init);
-  };
-})();
-async function api(path, init = {}){
-  const res = await fetch(path, { cache: "no-store", ...init });
-  const ct = res.headers.get("content-type") || "";
-  const isJson = ct.includes("application/json");
-  if (!res.ok) {
-    let msg = `HTTP ${res.status}`;
-    try {
-      if (isJson) {
-        const j = await res.json();
-        msg = j?.error || j?.message || JSON.stringify(j);
-      } else {
-        msg = (await res.text()) || msg;
+  <script>
+    /* ───── Proxy prefix (proxy/<node>/...) 호환 ───── */
+    const __PROXY_PREFIX__ = (() => {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+      return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+    })();
+    (function ensureBase() {
+      if (!__PROXY_PREFIX__) return;
+      const base = document.createElement("base");
+      base.href = __PROXY_PREFIX__ + "/";
+      document.head.prepend(base);
+    })();
+    (function patchFetch() {
+      if (!__PROXY_PREFIX__) return;
+      const orig = window.fetch;
+      window.fetch = function (input, init) {
+        let url = input;
+        if (typeof input !== "string" && input && input.url) url = input.url;
+        if (typeof url === "string") {
+          if (url.startsWith("/") && !url.startsWith("/proxy/")) url = __PROXY_PREFIX__ + url;
+        }
+        if (typeof input !== "string" && input && input.url) {
+          return orig(new Request(url, input), init);
+        }
+        return orig(url, init);
+      };
+    })();
+    async function api(path, init = {}) {
+      const res = await fetch(path, { cache: "no-store", ...init });
+      const ct = res.headers.get("content-type") || "";
+      const isJson = ct.includes("application/json");
+      if (!res.ok) {
+        let msg = `HTTP ${res.status}`;
+        try {
+          if (isJson) {
+            const j = await res.json();
+            msg = j?.error || j?.message || JSON.stringify(j);
+          } else {
+            msg = (await res.text()) || msg;
+          }
+        } catch { }
+        throw new Error(msg);
       }
-    } catch {}
-    throw new Error(msg);
-  }
-  return isJson ? res.json() : res.text();
-}
-
-/* ───── DOM ───── */
-const META      = document.getElementById("metaHost");
-const ERRBOX    = document.getElementById("errBox");
-const PILL      = document.getElementById("statusPill");
-const RC_PILL   = document.getElementById("rcPill");
-const RESP_BOX  = document.getElementById("respBox");
-const REQ_ECHO  = document.getElementById("reqEcho");
-const RESP_META = document.getElementById("respMeta");
-
-const IN_HOST   = document.getElementById("inputHost");
-const IN_PORT   = document.getElementById("inputPort");
-const TXT_JSON  = document.getElementById("inputJson");
-const CB_TOKEN  = document.getElementById("cbAutoToken");
-
-document.getElementById("btnBack").addEventListener("click", ()=> location.href="oms-system.html");
-document.getElementById("btnClear").addEventListener("click", ()=> {
-  TXT_JSON.value=""; RESP_BOX.textContent="-"; REQ_ECHO.textContent="-";
-  RESP_META.textContent=""; setRc(null); setPill("Idle"); hideErr();
-});
-document.getElementById("btnCopyResp").addEventListener("click", ()=> navigator.clipboard.writeText(RESP_BOX.textContent||""));
-document.getElementById("btnDownloadResp").addEventListener("click", ()=>{
-  const blob = new Blob([RESP_BOX.textContent||""], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = `oms_cmd_resp_${Date.now()}.json`;
-  a.click();
-  URL.revokeObjectURL(a.href);
-});
-document.getElementById("btnLoadFile").addEventListener("click", async ()=>{
-  const inp = document.createElement("input");
-  inp.type = "file"; inp.accept = ".json,application/json,text/json";
-  inp.onchange = async () => {
-    const file = inp.files?.[0]; if (!file) return;
-    const txt = await file.text();
-    TXT_JSON.value = txt;
-  };
-  inp.click();
-});
-document.getElementById("btnTemplate").addEventListener("click", ()=>{
-  const sample = {
-    Section1:"mtd",
-    Section2:"connect",
-    Section3:"",
-    SendState:"request",
-    From:"4DOMS",
-    To:"MTd",
-    Token: makeToken(),
-    Action:"set",
-    DMPDIP: guessMgmtIP(location.hostname || "127.0.0.1"),
-    DaemonList: { EMd:"10.82.104.210", CCd:"10.82.104.210", SCd:"10.82.104.210", GCd:"10.82.104.210", PCd:"10.82.104.210", SPd:"10.82.104.210" }
-  };
-  TXT_JSON.value = JSON.stringify(sample, null, 2);
-});
-
-document.getElementById("btnPickMTd").addEventListener("click", async ()=>{
-  try{
-    setPill("Detecting MTd...");
-    const st = await api("/oms/status");
-    const target = pickMTdTarget(st);
-    if (!target) throw new Error("No MTd detected.");
-    IN_HOST.value = target.host;
-    IN_PORT.value = 19765;
-    setPill("MTd selected");
-  }catch(e){
-    showErr(e.message||e);
-    setPill("Idle");
-  }
-});
-
-document.getElementById("btnSend").addEventListener("click", send);
-
-/* ───── helpers ───── */
-function setPill(text, tone=""){ PILL.textContent=text; PILL.className = "pill " + (tone||""); }
-function setRc(rc){
-  if (rc === null || rc === undefined){ RC_PILL.textContent="RC -"; RC_PILL.className="pill pill-warn"; return; }
-  const ok = Number(rc) === 1000;
-  RC_PILL.textContent = "RC " + rc;
-  RC_PILL.className = "pill " + (ok ? "pill-ok" : "pill-bad");
-}
-function showErr(msg){ ERRBOX.style.display="block"; ERRBOX.textContent = String(msg || "error"); }
-function hideErr(){ ERRBOX.style.display="none"; ERRBOX.textContent=""; }
-function makeToken(){
-  const d = new Date();
-  const hh = String(d.getHours()).padStart(2,"0");
-  const mm = String(d.getMinutes()).padStart(2,"0");
-  return `${hh}${mm}_${Date.now()}_${Math.random().toString(36).slice(2,5)}`;
-}
-function guessMgmtIP(fallback){
-  const h = (location.hostname || "").trim();
-  if (!h || h === "localhost" || h === "127.0.0.1") return fallback;
-  return h;
-}
-function pickMTdTarget(status){
-  const nodes = status?.nodes || [];
-  for (const n of nodes){
-    const st = n.status;
-    const arr = (st && st.data && typeof st.data==="object") ? Object.values(st.data)
-              : (Array.isArray(st.processes) ? st.processes
-              : (Array.isArray(st.executables) ? st.executables : []));
-    if (!arr) continue;
-    if (arr.some(p => p && p.name === "MTd")) {
-      return { nodeName: n.name, host: n.host, port: n.port || 19776 };
+      return isJson ? res.json() : res.text();
     }
-  }
-  return null;
-}
 
-function parseJsonLoose(text){
-  text = String(text||"");
-  text = text.replace(/\/\*[\s\S]*?\*\//g, "");               // /* */ 주석 제거
-  text = text.split("\n").map(line=>{                         // // 주석 제거
-    const i = line.indexOf("//");
-    return i>=0 ? line.slice(0,i) : line;
-  }).join("\n");
-  text = text.replace(/,\s*([}\]])/g, "$1");                  // 트레일링 콤마 제거
-  return JSON.parse(text);
-}
-function wrapForOms(host, port, messageObj){
-  return { host, port: Number(port)||19765, message: messageObj };
-}
-function isWrapped(obj){
-  return obj && typeof obj === "object"
-    && typeof obj.host !== "undefined"
-    && typeof obj.port !== "undefined"
-    && obj.message && typeof obj.message === "object";
-}
+    /* ───── DOM ───── */
+    const META = document.getElementById("metaHost");
+    const ERRBOX = document.getElementById("errBox");
+    const PILL = document.getElementById("statusPill");
+    const RC_PILL = document.getElementById("rcPill");
+    const RESP_BOX = document.getElementById("respBox");
+    const REQ_ECHO = document.getElementById("reqEcho");
+    const RESP_META = document.getElementById("respMeta");
 
-/** 메시지 정책 강제 적용 */
-function normalizeAndValidate(msg, hostForGuess){
-  // 1) 필수 기본값
-  if (!msg.Section1) msg.Section1 = "mtd";
-  if (!msg.Section2) msg.Section2 = "connect";
-  if (!msg.Section3) msg.Section3 = "";
-  if (!msg.SendState) msg.SendState = "request";
-  msg.From = "4DOMS"; // 강제
-  if (!msg.To) msg.To = "MTd";
-  if (!msg.Action) msg.Action = "set";
+    const IN_HOST = document.getElementById("inputHost");
+    const IN_PORT = document.getElementById("inputPort");
+    const TXT_JSON = document.getElementById("inputJson");
+    const CB_TOKEN = document.getElementById("cbAutoToken");
 
-  // 2) To=MMd → SPd 자동 치환(대소문자 무시)
-  if (typeof msg.To === "string" && msg.To.trim().toUpperCase() === "MMD") {
-    msg.To = "SPd";
-  }
-
-  // 5) DMPDIP 보정
-  if (!msg.DMPDIP) msg.DMPDIP = guessMgmtIP(hostForGuess);
-
-  // 6) Daemon 정보 조회 케이스: PreSd가 아니라면 DMPDIP 제거
-  const isDaemonInfo = msg.Section1==="Daemon" && msg.Section2==="Information";
-  if (isDaemonInfo && msg.To !== "PreSd") {
-    delete msg.DMPDIP;
-  }
-
-  return msg;
-}
-
-async function send(){
-  hideErr();
-  setPill("Sending...");
-  setRc(null);
-  RESP_BOX.textContent = "-";
-  REQ_ECHO.textContent = "-";
-  RESP_META.textContent = "";
-
-  let host = (IN_HOST.value||"").trim();
-  let port = Number(IN_PORT.value||19765);
-  if (!host) { showErr("MTd Host is required."); setPill("Idle"); return; }
-
-  let msg;
-  try{
-    msg = parseJsonLoose(TXT_JSON.value);
-  }catch(e){
-    showErr("Invalid JSON: " + (e.message||e));
-    setPill("Idle");
-    return;
-  }
-
-  let payload;
-
-  if (isWrapped(msg)) {
-    // 사용자가 래퍼 형태로 넣은 경우: 재래핑 금지, 내부 message만 정책 적용
-    if (CB_TOKEN.checked && !msg.message.Token) {
-      msg.message.Token = makeToken();
-    }
-    try{
-      msg.message = normalizeAndValidate(msg.message, msg.host || host);
-    }catch(e){
-      showErr(e.message||e);
-      setPill("Failed","pill-bad");
-      return;
-    }
-    payload = msg; // 그대로 전송
-  } else {
-    // 평문 message인 경우: 정책 적용 후 래핑
-    if (CB_TOKEN.checked && !msg.Token) msg.Token = makeToken();
-    try{
-      msg = normalizeAndValidate(msg, host);
-    }catch(e){
-      showErr(e.message||e);
-      setPill("Failed","pill-bad");
-      return;
-    }
-    payload = wrapForOms(host, port, msg);
-  }
-
-  REQ_ECHO.textContent = JSON.stringify(payload, null, 2);
-
-  const t0 = Date.now();
-  try{
-    const r = await api("/oms/mtd-connect", {
-      method: "POST",
-      headers: { "Content-Type":"application/json" },
-      body: JSON.stringify(payload)
+    document.getElementById("btnBack").addEventListener("click", () => location.href = "oms-system.html");
+    document.getElementById("btnClear").addEventListener("click", () => {
+      TXT_JSON.value = ""; RESP_BOX.textContent = "-"; REQ_ECHO.textContent = "-";
+      RESP_META.textContent = ""; setRc(null); setPill("Idle"); hideErr();
     });
-    const resp = r?.response || r;
-    const ms = Date.now() - t0;
+    document.getElementById("btnCopyResp").addEventListener("click", () => navigator.clipboard.writeText(RESP_BOX.textContent || ""));
+    document.getElementById("btnDownloadResp").addEventListener("click", () => {
+      const blob = new Blob([RESP_BOX.textContent || ""], { type: "application/json" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `oms_cmd_resp_${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(a.href);
+    });
+    document.getElementById("btnLoadFile").addEventListener("click", async () => {
+      const inp = document.createElement("input");
+      inp.type = "file"; inp.accept = ".json,application/json,text/json";
+      inp.onchange = async () => {
+        const file = inp.files?.[0]; if (!file) return;
+        const txt = await file.text();
+        TXT_JSON.value = txt;
+      };
+      inp.click();
+    });
+    document.getElementById("btnTemplate").addEventListener("click", () => {
+      const sample = {
+        Section1: "mtd",
+        Section2: "connect",
+        Section3: "",
+        SendState: "request",
+        From: "4DOMS",
+        To: "MTd",
+        Token: makeToken(),
+        Action: "set",
+        DMPDIP: guessMgmtIP(location.hostname || "127.0.0.1"),
+        DaemonList: { EMd: "10.82.104.210", CCd: "10.82.104.210", SCd: "10.82.104.210", GCd: "10.82.104.210", PCd: "10.82.104.210", SPd: "10.82.104.210" }
+      };
+      TXT_JSON.value = JSON.stringify(sample, null, 2);
+    });
 
-    RESP_BOX.textContent = JSON.stringify(resp, null, 2);
-    setRc(resp?.ResultCode);
-    setPill("Done", "pill-ok");
-    RESP_META.textContent = `elapsed ${ms} ms`;
-  }catch(e){
-    setPill("Failed", "pill-bad");
-    showErr("SEND error: " + (e.message||e));
-  }
-}
+    document.getElementById("btnPickMTd").addEventListener("click", async () => {
+      try {
+        setPill("Detecting MTd...");
+        const st = await api("/oms/status");
+        const target = pickMTdTarget(st);
+        if (!target) throw new Error("No MTd detected.");
+        IN_HOST.value = target.host;
+        IN_PORT.value = 19765;
+        setPill("MTd selected");
+      } catch (e) {
+        showErr(e.message || e);
+        setPill("Idle");
+      }
+    });
 
-/* meta */
-(function init(){
-  META.textContent = `(${location.hostname||"-"})`;
-})();
-</script>
+    document.getElementById("btnSend").addEventListener("click", send);
+
+    /* ───── helpers ───── */
+    function setPill(text, tone = "") { PILL.textContent = text; PILL.className = "pill " + (tone || ""); }
+    function setRc(rc) {
+      if (rc === null || rc === undefined) { RC_PILL.textContent = "RC -"; RC_PILL.className = "pill pill-warn"; return; }
+      const ok = Number(rc) === 1000;
+      RC_PILL.textContent = "RC " + rc;
+      RC_PILL.className = "pill " + (ok ? "pill-ok" : "pill-bad");
+    }
+    function showErr(msg) { ERRBOX.style.display = "block"; ERRBOX.textContent = String(msg || "error"); }
+    function hideErr() { ERRBOX.style.display = "none"; ERRBOX.textContent = ""; }
+    function makeToken() {
+      const d = new Date();
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      return `${hh}${mm}_${Date.now()}_${Math.random().toString(36).slice(2, 5)}`;
+    }
+    function guessMgmtIP(fallback) {
+      const h = (location.hostname || "").trim();
+      if (!h || h === "localhost" || h === "127.0.0.1") return fallback;
+      return h;
+    }
+    function pickMTdTarget(status) {
+      const nodes = status?.nodes || [];
+      for (const n of nodes) {
+        const st = n.status;
+        const arr = (st && st.data && typeof st.data === "object") ? Object.values(st.data)
+          : (Array.isArray(st.processes) ? st.processes
+            : (Array.isArray(st.executables) ? st.executables : []));
+        if (!arr) continue;
+        if (arr.some(p => p && p.name === "MTd")) {
+          return { nodeName: n.name, host: n.host, port: n.port || 19776 };
+        }
+      }
+      return null;
+    }
+
+    function parseJsonLoose(text) {
+      text = String(text || "");
+      text = text.replace(/\/\*[\s\S]*?\*\//g, "");               // /* */ 주석 제거
+      text = text.split("\n").map(line => {                         // // 주석 제거
+        const i = line.indexOf("//");
+        return i >= 0 ? line.slice(0, i) : line;
+      }).join("\n");
+      text = text.replace(/,\s*([}\]])/g, "$1");                  // 트레일링 콤마 제거
+      return JSON.parse(text);
+    }
+    function wrapForOms(host, port, messageObj) {
+      return { host, port: Number(port) || 19765, message: messageObj };
+    }
+    function isWrapped(obj) {
+      return obj && typeof obj === "object"
+        && typeof obj.host !== "undefined"
+        && typeof obj.port !== "undefined"
+        && obj.message && typeof obj.message === "object";
+    }
+
+    /** 메시지 정책 강제 적용 */
+    function normalizeAndValidate(msg, hostForGuess) {
+      // 1) 필수 기본값
+      if (!msg.Section1) msg.Section1 = "mtd";
+      if (!msg.Section2) msg.Section2 = "connect";
+      if (!msg.Section3) msg.Section3 = "";
+      if (!msg.SendState) msg.SendState = "request";
+      msg.From = "4DOMS"; // 강제
+      if (!msg.To) msg.To = "MTd";
+      if (!msg.Action) msg.Action = "set";
+
+      // 2) To=MMd → SPd 자동 치환(대소문자 무시)
+      if (typeof msg.To === "string" && msg.To.trim().toUpperCase() === "MMD") {
+        msg.To = "SPd";
+      }
+
+      // 5) DMPDIP 보정
+      if (!msg.DMPDIP) msg.DMPDIP = guessMgmtIP(hostForGuess);
+
+      // 6) Daemon 정보 조회 케이스: PreSd가 아니라면 DMPDIP 제거
+      const isDaemonInfo = msg.Section1 === "Daemon" && msg.Section2 === "Information";
+      if (isDaemonInfo && msg.To !== "PreSd") {
+        delete msg.DMPDIP;
+      }
+
+      return msg;
+    }
+
+    async function send() {
+      hideErr();
+      setPill("Sending...");
+      setRc(null);
+      RESP_BOX.textContent = "-";
+      REQ_ECHO.textContent = "-";
+      RESP_META.textContent = "";
+
+      let host = (IN_HOST.value || "").trim();
+      let port = Number(IN_PORT.value || 19765);
+      if (!host) { showErr("MTd Host is required."); setPill("Idle"); return; }
+
+      let msg;
+      try {
+        msg = parseJsonLoose(TXT_JSON.value);
+      } catch (e) {
+        showErr("Invalid JSON: " + (e.message || e));
+        setPill("Idle");
+        return;
+      }
+
+      let payload;
+
+      if (isWrapped(msg)) {
+        // 사용자가 래퍼 형태로 넣은 경우: 재래핑 금지, 내부 message만 정책 적용
+        if (CB_TOKEN.checked && !msg.message.Token) {
+          msg.message.Token = makeToken();
+        }
+        try {
+          msg.message = normalizeAndValidate(msg.message, msg.host || host);
+        } catch (e) {
+          showErr(e.message || e);
+          setPill("Failed", "pill-bad");
+          return;
+        }
+        payload = msg; // 그대로 전송
+      } else {
+        // 평문 message인 경우: 정책 적용 후 래핑
+        if (CB_TOKEN.checked && !msg.Token) msg.Token = makeToken();
+        try {
+          msg = normalizeAndValidate(msg, host);
+        } catch (e) {
+          showErr(e.message || e);
+          setPill("Failed", "pill-bad");
+          return;
+        }
+        payload = wrapForOms(host, port, msg);
+      }
+
+      REQ_ECHO.textContent = JSON.stringify(payload, null, 2);
+
+      const t0 = Date.now();
+      try {
+        const r = await api("/oms/mtd-connect", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const resp = r?.response || r;
+        const ms = Date.now() - t0;
+
+        RESP_BOX.textContent = JSON.stringify(resp, null, 2);
+        setRc(resp?.ResultCode);
+        setPill("Done", "pill-ok");
+        RESP_META.textContent = `elapsed ${ms} ms`;
+      } catch (e) {
+        setPill("Failed", "pill-bad");
+        showErr("SEND error: " + (e.message || e));
+      }
+    }
+
+    /* meta */
+    (function init() {
+      META.textContent = `(${location.hostname || "-"})`;
+    })();
+  </script>
+  <!-- Common Title -->
+  <script>
+    (function () {
+      function applyCommonConfig(cfg) {
+        if (!cfg || typeof cfg !== "object") return;
+        // 공통 prefix (원하면 사용)
+        var appName = cfg.appName || "4DReplay";
+        var version = cfg.version || "V5";
+        var pageCfg = (cfg.pages && cfg.pages.omsCommand) || {};
+
+        // 1) HTML <title>
+        if (pageCfg.htmlTitle) {
+          document.title = pageCfg.htmlTitle;
+        } else {
+          // json에 없으면 기본 규칙 사용
+          document.title = appName + " " + version + " - Dashboard";
+        }
+
+        // 2) 화면 내 H1 타이틀
+        var h1 = document.getElementById("pageTitle");
+        if (h1 && pageCfg.pageTitle) {
+          h1.textContent = pageCfg.pageTitle;
+        }
+
+        // 3) favicon (link[rel=icon] 교체)
+        if (cfg.faviconHref) {
+          var existing = document.querySelector('link[rel="icon"]');
+          if (!existing) {
+            existing = document.createElement("link");
+            existing.rel = "icon";
+            existing.type = "image/x-icon";
+            document.head.appendChild(existing);
+          }
+          existing.href = cfg.faviconHref;
+        }
+      }
+
+      function init() {
+        // 이미 로딩돼 있으면 바로 적용
+        if (window.OmsCommonConfig) {
+          applyCommonConfig(window.OmsCommonConfig);
+        }
+
+        // 나중에 로딩될 수도 있으니 이벤트도 구독
+        try {
+          window.addEventListener("oms:config-ready", function (e) {
+            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
+          });
+        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
 </html>
