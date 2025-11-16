@@ -846,8 +846,8 @@ class AId:
 
         # AId 자체 버전/날짜는 main 에서 conf._version,_release_date 로 세팅되어 있음
         aid_info = {
-            "version": conf._version,
-            "date": conf._release_date,
+            "version": self.version,
+            "date": self.release_date,
         }
         
         expect = pkt.get("Expect", {}) or {}
@@ -1016,6 +1016,7 @@ if __name__ == '__main__':
 
     conf._version = ver
     conf._release_date = date
+    
 
     fd_log.info(f"🧩 Latest Version: {conf._version}")
     fd_log.info(f"📅 Latest Date: {conf._release_date}")

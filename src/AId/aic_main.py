@@ -77,8 +77,6 @@ class AIc:
         self.version = self.conf._version  # conf에서 _version 가져오기
         self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
 
-        # (주의) AId와의 persistent 세션은 AId 쪽이 TCPClient, AIc는 TCPServer 역할이다.
-
     # ─────────────────────────────────────────────────────────────────────────
     # 시스템 초기화(로그 폴더 등). 실패시 False
     # ─────────────────────────────────────────────────────────────────────────
@@ -148,38 +146,52 @@ class AIc:
     # AId -> AIc : persistent 포트(19738)로 들어오는 메시지 처리
     # ----------------------------------------------------------
     def on_aid_msg(self, data):
-        """
-        TCPServer(19738)의 콜백.
-        fd_common.TCPServer 가 이미 JSON 디코딩해서 dict 로 넘겨준다고 가정.
-        """
+        # 1) bytes → str
+        if isinstance(data, bytes):
+            data = data.decode(errors="ignore")
+
+        # 2) str → dict(JSON)
+        if isinstance(data, str):
+            try:
+                data = json.loads(data)
+            except Exception as e:
+                fd_log.warning(f"[AIc] on_aid_msg: JSON parse error: {e}; raw={data[:200]}")
+                return
+
+        # 3) dict가 아니면 폐기
         if not isinstance(data, dict):
-            fd_log.warning(f"[AIc] on_aid_msg: invalid data type: {type(data)}")
+            fd_log.warning(f"[AIc] on_aid_msg: invalid data type after parse: {type(data)}")
             return
 
-        sec1 = data.get("Section1")
-        sec2 = data.get("Section2")
-        sec3 = data.get("Section3")
-        state = str(data.get("SendState", "")).lower()
+        # 4) dispatch
+        self._dispatch_aid_command(data) 
 
-        # version information
-        if (sec1, sec2, sec3) == ("Daemon", "Information", "Version") and state == "request":
-            fd_log.info(f"[AIc] version request : {sec1}/{sec2}/{sec3}")            
-            return self.handle_version_request_from_aid(data)
+    # ─────────────────────────────────────────────────────────────────────────
+    # AID Commands
+    # ─────────────────────────────────────────────────────────────────────────
+    def _dispatch_aid_command(self, pkt: dict):
+        sec1 = pkt.get("Section1")
+        sec2 = pkt.get("Section2")
+        sec3 = pkt.get("Section3")
+        state = str(pkt.get("SendState", "")).lower()
 
-        # Calibration 요청
+        # Version 요청
+        if (sec1, sec2, sec3) == ("AIc", "Information", "Version") and state == "request":
+            return self.handle_version_request_from_aid(pkt)
+
+        # Calibration 명령 예시
         if (sec1, sec2, sec3) == ("AI", "Operation", "Calibration"):
-            return self.handle_calibration(data)
+            return self.handle_calibration(pkt)
 
-        # LiveEncoding 요청
-        if (sec1, sec2, sec3) == ("AI", "Operation", "LiveEncoding"):
-            return self.handle_live_encoding(data)
+        # StartVideo 명령 예시
+        if (sec1, sec2, sec3) == ("AI", "Operation", "StartVideo"):
+            return self.handle_start_video(pkt)
 
-        # Detect 요청
-        if (sec1, sec2, sec3) == ("AI", "Process", "Detect"):
-            return self.handle_detect(data)
+        # 앞으로 여기에 계속 명령 추가
+        # if (sec1, sec2, sec3) == (...):
+        #     return self.handle_xxx(pkt)
 
-        fd_log.warning(f"[AIc] Unknown AId command: {sec1}/{sec2}/{sec3}")            
-
+        fd_log.warning(f"[AIc] unhandled AId command: {sec1}/{sec2}/{sec3}/{state}")
     # ─────────────────────────────────────────────────────────────────────────
     # 안전 종료(멱등)
     # ─────────────────────────────────────────────────────────────────────────
@@ -226,8 +238,8 @@ class AIc:
         - conf._version, conf._release_date 를 그대로 사용
         - AId 쪽은 SenderIP 를 굳이 믿지 않아도, TCPClient 생성 시점에 IP를 알고 있음.
         """
-        ver = conf._version
-        date = conf._release_date
+        ver = self.version
+        date = self.release_date
 
         resp = {
             "Section1": "Daemon",
