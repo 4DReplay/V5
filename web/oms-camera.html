@@ -46,16 +46,26 @@
   <!-- Title -->
   <h2 class="page-title">
     <span id="pageTitle">4DReplay V5 - Camera Manager</span>
-    <small id="camStats" class="muted" style="font-size:13px;">cameras: 0 • connected: 0</small>
-    <span id="pollChip" class="chip pill">poll -</span>
+    <small id="camStats" class="muted" style="font-size:13px;">cameras: 0 • connected: 0</small>    
   </h1>
+
   <!-- Controls under title -->
   <div class="toolbar" style="justify-content:flex-start">
-    <button id="btnRun" class="btn-secondary">🚀 Connect Cameras</button>
-    <button id="btnSwAllReboot" class="btn-secondary" title="Reboot all switches">🔁 Restart Cameras</button>
-    <label class="chip" style="margin-left:12px">
-      <input type="checkbox" id="selAll" /> Select All Cameras
-    </label>
+    <button id="btnDashboard">📊 Dashboard</button>
+    <span class="divider"></span>
+
+    <button id="btnCamRebootAll" class="btn-secondary">⟳ Restart All</button>
+    <button id="btnCamStopAll" class="btn-secondary">■ Stop All</button>
+    <button id="btnCamStartAll" class="btn-secondary">▶ Start All</button>
+    <span class="divider"></span>
+
+    <!-- Connect + progressChip -->
+    <button id="btnCamConnect" class="btn-secondary">📸 Connect</button>
+    <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
+
+    <span class="spacer"></span>
+
+    <span class="chip" id="pollChip">poll -</span>    
     <small id="busy" class="muted"></small>
   </div>
 
@@ -68,9 +78,10 @@
     <small id="meta"></small>
   </div>
 
+  <!-- Switch Detail Table -->
   <div class="panel" style="margin-top:16px">
     <h3 style="margin:0 0 6px; display:flex; align-items:center; justify-content:space-between;">
-      <span>Switch Details</span>
+      <span>🎛️ Switch Details</span>
       <span></span>
     </h3>
     <table>
@@ -89,9 +100,9 @@
       </tbody>
     </table>
   </div>
-
+  <!-- Camera Detail Table -->
   <div class="panel" style="margin-top:16px">
-    <h3 style="margin:0 0 6px">Camera Details</h3>
+    <h3 style="margin:0 0 6px">📷 Camera Details</h3>
     <table>
       <thead id="theadUnified">
         <!-- JS가 pre/post 단계별로 동적으로 생성 -->
@@ -104,32 +115,120 @@
     </table>
   </div>
 
-  <script src="/web/oms-camera.js" defer></script>
+  <!-- UI Style -->
+  <style>
+    .cam-icon {
+      display: inline-block;
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      vertical-align: middle;
+    }
+    .cam-icon-connected {
+      background: #22c55e; /* green */
+    }
+    .cam-icon-on {
+      background: #eab308; /* yellow */
+    }
+    .cam-icon-off {
+      background: #9ca3af; /* gray */
+    }
+
+    .camera-summary {
+      margin-left: 8px;
+      font-size: 0.9rem;
+      color: #666;
+    }
+  </style>
+
+  <script src="/web/oms-actions.js" defer></script>
+  <!-- bootstrap 1 -->
+  <script>
+    (function bootstrap() {
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => {
+          const path = location.pathname || "";
+          if (path.endsWith("/web/oms-camera.html") || path.endsWith("oms-camera.html")) {
+            initSwitchDetailsFromStatus();  // 이제 정상 동작
+          }
+        });
+      } else {
+        // 혹시 이미 DOM 준비된 상태에서 들어오는 경우
+        const path = location.pathname || "";
+        if (path.endsWith("/web/oms-camera.html") || path.endsWith("oms-camera.html")) {
+          initSwitchDetailsFromStatus();
+        }
+      }
+    })();
+  </script>
+  
+  <!-- bootstrap 2 -->
+  <script>
+    (function bootstrap() {
+      function initCameraPage() {
+        const path = location.pathname || "";
+        if (path.endsWith("/web/oms-camera.html") || path.endsWith("oms-camera.html")) {
+          // Switch 정보 초기화 (이미 쓰고 있었다면 그대로 유지)
+          if (window.OMS && window.OMS.Actions && typeof window.OMS.Actions.initSwitchDetailsFromStatus === "function") {
+            window.OMS.Actions.initSwitchDetailsFromStatus();
+          }
+          // 🔹 Camera Details 초기화 (Unknown 상태로 채우기)
+          if (window.OMS && window.OMS.Actions && typeof window.OMS.Actions.initCameraDetailsFromStatus === "function") {
+            window.OMS.Actions.initCameraDetailsFromStatus();
+          }
+        }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initCameraPage);
+      } else {
+        initCameraPage();
+      }
+    })();
+  </script>
+  
   <!-- Common Title -->
   <script>
     (function () {
       function applyCommonConfig(cfg) {
         if (!cfg || typeof cfg !== "object") return;
+
         // 공통 prefix (원하면 사용)
         var appName = cfg.appName || "4DReplay";
         var version = cfg.version || "V5";
-        var pageCfg = (cfg.pages && cfg.pages.omsCamera) || {};
+        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
 
         // 1) HTML <title>
         if (pageCfg.htmlTitle) {
           document.title = pageCfg.htmlTitle;
         } else {
-          // json에 없으면 기본 규칙 사용
           document.title = appName + " " + version + " - Dashboard";
         }
 
-        // 2) 화면 내 H1 타이틀
+        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
         var h1 = document.getElementById("pageTitle");
         if (h1 && pageCfg.pageTitle) {
+
+          // 기존 텍스트 유지
           h1.textContent = pageCfg.pageTitle;
+
+          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
+          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
+            var img = document.createElement("img");
+            img.src = cfg.faviconHref;
+            img.className = "title-icon";
+
+            // 텍스트 크기에 자동 맞춤
+            img.style.height = "1em";       // 텍스트 높이와 동일
+            img.style.width = "auto";       // 비율 유지
+            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
+            img.style.marginRight = "8px";
+
+            h1.prepend(img);
+          }
         }
 
-        // 3) favicon (link[rel=icon] 교체)
+        // 3) favicon link 교체 (브라우저 탭 아이콘)
         if (cfg.faviconHref) {
           var existing = document.querySelector('link[rel="icon"]');
           if (!existing) {
@@ -139,9 +238,15 @@
             document.head.appendChild(existing);
           }
           existing.href = cfg.faviconHref;
+
+          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
+          var titleIcon = document.querySelector("#pageTitle .title-icon");
+          if (titleIcon) {
+            titleIcon.src = cfg.faviconHref;
+          }
         }
       }
-
+      
       function init() {
         // 이미 로딩돼 있으면 바로 적용
         if (window.OmsCommonConfig) {
@@ -163,5 +268,171 @@
       }
     })();
   </script>
+  
+  <!-- Polling -->
+  <script>
+    function renderStatusIcon(cam) {
+      const status = (cam.status || "").toString().toLowerCase();
+      const connected = cam.connected === true ||
+                        cam.connected === 1 ||
+                        cam.connected === "true";
+
+      // 1) ON + CONNECTED  → CONNECTED pill (oms-system 과 동일 계열)
+      if (status === "on" && connected) {
+        return '<span class="pill connected">CONNECTED</span>';
+      }
+
+      // 2) ON (전원은 켜져 있으나 연결 안 됨) → RUNNING 스타일과 동일한 ON
+      if (status === "on") {
+        // 4d-common-style.css 에서 .pill.on 이 RUNNING 계열 스타일을 사용 :contentReference[oaicite:1]{index=1}
+        return '<span class="pill on">ON</span>';
+      }
+
+      // 3) 나머지는 전부 OFF → STOPPED 와 같은 디자인
+      //   (4d-common-style.css 의 .pill.off 이 STOPPED 계열 스타일을 사용) :contentReference[oaicite:2]{index=2}
+      return '<span class="pill off">OFF</span>';
+    }
+
+    function updateCameraUI(data) {
+      if (!data || !Array.isArray(data.cameras)) return;
+
+      const cameras = data.cameras;
+      const summary = data.summary || {};
+      const statsSpan = document.getElementById("camStats");
+
+      // --- title right side with summary from backend ---
+      if (statsSpan) {
+        const camCount = summary.cameras != null ? summary.cameras : cameras.length;
+        const connCount = summary.connected != null ? summary.connected : 0;
+        const onCount   = summary.on != null ? summary.on : 0;
+        const offCount  = summary.off != null ? summary.off : 0;
+
+        statsSpan.textContent =
+          `cameras: ${camCount} ( connected: ${connCount} / on: ${onCount} / off: ${offCount} )`;
+      }
+
+      const tbody = document.getElementById("tblUnified");
+      if (!tbody) return;
+
+      const camByIp = {};
+      for (const cam of cameras) {
+        if (cam && cam.IP) {
+          camByIp[String(cam.IP).trim()] = cam;
+        }
+      }
+
+      const rows = tbody.querySelectorAll("tr");
+      rows.forEach((row) => {
+        let ip =
+          row.getAttribute("data-ip") &&
+          row.getAttribute("data-ip").trim();
+
+        if (!ip) {
+          const ipCell =
+            row.querySelector('[data-col="ip"]') ||
+            row.querySelector(".col-ip") ||
+            row.cells[1];
+          if (!ipCell) return;
+          ip = (ipCell.textContent || "").trim();
+        }
+
+        if (!ip) return;
+        const cam = camByIp[ip];
+        if (!cam) return;
+
+        const statusCell =
+          row.querySelector('[data-col="status"]') ||
+          row.querySelector(".camera-status-cell") ||
+          row.querySelector(".col-status") ||
+          row.cells[row.cells.length - 1];
+
+        if (!statusCell) return;
+
+        statusCell.innerHTML = renderStatusIcon(cam);
+      });
+    }
+
+    function fetchCameraState() {
+      fetch("/oms/state", { cache: "no-store" })
+        .then(function (res) {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then(function (data) {
+          updateCameraUI(data);
+        })
+        .catch(function (err) {
+          console.error("Failed to fetch /oms/state:", err);
+        });
+    }
+
+    // --- polling interval control ---
+    // NOTE: change this value to update polling interval (seconds)
+    let CAMERA_POLL_SEC = 1;
+    let cameraPollTimer = null;
+
+    function startCameraPolling() {
+      // 기존 타이머 정리
+      if (cameraPollTimer) {
+        clearInterval(cameraPollTimer);
+      }
+      cameraPollTimer = setInterval(fetchCameraState, CAMERA_POLL_SEC * 1000);
+
+      // ✅ 버튼 모양 pollChip 텍스트 업데이트: "1 sec", "2 sec" …
+      const chip = document.getElementById("pollChip");
+      if (chip) {
+        chip.textContent = `poll ${CAMERA_POLL_SEC}s`;
+      }
+    }
+
+    // 초기 1회 실행
+    fetchCameraState();
+    startCameraPolling();
+  </script>
+
+  <!-- Connect Camera Button -->
+  <script>
+    (function () {
+      function bindButtons() {
+        // dashboard
+        const btnDashboard = document.getElementById("btnDashboard");
+        const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+        const __PROXY_PREFIX__ = m ? "/proxy/" + encodeURIComponent(decodeURIComponent(m[1])) : "";
+        if (btnDashboard) {
+          btnDashboard.onclick = () => {
+            const base = __PROXY_PREFIX__ || "";
+            window.location.href = base + "/dashboard";
+          };
+        }
+        // camera connect (btnCamConnect -> cameraConnectAll)
+        const btnCamConnect = document.getElementById("btnCamConnect");
+        if (btnCamConnect && window.OMS && window.OMS.Actions && typeof window.OMS.Actions.cameraConnectAll === "function") {
+          btnCamConnect.onclick = window.OMS.Actions.cameraConnectAll;
+        }
+        // camera connect (btnCamStopAll -> cameraStopAll)
+        const btnStopAll = document.getElementById("btnCamStopAll");
+        if (btnStopAll && window.OMS && OMS.Actions.cameraStopAll) {
+          btnStopAll.onclick = OMS.Actions.cameraStopAll;
+        }
+        // camera connect (btnCamStartAll -> cameraStartAll)
+        const btnStartAll = document.getElementById("btnCamStartAll");
+        if (btnStartAll && window.OMS && OMS.Actions.cameraStartAll) {
+          btnStartAll.onclick = OMS.Actions.cameraStartAll;
+        }
+        // camera stop all (btnCamRebootAll -> cameraRebootAll)
+        const btnCamRebootAll = document.getElementById("btnCamRebootAll");
+        if (btnCamRebootAll && window.OMS && OMS.Actions.cameraRebootAll) {
+          btnCamRebootAll.onclick = OMS.Actions.cameraRebootAll;
+        }        
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", bindButtons);
+      } else {
+        bindButtons();
+      }
+    })();
+  </script>
+
 </body>
 </html>

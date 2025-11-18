@@ -1,53 +1,62 @@
 <!doctype html>
 <html>
+
 <head>
   <meta charset="utf-8" />
   <title>4DReplay V5 - DMs System</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <style>
-    :root{
-      --bg:#0b0f14; --fg:#eef2f7; --muted:#94a3b8;
-      --card:#0b1220; --line:#1f2937; --line2:#243045;
-      --ok:#16a34a; --bad:#ef4444; --off:#52525b;
-      --btn:#1e40af; --btn2:#334155;
-    }
-    body{background:var(--bg);color:var(--fg);font:14px/1.5 -apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial,sans-serif;margin:24px}
-    h2{font-size:32px;margin:0 0 14px;display:flex;align-items:center;gap:8px}
-    h2 small{font-size:14px;opacity:.8}
-    .toolbar{display:flex;gap:10px;margin:8px 0 16px;align-items:center;flex-wrap:wrap}
-    .toolbar small{opacity:.8;margin-left:8px}
-    button{background:var(--btn);color:#fff;border:0;border-radius:10px;padding:10px 14px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;transition:filter .2s ease;}
-    button.btn-secondary{background:var(--btn2)}
-    button:hover{filter:brightness(1.15)}
-    button[disabled]{opacity:.6;cursor:not-allowed}
-    table{border-collapse:collapse;width:100%}
-    th,td{border:1px solid var(--line2);padding:10px}
-    th{background:#0f172a;text-align:left}
-    tr.running{background:#06220a}
-    tr.stopped{background:#1b0f0f}
-    tr.disabled{background:#111827}
-    .pill{display:inline-block;padding:3px 10px;border-radius:14px;font-size:12px;border:1px solid}
-    .ok{background:#0d3b1a;border-color:#16a34a;color:#a7f3d0}
-    .bad{background:#3b0d0d;border-color:#ef4444;color:#fecaca}
-    .off{background:#27272a;border-color:#52525b;color:#d4d4d8}
-    .select-cell{display:flex;gap:6px;align-items:center}
-    .namecell small{opacity:.8}
-    #err{display:none;margin:8px 0;padding:10px;border-radius:8px;background:#3b0d0d;border:1px solid #ef4444;color:#ffe0e0;white-space:pre-wrap}
-  </style>
+  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
+  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script>
+    (function () {
+      // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+      const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
+
+      const CSS_CANDIDATES = [PROXY_PREFIX + "/web/4d-common-style.css", "./4d-common-style.css",];
+      const JS_CANDIDATES = [PROXY_PREFIX + "/web/4d-common-style.js", "./4d-common-style.js",];
+      const OMS_JS_CANDIDATES = [PROXY_PREFIX + "/web/oms-system.js", "./oms-system.js",];
+
+      function injectCSS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("link");
+        el.rel = "stylesheet"; el.href = list[i] + bust;
+        el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i + 1); };
+        document.head.appendChild(el);
+      }
+      function injectJS(list, i = 0) {
+        if (i >= list.length) return;
+        const el = document.createElement("script");
+        el.defer = true; el.src = list[i] + bust;
+        el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i + 1); };
+        document.head.appendChild(el);
+      }
+      injectCSS(CSS_CANDIDATES);
+      injectJS(JS_CANDIDATES);
+      injectJS(OMS_JS_CANDIDATES);
+
+    })();
+  </script>
 </head>
+
 <body>
-  <h2>
-    <span>4DReplay V5 - DMs System</span>
+  <h2 class="page-title">
+    <span id="pageTitle">4DReplay V5 - DMs System</span>
     <small id="titleHost"></small>
   </h2>
 
   <div class="toolbar">
-    <button id="btnConfig" class="btn-secondary">📝 Config Editor</button>
-    <button id="btnStartAll">▶ Start All</button>
-    <button id="btnStopAll"  class="btn-secondary">■ Stop All</button>
-    <button id="btnRestartAll" class="btn-secondary">⟳ Restart All</button>
-    <!-- ✅ Reload 버튼 추가 -->
-    <button id="btnReload" class="btn-secondary">🔄 Reload</button>
+
+    <!-- 🔵 신규 추가: System 페이지 이동 버튼 -->
+    <button id="btnGotoSystem">⚙ System</button>
+    <span class="divider"></span>
+    <button id="btnStartAll" class="btn-secondary">▶ Start All</button>
+    <button id="btnStopAll" class="btn-secondary">■ Stop All</button>
+    <button id="btnRestartAll"  class="btn-secondary">⟳ Restart All</button>
+    <span class="divider"></span>
+    <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>
+    <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
     <small id="busyMsg"></small>
   </div>
 
@@ -56,8 +65,8 @@
   <table id="grid">
     <thead>
       <tr>
-        <th style="width:110px">Select</th>
-        <th style="width:280px">Name / Alias</th>
+        <!-- Select 제거 -->
+        <th style="width:320px">Name / Alias</th>
         <th>Exe</th>
         <th style="width:120px">PID</th>
         <th style="width:160px">Status</th>
@@ -70,275 +79,416 @@
 
   <p class="small" id="beat">Auto refresh: -</p>
 
-<script>
-/* ───────────────── Proxy 지원 ───────────────── */
-const __PROXY_PREFIX__ = (() => {
-  const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
-  return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
-})();
-(function ensureBase(){
-  if (!__PROXY_PREFIX__) return;
-  const base = document.createElement("base");
-  base.href = __PROXY_PREFIX__ + "/";
-  document.head.prepend(base);
-})();
-(function patchFetch(){
-  if (!__PROXY_PREFIX__) return;
-  const orig = window.fetch;
-  window.fetch = function(input, init){
-    let url = input;
-    if (typeof input !== "string" && input && input.url) url = input.url;
-    if (typeof url === "string") {
-      if (url.startsWith("/") && !url.startsWith("/proxy/")) {
-        url = __PROXY_PREFIX__ + url;
+  <script>
+    /* ─────────────── Proxy 지원 ─────────────── */
+    const __PROXY_PREFIX__ = (() => {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+      return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : "";
+    })();
+    (function ensureBase() {
+      if (!__PROXY_PREFIX__) return;
+      const base = document.createElement("base");
+      base.href = __PROXY_PREFIX__ + "/";
+      document.head.prepend(base);
+    })();
+    (function patchFetch() {
+      if (!__PROXY_PREFIX__) return;
+      const orig = window.fetch;
+      window.fetch = function (input, init) {
+        let url = input;
+        if (typeof input !== "string" && input && input.url) url = input.url;
+        if (typeof url === "string") {
+          if (url.startsWith("/") && !url.startsWith("/proxy/")) {
+            url = __PROXY_PREFIX__ + url;
+          }
+        }
+        if (typeof input !== "string" && input && input.url) {
+          return orig(new Request(url, input), init);
+        }
+        return orig(url, init);
+      };
+    })();
+
+    /* ─────────────── 공통 API ─────────────── */
+    async function api(path, opts = {}) {
+      const r = await fetch(path, Object.assign({ cache: "no-store" }, opts));
+      if (!r.ok) { const t = await r.text().catch(() => String(r.status)); throw new Error(t || `HTTP ${r.status}`); }
+      const ct = r.headers.get("content-type") || "";
+      return ct.includes("application/json") ? r.json() : r.text();
+    }
+
+    /* ─────────────── DOM ─────────────── */
+    const TBody = document.querySelector("#grid tbody");
+    const ERR = document.getElementById("err");
+    const TITLE = document.getElementById("titleHost");
+    const BEAT = document.getElementById("beat");
+    const BUSY = document.getElementById("busyMsg");
+    if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
+
+    let CFG = null;
+    let STATUS = null;
+
+    function showErr(m) { ERR.style.display = "block"; ERR.textContent = m; }
+    function clearErr() { ERR.style.display = "none"; ERR.textContent = ""; }
+
+    let IS_BUSY = false;
+    function setBusy(flag, msg = "") {
+      IS_BUSY = !!flag;
+      for (const id of ["btnStartAll", "btnStopAll", "btnRestartAll", "btnSysConfig", "btnSysReload"]) {
+        const b = document.getElementById(id);
+        if (b) b.disabled = IS_BUSY;
       }
+      BUSY.textContent = msg || "";
     }
-    if (typeof input !== "string" && input && input.url) {
-      return orig(new Request(url, input), init);
+
+    /* ─────────────── 렌더링 ─────────────── */
+    function toList(status) {
+      if (!status) return [];
+      if (status.data && typeof status.data === "object") return Object.values(status.data);
+      if (Array.isArray(status.processes)) return status.processes;
+      if (Array.isArray(status.executables)) return status.executables;
+      return [];
     }
-    return orig(url, init);
-  };
-})();
 
-/* ───────────────── 공통 API ───────────────── */
-async function api(path, opts={}){
-  const r = await fetch(path, Object.assign({cache:"no-store"}, opts));
-  if(!r.ok){ const t=await r.text().catch(()=>String(r.status)); throw new Error(t||`HTTP ${r.status}`); }
-  const ct = r.headers.get("content-type")||"";
-  return ct.includes("application/json") ? r.json() : r.text();
-}
+    function row(item) {
+      const tr = document.createElement("tr");
+      const running = !!item.running;
+      tr.className = running ? "running" : "stopped";
 
-/* ───────────────── DOM ───────────────── */
-const TBody = document.querySelector("#grid tbody");
-const ERR   = document.getElementById("err");
-const TITLE = document.getElementById("titleHost");
-const BEAT  = document.getElementById("beat");
-const BUSY  = document.getElementById("busyMsg");
-if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
+      const exeShort = (item.exe || "").split(/[\\/]/).slice(-2).join("/");
+      const badge = running ? `<span class="pill ok">RUNNING</span>`
+        : `<span class="pill bad">STOPPED</span>`;
 
-document.getElementById("btnConfig").onclick    = ()=>location.href="dms-config.html";
-document.getElementById("btnStartAll").onclick   = ()=>{ if(!IS_BUSY) bulk("start");   };
-document.getElementById("btnStopAll").onclick    = ()=>{ if(!IS_BUSY) bulk("stop");    };
-document.getElementById("btnRestartAll").onclick = ()=>{ if(!IS_BUSY) bulk("restart"); };
-// ✅ Reload 클릭 핸들러
-document.getElementById("btnReload").onclick = async ()=>{
-  if (IS_BUSY) return;
-  try { setBusy(true, "RELOAD..."); clearErr(); await tick(); }
-  catch(e){ showErr("Reload failed: " + (e.message||e)); }
-  finally { setBusy(false); }
-};
-
-/* ───────────────── 상태 ───────────────── */
-let CFG = null;    // /config-format 결과(JSON)
-let STATUS = null; // /status 결과(JSON)
-
-function showErr(m){ ERR.style.display="block"; ERR.textContent=m; }
-function clearErr(){ ERR.style.display="none"; ERR.textContent=""; }
-
-let IS_BUSY = false;
-function setBusy(flag,msg=""){
-  IS_BUSY = !!flag;
-  // ✅ Reload 버튼도 비활성화 대상에 포함
-  for (const id of ["btnStartAll","btnStopAll","btnRestartAll","btnConfig","btnReload"]) {
-    const b = document.getElementById(id);
-    if (b) b.disabled = IS_BUSY;
-  }
-  BUSY.textContent = msg || "";
-}
-
-/* helpers */
-function toList(status){
-  if (!status) return [];
-  if (status.data && typeof status.data === "object") return Object.values(status.data);
-  if (Array.isArray(status.processes)) return status.processes;
-  if (Array.isArray(status.executables)) return status.executables;
-  return [];
-}
-function row(item){
-  const tr = document.createElement("tr");
-  const selected = item.select === true;
-  const running  = !!item.running;
-  tr.className = selected ? (running ? "running" : "stopped") : "disabled";
-  const exeShort = (item.exe||"").split(/[\\/]/).slice(-2).join("/");
-  const badge = !selected
-      ? `<span class="pill off">DISABLED</span>`
-      : (running ? `<span class="pill ok">RUNNING</span>`
-                 : `<span class="pill bad">STOPPED</span>`);
-  tr.innerHTML = `
+      tr.innerHTML = `
     <td>
-      <div style="display:flex;align-items:center;gap:8px">
-        <input type="checkbox" data-a="toggle" data-n="${item.name}" ${selected?"checked":""}>
-        <span>${selected?"on":"off"}</span>
-      </div>
-    </td>
-    <td>
-      <div style="font-weight:700">${item.name||"-"}</div>
+      <div style="font-weight:700">${item.name || "-"}</div>
       ${item.alias ? `<div class="small">${item.alias}</div>` : `<div class="small">-</div>`}
     </td>
-    <td class="small" title="${item.exe||""}">${exeShort||"-"}</td>
+    <td class="small" title="${item.exe || ""}">${exeShort || "-"}</td>
     <td>${item.pid ?? "-"}</td>
     <td>${badge}</td>
     <td>${item.last_rc ?? "-"}</td>
     <td>
-      <button data-a="start"   data-n="${item.name}" ${selected?"":"disabled"}>Start</button>
+      <button data-a="start" data-n="${item.name}">Start</button>
       <button class="btn-secondary" data-a="stop" data-n="${item.name}">Stop</button>
-      <button class="btn-secondary" data-a="restart" data-n="${item.name}" ${selected?"":"disabled"}>Restart</button>
+      <button class="btn-secondary" data-a="restart" data-n="${item.name}">Restart</button>
       <button class="btn-secondary" data-a="logs" data-n="${item.name}">📜 Logs</button>
     </td>
   `;
-  return tr;
-}
-function render(){
-  clearErr();
-  const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
-  const statusMap = {};
-  for (const s of toList(STATUS)) statusMap[s.name] = s;
-  TBody.innerHTML = "";
-  for (const c of cfgExecs){
-    const s = statusMap[c.name] || {};
-    const item = {
-      name: c.name,
-      alias: c.alias || s.alias || "",
-      exe: c.path || s.path || s.exe || "",
-      select: c.select === true,
-      running: !!s.running,
-      pid: s.pid ?? "-",
-      last_rc: (s.last_rc ?? s.last_exit_code) ?? "-"
+      return tr;
+    }
+
+    function render() {
+      clearErr();
+      const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+      const statusMap = {};
+      for (const s of toList(STATUS)) statusMap[s.name] = s;
+      TBody.innerHTML = "";
+      for (const c of cfgExecs) {
+        // ✅ select==true 인 항목만 표시
+        if (!c.select) continue;
+        const s = statusMap[c.name] || {};
+        const item = {
+          name: c.name,
+          alias: c.alias || s.alias || "",
+          exe: c.path || s.path || s.exe || "",
+          running: !!s.running,
+          pid: s.pid ?? "-",
+          last_rc: (s.last_rc ?? s.last_exit_code) ?? "-"
+        };
+        TBody.appendChild(row(item));
+      }
+    }
+
+    /* ─────────────── status share (moved to function) ─────────────── */
+    function publishSummary() {
+      try {
+        // 선택된 프로세스 목록
+        const selectedNames = (CFG?.executables ?? [])
+          .filter(e => e.select === true)
+          .map(e => e.name);
+
+        // 현재 상태 리스트
+        const list = toList(STATUS);
+
+        // 실행중 카운트
+        const running = list.filter(s => selectedNames.includes(s.name) && !!s.running).length;
+        const total = selectedNames.length;
+        const stopped = Math.max(0, total - running);
+
+        // 노드/연결 수는 서버가 제공하지 않으면 1로 보수 처리
+        const nodes = Number(STATUS?.nodes?.length || STATUS?.node ? 1 : 1);
+        const connected = Number(STATUS?.connected ?? 1);
+
+        const OMS_SUMMARY = {
+          nodes,
+          processes: total,
+          connected,
+          running,
+          stopped,
+          source: "oms-system",
+          ts: Date.now()
+        };
+
+        // 로컬 스토리지 저장
+        try { localStorage.setItem("oms_summary", JSON.stringify(OMS_SUMMARY)); } catch {}
+
+        // 전역/브로드캐스트
+        window.OMS = window.OMS || {};
+        window.OMS.summary = OMS_SUMMARY;
+        try {
+          window.__OMS_CH__ = window.__OMS_CH__ || new BroadcastChannel("oms_summary");
+          window.__OMS_CH__.postMessage(OMS_SUMMARY);
+        } catch {}
+      } catch {
+        // 요약 계산 실패는 UI 치명적 오류가 아니므로 조용히 무시
+      }
+    }
+
+    /* ─────────────── 버튼 액션 ─────────────── */
+      // 🔵 신규 System 버튼 핸들러
+    document.getElementById("btnGotoSystem").onclick = () => {
+      window.location.href = "/system";
     };
-    TBody.appendChild(row(item));
-  }
-}
+    document.getElementById("btnSysConfig").onclick = () => location.href = "dms-config.html";
 
-/* 행/체크·개별 버튼 */
-TBody.addEventListener("click", async (ev)=>{
-  const btn = ev.target.closest("button");
-  const chk = ev.target.closest('input[type="checkbox"][data-a="toggle"]');
-  if (chk){
-    try{
-      const name = chk.dataset.n;
-      const ex = CFG.executables.find(e=>e.name===name);
-      if (ex){ ex.select = chk.checked; }
-      const formatted = await api("/config-format", {method:"POST", body: JSON.stringify(CFG)});
-      await api("/config", {method:"POST", body: formatted.text});
-      await tick();
-    }catch(e){ showErr("Update select failed: "+(e.message||e)); }
-    return;
-  }
-  if (!btn) return;
-  const act = btn.dataset.a, name = btn.dataset.n;
-  if (act === "logs"){
-    window.open(`web/log-viewer.html?name=${encodeURIComponent(name)}&tail=50000`, "_blank");
-    return;
-  }
-  try{
-    await api(`/${act}/${encodeURIComponent(name)}`, {method:"POST"});
-    await waitForRunning(name, act === "stop" ? false : true, ACTION_TIMEOUTS[act] || 120_000);
-    await tick();
-  }catch(e){ showErr(`${act.toUpperCase()} failed: `+(e.message||e)); }
-});
+    document.getElementById("btnStartAll").onclick = async () => {
+      if (IS_BUSY) return;
+      try {
+        setBusy(true, "START-ALL...");
+        await api("/start-all", { method: "POST" });
+        await tick();
+      } catch (e) { showErr("Start-All failed: " + (e.message || e)); }
+      finally { setBusy(false); }
+    };
 
-/* ───────── 병렬 Bulk (Start/Stop/Restart) ───────── */
-const ACTION_TIMEOUTS = { start: 180_000, stop: 150_000, restart: 240_000 };
+    document.getElementById("btnStopAll").onclick = async () => {
+      if (IS_BUSY) return;
+      try {
+        setBusy(true, "STOP-ALL...");
+        await api("/stop-all", { method: "POST" });
+        await tick();
+      } catch (e) { showErr("Stop-All failed: " + (e.message || e)); }
+      finally { setBusy(false); }
+    };
 
-function listFromStatus(st){
-  return (st && st.data && typeof st.data === "object") ? Object.values(st.data)
-       : (Array.isArray(st.processes)   ? st.processes
-       :  Array.isArray(st.executables) ? st.executables : []);
-}
-async function readProc(name){
-  try{
-    const st = await api("/status");
-    const arr = listFromStatus(st);
-    return arr.find(x => x && x.name === name);
-  }catch{ return null; }
-}
-async function waitForRunning(name, wantRunning, totalTimeoutMs, pollEveryMs=1200){
-  const t0 = Date.now();
-  while (Date.now() - t0 < totalTimeoutMs){
-    const p = await readProc(name);
-    if (p && !!p.running === !!wantRunning) return { ok:true };
-    await new Promise(r=>setTimeout(r,pollEveryMs));
-  }
-  return { ok:false, msg:"timeout" };
-}
+    document.getElementById("btnRestartAll").onclick = async () => {
+      if (IS_BUSY) return;
+      const startedAt = Date.now();
+      const fmt = (ms) => `${Math.round(ms / 1000)}s`;
+      const allNames = () => {
+        const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+        return cfgExecs.filter(e => e.select === true).map(e => e.name);
+      };
+      const progressLine = () => {
+        const names = allNames();
+        const stMap = {}; for (const s of toList(STATUS)) stMap[s.name] = s;
+        let run = 0, stop = 0, unknown = 0;
+        for (const n of names) {
+          const s = stMap[n];
+          if (!s) { unknown++; continue; }
+          if (s.running) run++; else stop++;
+        }
+        return { total: names.length, run, stop, unknown };
+      };
+      const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+      const withTimeout = (p, ms) => Promise.race([
+        p.then(v => ({ ok: true, v })).catch(e => ({ ok: false, e })),
+        new Promise(r => setTimeout(() => r({ ok: false, timeout: true }), ms))
+      ]);
 
-async function bulk(action){
-  if (!CFG || !Array.isArray(CFG.executables)) return;
-  const targets = CFG.executables.filter(e=>e.select===true).map(e=>e.name);
-  if (!targets.length){ showErr("No selected processes."); return; }
+      try {
+        setBusy(true, "RESTART-ALL...");
+        clearErr();
 
-  const label  = action.toUpperCase();
-  const want   = (action !== "stop");
-  const budget = ACTION_TIMEOUTS[action] || 180_000;
+        const req = api("/restart-all", { method: "POST" });
 
-  setBusy(true, `${label}... (0/${targets.length})`);
+        let allRunningSeenAt = 0;
+        const hardDeadline = Date.now() + 30_000;
+        while (Date.now() < hardDeadline) {
+          await tick();
+          const p = progressLine();
+          BUSY.textContent = `RESTART-ALL... (${p.run}/${p.total} running · ${p.stop}/${p.total} stopped · ${fmt(Date.now() - startedAt)})`;
+          const allRunning = (p.total > 0 && p.run === p.total);
+          if (allRunning) {
+            if (!allRunningSeenAt) allRunningSeenAt = Date.now();
+            if (Date.now() - allRunningSeenAt > 800) break;
+          }
+          await sleep(500);
+        }
 
-  let done = 0;
-  const results = await Promise.all(
-    targets.map((name) =>
-      (async () => {
-        try { await api(`/${action}/${encodeURIComponent(name)}`, { method:"POST" }); }
-        catch(_) {}
-        const waited = await waitForRunning(name, want, budget);
-        if (!waited.ok) throw new Error(waited.msg || "timeout");
-        return { ok:true };
-      })()
-      .then(
-        () => { done++; setBusy(true, `${label}... (${done}/${targets.length})`); return { ok:true }; },
-        (e)  => { done++; setBusy(true, `${label}... (${done}/${targets.length})`); return { ok:false, msg:`${name}: ${e.message||e}` }; }
-      )
-    )
-  );
+        const got = await withTimeout(req, 5000);
+        const sum = (bag) => {
+          if (!bag || !bag.results) return { ok: 0, fail: 0, fails: [] };
+          let ok = 0, fail = 0, fails = [];
+          for (const [n, r] of Object.entries(bag.results)) {
+            if (r && r.ok) ok++; else { fail++; fails.push(n); }
+          }
+          return { ok, fail, fails };
+        };
 
-  const okCount   = results.filter(r => r.ok).length;
-  const failItems = results.filter(r => !r.ok);
+        if (got.ok && !got.timeout) {
+          const resp = got.v;
+          const stopSum = sum(resp.stop);
+          const startSum = sum(resp.start);
+          const took = fmt(Date.now() - startedAt);
+          const fallback = resp && resp.fallback ? " (fallback mode)" : "";
+          const failList = [...stopSum.fails, ...startSum.fails];
+          if (failList.length) { showErr("Restart-All partial failures: " + failList.join(", ")); }
+        }
+      } catch (e) {
+        showErr("Restart-All failed: " + (e.message || e));
+      } finally {
+        setBusy(false);
+      }
+    };
 
-  setBusy(false, `${label} done: ${okCount} ok, ${failItems.length} failed`);
+    document.getElementById("btnSysReload").onclick = async () => {
+      if (IS_BUSY) return;
+      try { setBusy(true, "RELOAD..."); clearErr(); await tick(); }
+      catch (e) { showErr("Reload failed: " + (e.message || e)); }
+      finally { setBusy(false); }
+    };
 
-  if (failItems.length){
-    showErr(`${label} failures:\n` + failItems.map(f => f.msg).join("\n"));
-  } else {
-    clearErr();
-  }
+    /* ─────────────── 테이블 버튼 클릭 ─────────────── */
+    TBody.addEventListener("click", async (ev) => {
+      const btn = ev.target.closest("button");
+      if (!btn) return;
+      const act = btn.dataset.a, name = btn.dataset.n;
+      if (act === "logs") {
+        const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+        const node = m ? decodeURIComponent(m[1]) : "";
+        const nodeQ = node ? `node=${encodeURIComponent(node)}&` : "";
+        window.open(`/_/../web/log-viewer.html?${nodeQ}name=${encodeURIComponent(name)}&tail=50000`, "_blank");
+        return;
+      }
+      try {
+        setBusy(true, `${act.toUpperCase()} ${name}...`);
+        await api(`/${act}/${encodeURIComponent(name)}`, { method: "POST" });
+        await tick();
+      } catch (e) { showErr(`${act.toUpperCase()} failed: ` + (e.message || e)); }
+      finally { setBusy(false); }
+    });
 
-  await tick();
-}
-
-/* ───────── 표시용 Host 추출 & 주기 폴링 ───────── */
-function pickDisplayHost(st){
-  const pick = (o)=> {
-    if (!o || typeof o !== "object") return "";
-    for (const k of ["host","hostname","ip","ipaddr","ip_addr","address","addr"]) {
-      const v = o[k]; if (v && String(v).trim()) return String(v).trim();
+    /* ─────────────── 주기 갱신 ─────────────── */
+    function pickDisplayHost(st) {
+      const pick = (o) => {
+        if (!o || typeof o !== "object") return "";
+        for (const k of ["host", "hostname", "ip", "ipaddr", "ip_addr", "address", "addr"]) {
+          const v = o[k]; if (v && String(v).trim()) return String(v).trim();
+        }
+        return "";
+      };
+      let v = pick(st) || pick(st?.node) || pick(st?.server) || pick(st?.meta) || pick(st?.config);
+      if (v) return v;
+      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+      if (m && m[1]) return m[1];
+      return location.hostname || "";
     }
-    return "";
-  };
-  let v = pick(st) || pick(st?.node) || pick(st?.server) || pick(st?.meta) || pick(st?.config);
-  if (v) return v;
-  const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-  if (m && m[1]) return m[1];
-  return location.hostname || "";
-}
 
-async function tick(){
-  try{
-    STATUS = await api("/status");
-    const hostHint = pickDisplayHost(STATUS);
-    if (hostHint) TITLE.textContent = `(${hostHint})`;
-    const hb = Number(STATUS.heartbeat_interval_sec||2);
-    BEAT.textContent = `ON (${hb}s)`;
-    if (!CFG){
-      const raw = await api("/config","GET"); // 기존 로직 유지
-      const fm  = await api("/config-format",{method:"POST", body: raw});
-      CFG = JSON.parse(fm.text);
+    async function tick() {
+      try {
+        STATUS = await api("/status");
+        const hostHint = pickDisplayHost(STATUS);
+        if (hostHint) TITLE.textContent = `(${hostHint})`;
+        const hb = Number(STATUS.heartbeat_interval_sec || 2);
+        BEAT.textContent = `ON (${hb}s)`;
+
+        if (!CFG) {
+          const raw = await api("/config");
+          const fm = await api("/config-format", { method: "POST", body: raw });
+          CFG = JSON.parse(fm.text);
+        }
+        render();
+        publishSummary();   // ✅ 여기서 요약 갱신
+      } catch (e) {
+        showErr("Tick failed: " + (e.message || e));
+      }
     }
-    render();
-  }catch(e){
-    showErr("Tick failed: "+(e.message||e));
-  }
-}
-tick();
-setInterval(tick, 2000);
-</script>
+    tick();
+    setInterval(tick, 2000);
+  </script>
+  <!-- Common Title -->
+  <script>
+    (function () {
+      function applyCommonConfig(cfg) {
+        if (!cfg || typeof cfg !== "object") return;
+
+        // 공통 prefix (원하면 사용)
+        var appName = cfg.appName || "4DReplay";
+        var version = cfg.version || "V5";
+        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
+
+        // 1) HTML <title>
+        if (pageCfg.htmlTitle) {
+          document.title = pageCfg.htmlTitle;
+        } else {
+          document.title = appName + " " + version + " - Dashboard";
+        }
+
+        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
+        var h1 = document.getElementById("pageTitle");
+        if (h1 && pageCfg.pageTitle) {
+
+          // 기존 텍스트 유지
+          h1.textContent = pageCfg.pageTitle;
+
+          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
+          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
+            var img = document.createElement("img");
+            img.src = cfg.faviconHref;
+            img.className = "title-icon";
+
+            // 텍스트 크기에 자동 맞춤
+            img.style.height = "1em";       // 텍스트 높이와 동일
+            img.style.width = "auto";       // 비율 유지
+            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
+            img.style.marginRight = "8px";
+
+            h1.prepend(img);
+          }
+        }
+
+        // 3) favicon link 교체 (브라우저 탭 아이콘)
+        if (cfg.faviconHref) {
+          var existing = document.querySelector('link[rel="icon"]');
+          if (!existing) {
+            existing = document.createElement("link");
+            existing.rel = "icon";
+            existing.type = "image/x-icon";
+            document.head.appendChild(existing);
+          }
+          existing.href = cfg.faviconHref;
+
+          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
+          var titleIcon = document.querySelector("#pageTitle .title-icon");
+          if (titleIcon) {
+            titleIcon.src = cfg.faviconHref;
+          }
+        }
+      }
+      
+      function init() {
+        // 이미 로딩돼 있으면 바로 적용
+        if (window.OmsCommonConfig) {
+          applyCommonConfig(window.OmsCommonConfig);
+        }
+
+        // 나중에 로딩될 수도 있으니 이벤트도 구독
+        try {
+          window.addEventListener("oms:config-ready", function (e) {
+            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
+          });
+        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
+      }
+
+      if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+      } else {
+        init();
+      }
+    })();
+  </script>
 </body>
+
 </html>

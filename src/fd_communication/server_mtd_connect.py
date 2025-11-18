@@ -90,6 +90,9 @@ def tcp_json_roundtrip(host: str, port: int, message: dict, timeout: float = 10.
 
     js = json.dumps(outgoing, ensure_ascii=False).encode("utf-8")
 
+    # always safe minimum timeout
+    timeout = max(timeout, 10.0)
+
     # ✅ MTd 구규격: 4바이트 길이(LE) + 1바이트 구분자(=0)
     header = struct.pack("<IB", len(js), 0)   # <- 여기만 확실히 0으로 고정
     packet = header + js
@@ -100,10 +103,10 @@ def tcp_json_roundtrip(host: str, port: int, message: dict, timeout: float = 10.
             s.settimeout(timeout)
             s.sendall(packet)
 
-            # recv 5B header
-            deadline = time.time() + timeout
+            # --- header timeout only ---
+            header_deadline = time.time() + 5.0
             while len(hdr) < 5:
-                if time.time() >= deadline:
+                if time.time() >= header_deadline:
                     raise MtdTraceError("timeout while reading header", tag)
                 chunk = s.recv(5 - len(hdr))
                 if not chunk: break
@@ -112,10 +115,12 @@ def tcp_json_roundtrip(host: str, port: int, message: dict, timeout: float = 10.
                 raise MtdTraceError("empty response or short header", tag)
 
             size, typ = struct.unpack("<IB", hdr)
-
+            
+            # --- body timeout only ---
+            body_deadline = time.time() + max(5.0, timeout - 5.0)
             # recv body
             while len(body) < size:
-                if time.time() >= deadline:
+                if time.time() >= body_deadline:
                     raise MtdTraceError("timeout while reading body", tag)
                 chunk = s.recv(size - len(body))
                 if not chunk: break

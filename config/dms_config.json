@@ -74,7 +74,7 @@
         "FD_LOG_DIR": "C:\\4DReplay\\V5\\daemon\\AId\\log"
       },
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true,
       "shell": false
     },

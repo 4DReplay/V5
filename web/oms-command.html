@@ -610,26 +610,43 @@
     (function () {
       function applyCommonConfig(cfg) {
         if (!cfg || typeof cfg !== "object") return;
+
         // 공통 prefix (원하면 사용)
         var appName = cfg.appName || "4DReplay";
         var version = cfg.version || "V5";
-        var pageCfg = (cfg.pages && cfg.pages.omsCommand) || {};
+        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
 
         // 1) HTML <title>
         if (pageCfg.htmlTitle) {
           document.title = pageCfg.htmlTitle;
         } else {
-          // json에 없으면 기본 규칙 사용
           document.title = appName + " " + version + " - Dashboard";
         }
 
-        // 2) 화면 내 H1 타이틀
+        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
         var h1 = document.getElementById("pageTitle");
         if (h1 && pageCfg.pageTitle) {
+
+          // 기존 텍스트 유지
           h1.textContent = pageCfg.pageTitle;
+
+          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
+          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
+            var img = document.createElement("img");
+            img.src = cfg.faviconHref;
+            img.className = "title-icon";
+
+            // 텍스트 크기에 자동 맞춤
+            img.style.height = "1em";       // 텍스트 높이와 동일
+            img.style.width = "auto";       // 비율 유지
+            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
+            img.style.marginRight = "8px";
+
+            h1.prepend(img);
+          }
         }
 
-        // 3) favicon (link[rel=icon] 교체)
+        // 3) favicon link 교체 (브라우저 탭 아이콘)
         if (cfg.faviconHref) {
           var existing = document.querySelector('link[rel="icon"]');
           if (!existing) {
@@ -639,9 +656,15 @@
             document.head.appendChild(existing);
           }
           existing.href = cfg.faviconHref;
+
+          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
+          var titleIcon = document.querySelector("#pageTitle .title-icon");
+          if (titleIcon) {
+            titleIcon.src = cfg.faviconHref;
+          }
         }
       }
-
+      
       function init() {
         // 이미 로딩돼 있으면 바로 적용
         if (window.OmsCommonConfig) {

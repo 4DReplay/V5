@@ -84,10 +84,13 @@ BODY
   </h2>
 
   <div class="toolbar">
-    <button id="btnDashboard" class="btn-secondary">📊 Dashboard</button>
-    <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
+    <button id="btnDashboard">📊 Dashboard</button>
+    <span class="divider"></span>
     <button id="btnSysRestart" class="btn-secondary">⟳ Restart All</button>
-    <button id="btnSysConnect">🔌 Connect</button>
+    <span class="divider"></span>
+    <button id="btnSysConnect" class="btn-secondary">🔌 Connect</button>
+    <span class="divider"></span>
+    <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
     <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>    
     <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
@@ -241,15 +244,21 @@ BODY
       const href = "/proxy/" + encodeURIComponent(n.name) + "/dms-system.html";
       const suffix = (typeof procIndex === "number" && typeof procTotal === "number" && procTotal > 0)
         ? " (" + (procIndex + 1) + "/" + procTotal + ")" : "";
-      return '<a class="node" href="' + href + '" target="_blank">' + (n.alias || n.name) + '</a><br>' +
-             '<span class="muted">' + n.host + ":" + n.port + suffix + "</span>";
+
+      return `
+        <a class="node" href="${href}">${n.alias || n.name}</a><br>
+        <span class="muted">${n.host}:${n.port}${suffix}</span>
+      `;
     }
     function applyOverlays(data) {
       const extra = (data && data.extra) || {};
       const verMap = extra.versions || {};
       const presdVer = extra.presd_versions || {};
+      const aicVer = extra.aic_versions || {};                     // ★ 추가
       const conn = extra.connected_daemons || {};
-      const presdIps = extra.presd_ips || [];
+      const presdIps = Array.isArray(extra.presd_ips)              // ★ 배열 보장
+        ? extra.presd_ips
+        : [];
       const nodes = Array.isArray(data.nodes) ? data.nodes : [];
 
       const ipFromHost = (s) => {
@@ -270,7 +279,35 @@ BODY
         for (const p of procs) {
           if (!p || !p.name) continue;
 
-          // 버전 오버레이
+          // ── AIc 버전 오버레이 (ip / process 기반)
+          if (p.name === "AIc" && aicVer) {
+            const alias = (p.alias || "").trim();
+            let src = null;
+
+            // aic_versions 구조: { "<ip>": { "<proc_or_alias>": {version,date}, ... }, ... }
+            for (const [ip, byName] of Object.entries(aicVer)) {
+              if (!byName || typeof byName !== "object") continue;
+              if (alias && alias in byName) {
+                src = byName[alias];
+                break;
+              }
+            }
+
+            // alias 로 못 찾았으면, 노드 IP + "AIc" 이름으로 한 번 더 시도
+            if (!src) {
+              const byName = aicVer[nodeIp];
+              if (byName && typeof byName === "object" && byName["AIc"]) {
+                src = byName["AIc"];
+              }
+            }
+
+            if (src) {
+              p.version = src.version || "-";
+              p.version_date = src.date || "-";
+            }
+          }
+
+          // ── PreSd 버전 오버레이
           if (p.name === "PreSd") {
             const src =
               presdVer[nodeIp] ||
@@ -288,7 +325,7 @@ BODY
             p.version_date = verMap[p.name].date || p.version_date || "-";
           }
 
-          // CONNECTED 오버레이 (PCd / PreSd)
+          // ── CONNECTED 오버레이
           if (conn && conn[p.name] === true) {
             if (p.name === "PreSd") {
               const ipOk = !presdIps.length || presdIps.includes(nodeIp);
@@ -315,13 +352,10 @@ BODY
       if (!data) return;
       applyOverlays(data);
       lastData = data;
-
+      
       const hbSecRaw = Number(data && data.heartbeat_interval_sec);
       const nodes = Array.isArray(data.nodes) ? data.nodes : [];
-      let procTotal = 0;
-      let connectedTotal = 0;
-      let runningTotal = 0;
-      let stoppedTotal = 0;
+      const summary = (data && data.summary) || {};
 
       if (!Number.isNaN(hbSecRaw) && hbSecRaw > 0) {
         const nextMs = Math.max(800, Math.min(10000, Math.floor(hbSecRaw * 1000)));
@@ -333,8 +367,14 @@ BODY
 
       TBody.innerHTML = "";
       if (nodes.length === 0) {
-        const bullet = "\u2022";
-        META.textContent = "nodes: 0 " + bullet + " processes: 0 " + bullet + " connected: 0";
+        const nodesCount      = summary.nodes      ?? 0;
+        const processesCount  = summary.processes  ?? 0;
+        const connectedCount  = summary.connected  ?? 0;
+        const runningCount    = summary.running    ?? 0;
+        const stoppedCount    = summary.stopped    ?? 0;
+        META.textContent =
+          `nodes: ${nodesCount} • processes: ${processesCount}` +
+          ` ( connected: ${connectedCount} / running: ${runningCount} / stopped: ${stoppedCount} )`;
         TBody.innerHTML = '<tr class="other"><td colspan="5" class="muted">no nodes</td></tr>';
         return;
       }
@@ -349,8 +389,7 @@ BODY
       for (let i = 0; i < nodes.length; i++) {
         const n = nodes[i];
         let shown = selectedProcList(n.status);
-        procTotal += shown.length;
-
+        
         if (!n.status) {
           TBody.insertAdjacentHTML("beforeend",
             '<tr class="other"><td>' + nodeCellHtml(n, 0, 0) + '</td><td colspan="4" class="muted">unreachable</td></tr>');
@@ -391,10 +430,6 @@ BODY
           };
 
           const eff = effectiveStateOf(p);
-          if (eff === "CONNECTED") connectedTotal += 1;
-          else if (eff === "RUNNING") runningTotal += 1;
-          else stoppedTotal += 1;
-
           const badge =
             eff === "STOPPED" ? '<span class="pill bad">STOPPED</span>' :
             eff === "CONNECTED" ? '<span class="pill connected">CONNECTED</span>' :
@@ -436,16 +471,18 @@ BODY
       }
 
       const bullet = "\u2022";
-      const nodesCount = nodes.length;
-      const processesCount = procTotal;
-      const connectedCount = connectedTotal;
-      const runningCount = runningTotal;
-      const stoppedCount = stoppedTotal;
+      // ✅ summary 기준으로 메타/이벤트 반영 (없으면 최소 fallback)
+      const nodesCount      = summary.nodes      ?? nodes.length;
+      const processesCount  = summary.processes  ?? 0;
+      const connectedCount  = summary.connected  ?? 0;
+      const runningCount    = summary.running    ?? 0;
+      const stoppedCount    = summary.stopped    ?? 0;
 
       META.textContent =
         `nodes: ${nodesCount} • processes: ${processesCount} ( connected: ${connectedCount} / running: ${runningCount} / stopped: ${stoppedCount} )`;
 
       const OSM_SUMMARY = {
+        // 그대로 summary를 흘려보내되, 필수값 없으면 최소한의 fallback
         nodes: nodesCount,
         processes: processesCount,
         connected: connectedCount,
@@ -462,6 +499,7 @@ BODY
         if (DEBUG) console.warn("oms:summary dispatch failed", e);
       }
     }
+
     async function reloadNow(opts = {}) {
       const silent = !!opts.silent;
       try {
@@ -521,14 +559,33 @@ BODY
     BTN_SYS_CONNECT.onclick = () => {
       // ✅ Connect 시작 시에도 지난 메시지 clear
       clearProgressChip();
-      // 진행칩은 actions.js에서 chipMsg로 관리하므로 여기서는 단순 트리거만
+
       try {
-        if (window.OMS && window.OMS.Actions && typeof window.OMS.Actions.sysConnect === "function") {
-          window.OMS.Actions.sysConnect();
-        } else {
-          // 필요 없으면 fallback 완전히 제거하거나,
-          // "지원되지 않는 환경" 정도만 로그로 남기기
+        const Actions = window.OMS && window.OMS.Actions;
+        if (!Actions || typeof Actions.sysConnect !== "function") {
           console.error("sysConnect not available");
+          return;
+        }
+
+        const ret = Actions.sysConnect();
+        // sysConnect가 async 함수라면 여기서 Promise를 받을 수 있음
+        if (ret && typeof ret.then === "function") {
+          ret
+            .then(() => {
+              // Connect 작업 끝난 뒤 최신 상태로 한 번 강제 리로드
+              return reloadNow({ silent: false });
+            })
+            .catch((e) => {
+              console.error("sysConnect failed", e);
+              // 실패해도 한번 상태는 다시 읽어볼 수 있음
+              reloadNow({ silent: false }).catch(() => {});
+            });
+        } else {
+          // Promise를 안 리턴하는 구버전 구현이라면,
+          // 약간의 딜레이 후에 한 번 상태 재조회
+          setTimeout(() => {
+            reloadNow({ silent: false }).catch(() => {});
+          }, 2000);
         }
       } catch (e) {
         console.error(e);
@@ -626,7 +683,7 @@ BODY
       const INTERVAL = 1000;
 
       function applyLockFromMessage(msgRaw) {
-
+        // debug
         console.log("applyLockFromMessage", msgRaw)
 
         const msg = String(msgRaw || "").trim().toLowerCase();
@@ -655,6 +712,7 @@ BODY
 
           // debug
           console.log("unifiedProgressManager",msg)
+
           PROG.textContent = msg;
           PROG.style.visibility = msg ? "visible" : "hidden";
           applyLockFromMessage(msg);
@@ -677,31 +735,58 @@ BODY
     (function () {
       function applyCommonConfig(cfg) {
         if (!cfg || typeof cfg !== "object") return;
+
+        // 공통 prefix (원하면 사용)
         var appName = cfg.appName || "4DReplay";
         var version = cfg.version || "V5";
-        var pageCfg = (cfg.pages && cfg.pages.omsSystem) || {};
+        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
 
         // 1) HTML <title>
         if (pageCfg.htmlTitle) {
           document.title = pageCfg.htmlTitle;
         } else {
-          document.title = appName + " " + version + " - OMs System";
+          document.title = appName + " " + version + " - Dashboard";
         }
-        // 2) 화면 상단 H2 안의 타이틀 텍스트
-        var h = document.getElementById("pageTitle");
-        if (h && pageCfg.pageTitle) {
-          h.textContent = pageCfg.pageTitle;
-        }
-        // 3) favicon (공통)
-        if (cfg.faviconHref) {
-          var link = document.querySelector('link[rel="icon"]');
-          if (!link) {
-            link = document.createElement("link");
-            link.rel = "icon";
-            link.type = "image/x-icon";
-            document.head.appendChild(link);
+
+        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
+        var h1 = document.getElementById("pageTitle");
+        if (h1 && pageCfg.pageTitle) {
+
+          // 기존 텍스트 유지
+          h1.textContent = pageCfg.pageTitle;
+
+          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
+          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
+            var img = document.createElement("img");
+            img.src = cfg.faviconHref;
+            img.className = "title-icon";
+
+            // 텍스트 크기에 자동 맞춤
+            img.style.height = "1em";       // 텍스트 높이와 동일
+            img.style.width = "auto";       // 비율 유지
+            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
+            img.style.marginRight = "8px";
+
+            h1.prepend(img);
           }
-          link.href = cfg.faviconHref;
+        }
+
+        // 3) favicon link 교체 (브라우저 탭 아이콘)
+        if (cfg.faviconHref) {
+          var existing = document.querySelector('link[rel="icon"]');
+          if (!existing) {
+            existing = document.createElement("link");
+            existing.rel = "icon";
+            existing.type = "image/x-icon";
+            document.head.appendChild(existing);
+          }
+          existing.href = cfg.faviconHref;
+
+          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
+          var titleIcon = document.querySelector("#pageTitle .title-icon");
+          if (titleIcon) {
+            titleIcon.src = cfg.faviconHref;
+          }
         }
       }
       function init() {

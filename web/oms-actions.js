@@ -24,7 +24,10 @@
     connected: {},   // { EMd:true, SCd:true ... }
     lastUpdate: 0
   };
-
+  
+  // -------------------------------------------------------------------
+  // ---- Global Message (chipMsg)
+  // -------------------------------------------------------------------
   function _scopeName(scope) { return (scope === 2 || scope === 'camera') ? 'camera' : 'system'; }
   function _modeName(mode) { return (mode === 2 || mode === 'connect') ? 'connect' : 'restart'; }
   function _prefix(scope, mode) { return `[${_scopeName(scope)}][${_modeName(mode)}]`; }
@@ -36,16 +39,12 @@
   }
   function _bc(name) { try { return new BroadcastChannel(name); } catch { return null; } }
   function _paintChip(text) {
-    // debug
-    console.log("_paintChip",text)
-    
     const el = document.getElementById('progressChip');
     if (!el) return;
     const msg = (text && String(text).trim()) || (el.textContent.trim() || 'Working…');
     el.style.visibility = 'visible';
     if (el.textContent !== msg) el.textContent = msg;
   }
-
   function _emit(scopeName, text, priority = 1) {
     const payload = {
       scope: scopeName,
@@ -56,8 +55,7 @@
       seq: (window.__OMS_SEQ__ = (window.__OMS_SEQ__ | 0) + 1)
     };
     // debug
-    console.log("_emit",text)
-
+    console.log("broadcast message:",text)
     // 1) system/camera 전용 키
     try {
       localStorage.setItem(CHIP_KEYS[scopeName] || CHIP_KEYS.system,
@@ -80,22 +78,16 @@
     if (scopeStr === 'system' || scopeStr === '1') {
       updateRestartLockFromMessage(payload.text);
     }
-
     return payload;
   }
-
-  // ---- Single public API ----
   function chipMsg(scope, mode, text, priority = 1) {
     const sname = _scopeName(scope);
     const msg = _prefixed(sname, mode, text);
-
     // debug          
     console.log("chipMsg:", text)
-
     _paintChip(msg);    
     return _emit(sname, msg, priority);
   }
-
   // Expose globally
   global.chipMsg = chipMsg;
 
@@ -105,14 +97,12 @@
   const W = global;
   W.OMS = W.OMS || {};
   const NS = (W.OMS.Actions = W.OMS.Actions || {});
-
   const EXPLICIT_PREFIX = (typeof window !== 'undefined' && (window.__OMS_API_PREFIX__ || '')) || '';
   const PROXY_PREFIX = (() => {
     try { const m = location.pathname.match(/^\/proxy\/([^\/]+)/); return m ? `/proxy/${encodeURIComponent(decodeURIComponent(m[1]))}` : ''; }
     catch { return ''; }
   })();
   const API_BASE = EXPLICIT_PREFIX || PROXY_PREFIX || '';
-
   async function api(path, init = {}) {
     const url = (typeof path === 'string' && path.startsWith('/')) ? (API_BASE + path) : path;
     const { timeoutMs, ...rest } = init || {};
@@ -128,99 +118,6 @@
   }
   NS.api = api;
 
-  // ─────────────────────────────────────────────────────
-  // MTd HTTP 프록시 래퍼 + 디버그 로그
-  // ─────────────────────────────────────────────────────
-  async function mtdSend(host, port, message, timeoutSec = 12) {
-    const h = host;
-    const p = Number(port) || 19765;
-    const payload = {
-      host: h,
-      port: p,
-      timeout: timeoutSec,
-      message,
-    };
-
-    // 1) 보내기 직전 로그
-    pushMtdDebug('send', {
-      host: h,
-      port: p,
-      timeoutSec,
-      message,
-    });
-
-    let res;
-    try {
-      res = await api('/oms/mtd-connect', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-        // MTd 타임아웃보다 살짝 길게
-        timeoutMs: (timeoutSec + 5) * 1000,
-      });
-    } catch (e) {
-      // 2) HTTP 레벨 / 네트워크 에러 로그
-      pushMtdDebug('error', {
-        host: h,
-        port: p,
-        timeoutSec,
-        error: String(e && e.message ? e.message : e),
-        status: e && e.status,
-        url: e && e.url,
-        body: e && e.body,
-      });
-      throw e;
-    }
-
-    // res 는 /oms/mtd-connect 응답 JSON (ok, tag, response …)
-    const response = (res && res.response != null) ? res.response : res;
-
-    // 3) 성공 응답 로그
-    pushMtdDebug('recv', {
-      host: h,
-      port: p,
-      timeoutSec,
-      response,
-      tag: res && res.tag,
-    });
-
-    return response;
-  }
-  // ─────────────────────────────────────────────────────
-  // MTd 메시지 로컬 디버그 로그 (브라우저 localStorage)
-  // ─────────────────────────────────────────────────────
-  function pushMtdDebug(direction, payload) {
-    try {
-      const key = 'oms_mtd_debug_log';
-      const now = new Date().toISOString();
-      let list;
-      try {
-        const raw = localStorage.getItem(key);
-        list = raw ? JSON.parse(raw) : [];
-        if (!Array.isArray(list)) list = [];
-      } catch {
-        list = [];
-      }
-
-      list.push({
-        ts: now,
-        dir: direction,  // 'send' | 'recv' | 'error'
-        ...payload,
-      });
-
-      // 로그가 너무 커지지 않도록 최근 200개만 유지
-      const MAX_LEN = 200;
-      if (list.length > MAX_LEN) {
-        list.splice(0, list.length - MAX_LEN);
-      }
-
-      localStorage.setItem(key, JSON.stringify(list));
-    } catch (e) {
-      // 디버그 로깅 실패는 서비스에 영향 주지 않도록 그냥 경고만
-      console.warn('pushMtdDebug failed', e);
-    }
-  }
-  
   // ========================================================================
   // Restart monitors
   // ========================================================================
@@ -259,7 +156,91 @@
   // ========================================================================
   // System connect [oms/sys-connect]
   // ========================================================================
-  
+  async function getSwitchIpList() {
+    try {
+      const res = await fetch("/oms/state", { cache: "no-store" });
+      const data = await res.json();
+
+      // cameras 배열에서 SCdIP만 추출
+      if (!data.cameras || !Array.isArray(data.cameras)) return [];
+
+      const unique = new Set();
+
+      data.cameras.forEach(cam => {
+        if (cam.SCdIP) unique.add(cam.SCdIP);
+      });
+
+      return [...unique].map(ip => ({ ip }));
+    } catch (e) {
+      console.error("Failed to load /oms/state", e);
+      return [];
+    }
+  }
+  async function sendSwitchCommand(section3) {
+    const switchList = await getSwitchIpList();
+    if (switchList.length === 0) {
+      chipMsg(2, 1, "No switch detected");
+      return;
+    }
+
+    const payload = {
+      host: "127.0.0.1",
+      port: 19765,
+      timeout: 15,
+      message: {
+        Section1: "Switch",
+        Section2: "Operation",
+        Section3: section3,
+        SendState: "request",
+        From: "4DDM",
+        To: "SCd",
+        Action: "run",
+        Token: "oms_" + Date.now(),
+        Switches: switchList
+      }
+    };
+    chipMsg(2,1,'Send Message to Switch')
+    const res = await fetch("/oms/mtd-connect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+      cache: "no-store",
+    });
+
+    const data = await res.json();
+    console.log("SCd response:", data);
+
+    const results = data.Switches || [];
+    const okList = results.filter(x => x.errorMsg === "SUCCESS");
+    const failList = results.filter(x => x.errorMsg !== "SUCCESS");
+
+    // chip message
+    chipMsg(2, 1, `${section3}:Done (${okList.length}:Success)`);
+
+    // -----------------------------
+    // 🆕 SUCCESS 메시지 박스 표시
+    // -----------------------------
+    let msg = `Command: ${section3}\n\n`;
+
+    if (okList.length > 0) {
+      msg += `Success:\n`;
+      okList.forEach(sw => {
+        msg += ` - ${sw.ip}\n`;
+      });
+      msg += `\n`;
+    }
+
+    if (failList.length > 0) {
+      msg += `Failed:\n`;
+      failList.forEach(sw => {
+        msg += ` - ${sw.ip} (${sw.errorMsg})\n`;
+      });
+    }
+    // 메시지 박스 띄우기
+    alert(msg);
+    return data;
+  }
+
   NS.mtdConnect = async function (extra = {}) {
     // explicit MTd message passthrough 
     if (extra && typeof extra.mtdMessage === 'object') {
@@ -511,25 +492,77 @@
     if (btnSysRestart)    btnSysRestart.addEventListener('click', () => NS.sysRestart().catch(e => alert('Restart-All failed: ' + (e?.message || e))));    
   };
 
-  // Keep a small listener to mirror messages across tabs
-  try {
-    const bc = new BroadcastChannel('oms-progress');
-    bc.onmessage = (e) => { const t = (e && e.data && e.data.text) || ''; if (typeof t === 'string' && t.length) chipMsg(1, 1, t); };    
-  } catch { }
+  // ========================================================================
+  // Camera Command
+  // ========================================================================
+  window.OMS = window.OMS || {};
+  OMS.Actions = OMS.Actions || {};
+  // 공용 Busy 표시용 헬퍼
+  OMS.Actions.setBusy = function (msg) {
+    const el = document.getElementById("busy");
+    if (el) el.textContent = msg || "";
+  };
+  
+  // ========================================================================
+  // 🔹 Connect Cameras 전체 워크플로우 트리거
+  // ========================================================================
+  OMS.Actions.cameraConnectAll = async function () {
+    try {
+      OMS.Actions.setBusy("Connecting cameras...");
+      console.log("Connecting cameras..")
 
-  // ========================================================================
-  // Camera Page (only message plumbing changes here)
-  // ========================================================================
-  (function cameraWiring() {
-    const BTN_RUN = document.getElementById('btnRun');
-    if (BTN_RUN) {
-      BTN_RUN.addEventListener('click', () => {
-        // camera connect sequence progress messages use [camera][connect]
-        chipMsg(2, 2, 'Start');
-      }, false);
+      const res = await fetch("/oms/cam-connect/all", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+        cache: "no-store",
+      });
+
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+
+      const data = await res.json();
+
+      if (data && data.ok === true) {
+        OMS.Actions.setBusy("Cameras connected.");
+      } else {
+
+        // 🔥 여기 추가
+        // MTd/CCd timeout 또는 카메라 0 → Needs / Check System
+        chipMsg(2, 2, "Needs Check System");  
+        OMS.Actions.setBusy("Needs Check System");
+
+        console.error("connect-all error:", data);
+      }
+
+      if (typeof window.fetchCameraState === "function") {
+        window.fetchCameraState();
+      }
+
+    } catch (err) {
+      console.error("cameraConnectAll failed:", err);
+
+      // 네트워크 오류도 동일하게 처리
+      chipMsg(2, 2, "Needs Check System");
+      OMS.Actions.setBusy("Needs Check System");
+    } finally {
+      setTimeout(() => OMS.Actions.setBusy(""), 1500);
     }
-  })();
-
+  };
+  OMS.Actions.cameraRebootAll = async function () {
+    chipMsg(2, 1, `Camera Restarting ...`);
+    console.log("cameraRebootAll")
+    return sendSwitchCommand("Reboot");
+  };
+  OMS.Actions.cameraStartAll = async function () {
+    chipMsg(2, 1, `Camera Starting ...`);
+    return sendSwitchCommand("On");
+  };
+  OMS.Actions.cameraStopAll = async function () {
+    chipMsg(2, 1, `Camera Stopping ...`);
+    return sendSwitchCommand("Off");
+  };
 })(window);
 
 // ────────────────────────────────────────────────
@@ -538,15 +571,12 @@
 //    상태가 될 때까지 감시
 //  - 특정 안정화 구간(연속 n번 정상) 충족 시 "onStable" 콜백 호출
 // ────────────────────────────────────────────────
-
 (function () {
   const STABLE_REQUIRED = 3;          // 연속 3번 정상 상태면 안정화 된 것으로 판단
   const STABILIZE_TIMEOUT = 20000;    // 최대 20초 대기
-
   // restart lifecycle monitor
   window.OMS = window.OMS || {};
   window.OMS.Actions = window.OMS.Actions || {};
-
   /**
    * Start monitoring restart lifecycle
    * @param {Function} onState - every state callback (for UI update)
@@ -556,10 +586,8 @@
     let stableCount = 0;
     let stopped = false;
     let timeoutId = null;
-
     // SSE 구독
     const evt = new EventSource((window.__OMS_API_PREFIX__ || "") + "/oms/sys-restart/stream");
-
     const finish = (reason, last) => {
       if (stopped) return;
       stopped = true;
@@ -567,7 +595,6 @@
       clearTimeout(timeoutId);
       onStable({ reason, lastState: last });
     };
-
     evt.onmessage = (e) => {
       let s = null;
       try { s = JSON.parse(e.data); } catch (_) { }
@@ -638,4 +665,215 @@
     setTimeout(pollStatus, 700);
   };
 
+})();
+
+// Load switch info from /oms/status and render into Switch Details table
+(function () {
+  const W = window;
+  const m = location.pathname.match(/^\/proxy\/([^/]+)/);
+  const API_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+  async function loadSwitchesFromStatus() {
+    try {
+      const res = await fetch(API_PREFIX + "/oms/status", {
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        throw new Error("HTTP " + res.status);
+      }
+      const data = await res.json();
+      const extra = (data && data.extra) || {};
+      const switches = extra.switches || [];
+      renderSwitchTable(Array.isArray(switches) ? switches : []);
+    } catch (err) {
+      console.warn("[OMS] Failed to load switches:", err);
+      renderSwitchTable([]);
+    }
+  }
+  // ✅ 전역에서 쓸 수 있게 export
+  if (typeof window !== "undefined") {
+    window.initSwitchDetailsFromStatus = loadSwitchesFromStatus;
+  }
+
+  function renderSwitchTable(list) {
+    const tbody = document.getElementById("tblSwitch");
+    if (!tbody) return;
+
+    if (!list.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="4" class="muted">no data</td></tr>';
+      return;
+    }
+
+    // Switch IP 목록을 기반으로 row + Restart 버튼 생성
+    tbody.innerHTML = list
+      .map((sw) => {
+        const ip = sw.IP || sw.ip || "";
+        const brand = sw.Brand || sw.brand || "";
+        const model = sw.Model || sw.model || "";
+
+        return `
+          <tr data-ip="${ip}">
+            <td>${ip}</td>
+            <td>${brand}</td>
+            <td>${model}</td>
+            <td>
+              <button type="button"
+                      class="btn-secondary btn-sm"
+                      data-ip="${ip}"
+                      onclick="window.OMS && window.OMS.Actions && window.OMS.Actions.restartCameraSwitch && window.OMS.Actions.restartCameraSwitch('${ip}')">
+                🔁 Restart
+              </button>
+            </td>
+          </tr>
+        `;
+      })
+      .join("");
+
+    // 상단 "Restart Cameras" 버튼 → 모든 Switch IP에 대해 stub 호출
+    const btnAll = document.getElementById("btnCamAllReboot");
+    if (btnAll) {
+      btnAll.onclick = function () {
+        const ips = list
+          .map((sw) => sw.IP || sw.ip || "")
+          .filter((v, idx, arr) => v && arr.indexOf(v) === idx);
+
+        if (
+          W.OMS &&
+          W.OMS.Actions &&
+          typeof W.OMS.Actions.restartAllCameras === "function"
+        ) {
+          W.OMS.Actions.restartAllCameras(ips);
+        } else {
+          console.warn("OMS.Actions.restartAllCameras stub not found");
+        }
+      };
+    }
+  }
+  // 다른 스크립트(oms-camera.html bootstrap)에서 직접 호출 가능하게 export
+  W.initSwitchDetailsFromStatus = loadSwitchesFromStatus;
+  // Run on page load (페이지 로드시 자동으로 한 번 호출)
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", loadSwitchesFromStatus);
+  } else {
+    loadSwitchesFromStatus();
+  }
+
+  // ─────────────────────────────────────────────
+  // Camera Details 초기화 (Status는 일단 Unknown)
+  // ─────────────────────────────────────────────
+  function initCameraDetailsFromStatus() {
+    try {
+      const thead = document.getElementById("theadUnified");
+      const tbody = document.getElementById("tblUnified");
+
+      if (!thead || !tbody) {
+        console.warn("[OMS][Camera] camera table elements not found");
+        return;
+      }
+
+      // 헤더 고정: Index | IP | Model | PreSd ip | Switch ip | Status
+      thead.innerHTML = `
+        <tr>
+          <th style="width:80px">Index</th>
+          <th>IP</th>
+          <th>Model</th>
+          <th>PreSd IP</th>
+          <th>Switch IP</th>
+          <th style="width:120px">Status</th>
+        </tr>
+      `;
+
+      // 기본값: 로딩 중 표기
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" class="muted">loading ...</td>
+        </tr>
+      `;
+
+      fetch(API_PREFIX + "/oms/status", {
+        cache: "no-store",
+      })
+        .then((res) => {
+          if (!res.ok) throw new Error("HTTP " + res.status);
+          return res.json();
+        })
+        .then((js) => {
+          // /oms/status 결과에서 cameras 추출
+          const cameras =
+            (js && js.extra && js.extra.cameras) ||
+            js.cameras ||
+            [];
+
+          if (!Array.isArray(cameras) || cameras.length === 0) {
+            tbody.innerHTML = `
+              <tr>
+                <td colspan="6" class="muted">no camera data</td>
+              </tr>
+            `;
+            return;
+          }
+
+          // cam Index 순으로 정렬
+          const sorted = [...cameras].sort((a, b) => {
+            const ia = Number(a.Index || 0);
+            const ib = Number(b.Index || 0);
+            return ia - ib;
+          });
+
+          let html = "";
+          for (const cam of sorted) {
+            const idx    = cam.Index ?? "";
+            const ip     = cam.IP ?? "";
+            const model  = cam.CameraModel ?? "";
+            const presd  = cam.PreSdIP ?? cam.PreSd_id ?? "";
+            const swip   = cam.SCdIP ?? cam.SCd_id ?? cam.SCdIP ?? "";
+            const status = "Unknown"; // 아직 Connection 정보를 모름
+
+            html += `
+              <tr>
+                <td>${idx}</td>
+                <td>${ip}</td>
+                <td>${model}</td>
+                <td>${presd}</td>
+                <td>${swip}</td>
+                <td><span class="badge badge-muted">${status}</span></td>
+              </tr>
+            `;
+          }
+          tbody.innerHTML = html;
+        })
+        .catch((err) => {
+          console.error("[OMS][Camera] initCameraDetailsFromStatus failed:", err);
+          tbody.innerHTML = `
+            <tr>
+              <td colspan="6" class="muted">failed to load camera list</td>
+            </tr>
+          `;
+        });
+    } catch (e) {
+      console.error("[OMS][Camera] initCameraDetailsFromStatus error:", e);
+    }
+  }
+  // 전역 네임스페이스에 붙여두기 (다른 페이지에서도 재사용 가능)
+  window.OMS.Actions = window.OMS.Actions || {};
+  window.OMS.Actions.initCameraDetailsFromStatus = initCameraDetailsFromStatus;
+  // 페이지 진입 시 Camera Details도 자동 초기화
+  (function autoInitCameraDetails() {
+    function run() {
+      // 이 페이지(oms-camera.html)에서만 동작하게 최소한으로 가드
+      const hasTable = document.getElementById("tblUnified");
+      if (!hasTable) return;
+      try {
+        initCameraDetailsFromStatus();
+      } catch (e) {
+        console.error("[OMS][Camera] autoInitCameraDetails failed:", e);
+      }
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", run);
+    } else {
+      run();
+    }
+  })();
 })();

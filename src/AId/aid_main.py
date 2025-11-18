@@ -379,6 +379,7 @@ class AId:
             }
 
         # 1) 요청 보내기
+        time.sleep(0.3)
         for ip, sess in self.aic_sessions.items():
             if ip in pending:
                 try:

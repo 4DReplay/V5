@@ -9,7 +9,6 @@
   <!-- Hint browsers that both color schemes are supported; default to dark via CSS -->
   <meta name="color-scheme" content="dark light" />
   <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
-
   <!-- Theme bootstrap: lock theme via data-theme; allow override by ?theme=light|dark -->
   <script>
     (function () {
@@ -52,6 +51,7 @@
       const STYLE_LIST   = [...makeCandidates("4d-common-style.js")];
       const ACTIONS_LIST = [...makeCandidates("oms-actions.js")];
 
+    
       function inject(tag, urls) {
         // 순차 폴백 + Promise 로드 완료 통지
         return new Promise((resolve) => {
@@ -84,7 +84,7 @@
       window.__PROXY_PREFIX__ = PROXY_PREFIX;
     })();
   </script>
-
+  <!-- Button Design -->
   <style>
     /* -----------------------------
        Apple-inspired visual system
@@ -234,7 +234,7 @@
       backdrop-filter: saturate(160%) blur(18px);
       -webkit-backdrop-filter: saturate(160%) blur(18px);
       overflow: hidden;
-      min-height: 420px;
+      min-height: 350px;
       isolation: isolate;
       /* keep inner glows inside */
     }
@@ -322,7 +322,7 @@
 
     /* Status word */
     .ready {
-      font-size: clamp(38px, 10vw, 84px);
+      font-size: clamp(38px, 10vw, 60px);
       line-height: 1;
       font-weight: 1000;
       color: var(--accent-green);
@@ -339,10 +339,13 @@
       color: var(--accent-blue);
     }
 
-    /* Need to Restart 전용 강한 경고 색 (Apple Red 톤) */
+    .status-init {
+      color: var(--accent-yellow);   /* 기존 Apple Yellow 톤 (#ffd60a) */      
+    }
+
+    /* Needs Restart 전용 강한 경고 색 (Apple Red 톤) */
     .status-danger {
       color: #ff3b30;        /* Apple system red */
-      font-weight: 700;
     }
 
     #sysReady.status-danger {
@@ -374,21 +377,20 @@
       right: 22px;
       bottom: 20px;
       display: flex;
-      justify-content: space-between;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
     }
 
     .stats {
-      display: grid;
-      gap: 6px;
+      display: block;
     }
 
     .stat {
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       margin-top: 0;
-      line-height: 1.2;
+      line-height: 1.4;
       color: var(--text-primary);
     }
 
@@ -396,6 +398,19 @@
       color: var(--text-secondary);
       font-weight: 600;
       letter-spacing: .2px;
+    }
+
+    .stat-merged {
+      text-align: center;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .stat-line {
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      margin-bottom: 2px;
     }
 
     /* Chips */
@@ -465,8 +480,9 @@
     /* Actions */
     .actions {
       display: flex;
-      gap: 12px;
+      gap: 25px;
       align-items: center;
+      justify-content: center;
     }
 
     /* Refined circular button design */
@@ -477,8 +493,8 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      width: 170px;
-      height: 170px;
+      width: 130px;
+      height: 130px;
       border-radius: 50%;
       border: none;
       cursor: pointer;
@@ -500,15 +516,15 @@
     }
 
     .btn-neo span.top {
-      font-size: 15px;
+      font-size: 12px;
       font-weight: 800;
       opacity: 0.85;
     }
 
     .btn-neo span.bottom {
-      font-size: 27px;
+      font-size: 22px;
       font-weight: 900;
-      margin-top: 0px;
+      margin-top: -12px;
       letter-spacing: .1px;
       text-transform: uppercase;
       text-shadow: 0 5px 10px rgba(0, 0, 0, .45);
@@ -516,6 +532,11 @@
 
     .btn-green {
       background: linear-gradient(180deg, #4ce67c, #2ebb58);
+    }
+
+    .btn-yellow {
+      background: linear-gradient(180deg, #ffe066, #ffcc00);
+      color: #4a3f00;
     }
 
     .btn-blue {
@@ -610,22 +631,24 @@
       <div class="ready" id="sysReady">Ready</div>
 
       <div class="stats-wrapper">
-        <div class="stats" id="sysStats">
-          <div class="stat"><small>Nodes :</small> <span id="sysNodes">-</span></div>
-          <div class="stat"><small>Processes :</small> <span id="sysProcs">-</span></div>
-          <div class="stat"><small>Connected :</small> <span id="sysConn">0</span></div>
-          <div class="stat"><small>Running :</small> <span id="sysRun">0</span></div>
-          <div class="stat"><small>Stopped :</small> <span id="sysStop">0</span></div>
-        </div>
         <div class="actions">
           <button id="btnSysRestart" class="btn-neo btn-green" title="Processes Restart">
             <span class="top">Processes</span>
             <span class="bottom">Restart</span>
-            <button id="btnSysConnect" class="btn-neo btn-blue" title="Processes Connect"
-              data-reconnect="/oms/sys-connect/sequence">
-              <span class="top">Processes</span>
-              <span class="bottom">Connect</span>
-            </button>
+          </button>
+          <button id="btnSysConnect" class="btn-neo btn-blue" title="Processes Connect"
+            data-reconnect="/oms/sys-connect/sequence">
+            <span class="top">Processes</span>
+            <span class="bottom">Connect</span>
+          </button>
+        </div>
+        <div class="stats stat-merged" id="sysStats">
+          <div class="stat-line">
+            node : <span id="sysNodes">-</span>, total processes : <span id="sysProcs">-</span>
+          </div>
+          <div class="stat-line">
+            connected : <span id="sysConn">0</span> / running : <span id="sysRun">0</span> / stopped : <span id="sysStop">0</span>
+          </div>
         </div>
       </div>
     </section>
@@ -640,12 +663,6 @@
       </h2>
       <div class="ready" id="camReady">Ready</div>
       <div class="stats-wrapper">
-        <div class="stats" id="camStats">
-          <div class="stat"><small>Cameras :</small> <span id="camTotal">-</span></div>
-          <div class="stat"><small>Connected :</small> <span id="camConn">0</span></div>
-          <div class="stat"><small>On :</small> <span id="camOn">0</span></div>
-          <div class="stat"><small>Off :</small> <span id="camOff">0</span></div>
-        </div>
         <div class="actions">
           <button id="btnCamRestart" class="btn-neo btn-green" title="Cameras Restart">
             <span class="top">Cameras</span>
@@ -656,6 +673,15 @@
             <span class="bottom">Connect</span>
           </button>
         </div>
+        <div class="stats stat-merged" id="camStats">
+          <div class="stat-line">
+            total cameras : <span id="camTotal">-</span>
+          </div>
+          <div class="stat-line">
+            connected : <span id="camConn">0</span> / on : <span id="camOn">0</span> / off : <span id="camOff">0</span>
+          </div>
+        </div>
+
     </section>
   </div>
   <script>
@@ -815,13 +841,11 @@
       ]);
 
       let latest = null;
-
       if (conn?.updated_at) latest = { ts: conn.updated_at, msg: conn.message };
       if (restart?.updated_at) {
         if (!latest || restart.updated_at > latest.ts)
           latest = { ts: restart.updated_at, msg: restart.message };
       }
-
       // prev는 fallback 용도로만 사용
       const prev = localStorage.getItem("oms_ra_progress") || "";
 
@@ -915,24 +939,27 @@
       function setStatus(elm, status) {
         const s = String(status || '').toLowerCase();
 
+        // ✅ 모든 status-* 클래스 먼저 제거
+        elm.classList.remove('status-ready', 'status-warn', 'status-danger', 'status-init');
         if (s === 'ready') {
-          elm.classList.remove('status-warn', 'status-danger');
           elm.classList.add('status-ready');
           elm.innerHTML = 'Ready';
           return;
         }
-
-        // default: 경고 계열
-        elm.classList.remove('status-ready', 'status-warn', 'status-danger');
-
+        // ✅ 새 분기: Needs Check System
+        if (s.includes('check system')) {
+          elm.classList.add('status-init'); // 파란색 계열 유지
+          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Check System</span>';
+          return;
+        }
         if (s.includes('restart')) {
-          // Need to Restart → 강한 빨간색
+          // Needs Restart → 빨간색
           elm.classList.add('status-danger');
-          elm.innerHTML = '<span class="prefix">Need to</span><span class="main">Restart</span>';
+          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Restart</span>';
         } else {
-          // Need to Connect → 기존 경고색 유지
+          // Needs Connect → 파란색
           elm.classList.add('status-warn');
-          elm.innerHTML = '<span class="prefix">Need to</span><span class="main">Connect</span>';
+          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Connect</span>';
         }
       }
 
@@ -1024,7 +1051,6 @@
         if (__dashRestartPollTimer) return;
         dashPollRestartState().catch(() => { });
       }
-
       // 액션 호출 보조: OMS.Actions 가 준비될 때까지 기다리거나, 폴백 REST 호출
       async function callAction(kind) {
         // 0) 버튼 data-*로 강제 경로 오버라이드 허용
@@ -1131,14 +1157,16 @@
 
       // ---- comment rules (unchanged logic)
       function commentSystem({ proc, connected, running, stopped }) {
+        if (!proc || proc === 0) return 'Needs Check System';
         if (proc === connected) return 'Ready';
-        if (stopped > 0) return 'Need to Restart';
-        return 'Need to Connect';
+        if (stopped > 0) return 'Needs Restart';
+        return 'Needs Connect';
       }
       function commentCamera({ cams, connected, on, off }) {
+        if (!cams || cams === 0) return 'Needs Check System';
         if (cams === connected) return 'Ready';
-        if (off > 0) return 'Need to Restart';
-        return 'Need to Connect';
+        if (off > 0) return 'Needs Restart';
+        return 'Needs Connect';
       }
 
       // ---- System summary helpers (same logic as oms-system) ----
@@ -1251,61 +1279,6 @@
         if (conn === "CONNECTED") return "CONNECTED";
         return "RUNNING";
       }
-
-      function summarizeSystemStatus(data) {
-        if (!data) {
-          return { nodes: 0, processes: 0, connected: 0, running: 0, stopped: 0 };
-        }
-
-        const nodes = Array.isArray(data.nodes) ? data.nodes : [];
-        applyOverlaysForSummary(data);
-
-        let procTotal      = 0;
-        let connectedTotal = 0;
-        let runningTotal   = 0;
-        let stoppedTotal   = 0;
-
-        for (const n of nodes) {
-          let shown = selectedProcListFromStatus(n.status);
-          procTotal += shown.length;
-
-          if (!n.status) continue;
-
-          if (shown.length === 0) {
-            const fallback = toProcList(n.status).map(x => ({
-              name: (x && (x.name || x.proc || x.id)) || "-",
-              alias: (x && x.alias) || "",
-              running: !!(x && (x.running || String(x.status || "").toLowerCase() === "running")),
-              connection_state: (x && x.connection_state) || null,
-              select: true
-            }));
-            if (fallback.length > 0) {
-              shown = fallback;
-              procTotal += fallback.length;
-            } else {
-              continue;
-            }
-          }
-
-          for (const p of shown) {
-            const eff = effectiveStateOfProc(p);
-            if (eff === "CONNECTED") connectedTotal += 1;
-            else if (eff === "RUNNING") runningTotal += 1;
-            else stoppedTotal += 1;
-          }
-        }
-
-        return {
-          nodes:     nodes.length,
-          processes: procTotal,
-          connected: connectedTotal,
-          running:   runningTotal,
-          stopped:   stoppedTotal,
-        };
-      }
-
-
-
       function normCamState(v) {
         const s = String(v || '').toLowerCase();
         if (s.includes('video ok') || s.includes('connected') || s.includes('info ok') || s === 'ok') return 'connected';
@@ -1332,7 +1305,8 @@
         const stick = window.__restart_sticky && (Date.now() < (window.__restart_hold_until || 0));
         if (window.__system_restart || window.__restart_sticky || stick) {
           el.sysReady.classList.remove('status-ready');
-          el.sysReady.classList.add('status-warn');
+          el.sysReady.classList.remove('status-warn');
+          el.sysReady.classList.add('status-init');
           el.sysReady.innerHTML = '<span class="main">Restarting…</span>';
         } else {
           setStatus(el.sysReady, cmt);
@@ -1344,6 +1318,18 @@
         if (!candidate) return false;
         const ts = Number(candidate.ts ?? candidate.seq ?? 0);
         return Number.isFinite(ts) && ts > lastSysTs;
+      }
+
+      // =========================
+      // Common JSON Request Helpers
+      // =========================
+      async function GET_JSON(url, opts) {
+        const res = await fetch(url, opts || {});
+        return await res.json();
+      }
+      // dashboard 에서는 SSE 를 쓰지 않아도 되므로 no-op 으로 둔다.
+      function useSseIfNeeded(_resp) {
+        // intentionally empty
       }
 
       function acceptIfFresher(sum, label) {
@@ -1364,52 +1350,39 @@
       }
 
       async function refreshSystem() {
-        const now = nowMs();
-
-        // 1) 최근 5초 내 갱신된 LS(source=oms-system)가 있으면 우선 적용
-        if (now < preferLSUntil) {
-          try {
-            const raw = localStorage.getItem("oms_summary");
-            if (raw) {
-              const sum = JSON.parse(raw);
-              if (sum && sum.source === "oms-system") {
-                acceptIfFresher(sum, pollLabel());
-              }
-            }
-          } catch { /* ignore */ }
-        }
-
-        // 2) 항상 서버 폴링 시도 (더 신선하면 덮어씀)
+        console.log("refreshSystem");
+        const label = pollLabel();
         try {
-          const s = await httpJson("/oms/status");
-          const hb = Number(s?.heartbeat_interval_sec);
-          if (Number.isFinite(hb) && hb > 0) {
-            const next = Math.max(1500, Math.min(10000, hb * 1000)); // 1.5s~10s
-            if (next !== sysPollMs) {
-              sysPollMs = next;
-              el.sysPoll.textContent = pollLabel();
-              if (sysPollTimer) { clearInterval(sysPollTimer); sysPollTimer = setInterval(() => { refreshSystem().catch(() => { }); }, sysPollMs); }
-            }
+          const s = await GET_JSON("/oms/status", { timeoutMs: 800 });
+          if (s && s.summary && typeof s.summary === "object") {
+            const sum = s.summary;
+            acceptIfFresher({
+              nodes:     sum.nodes     ?? 0,
+              processes: sum.processes ?? 0,
+              connected: sum.connected ?? 0,
+              running:   sum.running   ?? 0,
+              stopped:   sum.stopped   ?? 0,
+              ts: nowMs(),
+            }, label);
+          } else {
+            console.log("refreshSystem - summary null");
+            const nodes = Array.isArray(s && s.nodes) ? s.nodes : [];
+            acceptIfFresher({
+              nodes: nodes.length,
+              processes: 0,
+              connected: 0,
+              running: 0,
+              stopped: 0,
+              ts: nowMs(),
+            }, label);
           }
-          // ✅ oms-system 과 동일한 방식으로 /oms/status 전체에서 summary 계산
-          const sum = summarizeSystemStatus(s);
-          acceptIfFresher({
-            nodes:     sum.nodes,
-            processes: sum.processes,
-            connected: sum.connected,
-            running:   sum.running,
-            stopped:   sum.stopped,
-            ts: nowMs(),
-          }, pollLabel());
-        } catch {
-          // server 실패 시: 마지막 정상값 유지 (하이픈 초기화 금지)
+          // SSE 는 서버 응답 객체 기준으로만
+          useSseIfNeeded(s);
+        } catch (e) {
+          console.warn("[dashboard] refreshSystem failed:", e);
         }
+      }   
 
-        // 3) 초기 렌더가 아직 없으면 안전값으로 0 채움(1회)
-        if (!lastSys) {
-          acceptIfFresher({ nodes: 0, processes: 0, connected: 0, running: 0, stopped: 0, ts: nowMs() }, pollLabel());
-        }
-      }
       window.__dashRefreshSystem = refreshSystem;
       // live update from storage/broadcast
       try {
@@ -1419,7 +1392,6 @@
             const sum = JSON.parse(e.newValue);
             if (sum && sum.source === "oms-system") {
               if (acceptIfFresher(sum, pollLabel())) {
-                // 최신 스냅샷을 받았으므로 5초간 LS를 우선 신뢰
                 preferLSUntil = nowMs() + 5000;
               }
             }
@@ -1430,27 +1402,14 @@
 
       // ---- Camera stats (/oms/state or local snapshot)
       async function refreshCamera() {
-        let raw = null; try { raw = localStorage.getItem("oms_camera_summary"); } catch { }
-        let sum = null; if (raw) { try { sum = JSON.parse(raw); } catch { } }
-
-        if (sum && typeof sum === "object" && sum.source === "oms-camera") {
-          el.camTotal.textContent = String(sum.cameras ?? "-");
-          el.camConn.textContent = String(sum.connected ?? "-");
-          el.camOn.textContent = String(sum.on ?? "-");
-          el.camOff.textContent = String(sum.off ?? "-");
-          const cc = commentCamera({
-            cams: Number(sum.cameras || 0),
-            connected: Number(sum.connected || 0),
-            on: Number(sum.on || 0),
-            off: Number(sum.off || 0),
-          });
-          setStatus(el.camReady, cc);
-          el.camPoll.textContent = "poll 3s";
-          return;
+        let raw = null; try { raw = localStorage.getItem("oms_camera_summary"); } catch { }        
+        let st = null;
+        try {
+          st = await GET_JSON("/oms/state");
+        } catch (e) {
+          console.warn("[dashboard] refreshCamera /oms/state failed:", e);
         }
 
-        // Fallbacks
-        let st = null; try { st = await httpJson("/oms/state"); } catch { }
         let cams = 0, connected = 0, on = 0, off = 0;
         if (st && typeof st.summary === 'object') {
           cams = Number(st.summary.cameras || 0);
@@ -1485,13 +1444,11 @@
       }
 
       try { window.addEventListener("storage", (e) => { if (e.key === "oms_camera_summary") { refreshCamera().catch(() => { }); } }); } catch { }
+      try { const camCh = new BroadcastChannel("oms_camera"); camCh.onmessage = (ev) => { const s = ev.data; if (s && s.source === "oms-camera") { refreshCamera().catch(() => { }); } };      } catch { }
 
-      try {
-        const camCh = new BroadcastChannel("oms_camera");
-        camCh.onmessage = (ev) => { const s = ev.data; if (s && s.source === "oms-camera") { refreshCamera().catch(() => { }); } };
-      } catch { }
-
-      // Actions (same API fallbacks)      
+      ////////////////////////////////////////////////////////////////////////////
+      // System Actions (same API fallbacks)      
+      ////////////////////////////////////////////////////////////////////////////
       el.btnSysRestart.onclick = async () => {
         el.btnSysRestart.disabled = true;
         try {
@@ -1506,8 +1463,8 @@
 
           // ③ UI 즉시 표시
           el.sysReady.innerHTML = '<span class="main">Restarting…</span>';
-          el.sysReady.classList.remove('status-ready');
-          el.sysReady.classList.add('status-warn');
+          el.sysReady.classList.remove('status-warn', 'status-danger', 'status-ready');
+          el.sysReady.classList.add('status-init');
           // ④ 이후 원래 로직 수행
           await callAction("restart");
         } catch (e) {
@@ -1547,8 +1504,30 @@
           }, 1000);
         }
       };
-      el.btnCamRestart.onclick = () => { window.open(API("/web/oms-camera.html"), "_blank"); };
-      el.btnCamConnect.onclick = () => { window.open(API("/web/oms-camera.html"), "_blank"); };
+      
+      //////////////////////////////////////////////////////////////////////////
+      // Camera Actions (bind to actual OMS.Actions methods)
+      //////////////////////////////////////////////////////////////////////////
+      (function bindDashboardCameraButtons() {
+        // actions.js load 대기 (이미 로드돼 있으면 바로 지나감)
+        const wait = window.__OMS_ACTIONS_LOAD__ || Promise.resolve();
+        wait.then(() => {
+          if (!window.OMS || !OMS.Actions) return;
+
+          const A = OMS.Actions;
+          // Restart → cameraRebootAll
+          const btnCamRestart = document.getElementById("btnCamRestart");
+          if (btnCamRestart && typeof A.cameraRebootAll === "function") {
+            btnCamRestart.onclick = A.cameraRebootAll;
+          }
+
+          // Connect → cameraConnectAll
+          const btnCamConnect = document.getElementById("btnCamConnect");
+          if (btnCamConnect && typeof A.cameraConnectAll === "function") {
+            btnCamConnect.onclick = A.cameraConnectAll;
+          }          
+        });
+      })();
 
       // initial + auto refresh
       (async function boot() {
@@ -1798,7 +1777,7 @@
     }
 
     /* ✅ 1열 전환 임계값을 한 번에 강제 (원하는 값으로 조절) */
-    @media (max-width: 1150px) {
+    @media (max-width: 740px) {
 
       /* ← 필요에 맞게 900~1200 사이로 조절 */
       .grid {
@@ -1823,16 +1802,16 @@
 
       /* 통계/버튼 블록을 위→아래로 */
       .stats-wrapper {
-        position: absolute;
-        /* 기존 유지 */
-        left: 22px;
-        right: 22px;
-        bottom: 20px;
+        position: static;
+        /* 세로 버전에서는 카드 안에서 자연스럽게 흐르도록 */
+        left: auto;
+        right: auto;
+        bottom: auto;
         display: flex;
         flex-direction: column;
-        /* ← 세로 배치 */
         align-items: stretch;
-        gap: 12px;
+        gap: 15px;
+        margin-top: 15px;  /* READY 바로 아래로 붙게 */
       }
 
       /* 버튼 컨테이너: 한 줄에 하나씩 */
@@ -1859,7 +1838,7 @@
 
       .btn-neo span.top {
         /* 보조 라벨 */
-        font-size: 14px;
+        font-size: 12px;
         font-weight: 800;
       }
 
@@ -1871,11 +1850,11 @@
 
       /* 세로로 늘어나며 카드 하단이 가려지지 않게 하단 패딩 보강(필요시) */
       .card {
-        padding-bottom: 164px;
+        padding-bottom: 25px;
         /* 버튼 2개 세로배치 높이에 맞춰 여유 */
       }
 
-      /* ✅ 화면 크기 상관없이, Need to Connect 색상을 CONNECT 버튼 톤으로 고정 */
+      /* ✅ 화면 크기 상관없이, Needs Connect 색상을 CONNECT 버튼 톤으로 고정 */
       #sysReady.status-warn,
       #camReady.status-warn {
         color: var(--accent-blue) !important;
@@ -1909,6 +1888,7 @@
     (function () {
       function applyCommonConfig(cfg) {
         if (!cfg || typeof cfg !== "object") return;
+
         // 공통 prefix (원하면 사용)
         var appName = cfg.appName || "4DReplay";
         var version = cfg.version || "V5";
@@ -1918,17 +1898,33 @@
         if (pageCfg.htmlTitle) {
           document.title = pageCfg.htmlTitle;
         } else {
-          // json에 없으면 기본 규칙 사용
           document.title = appName + " " + version + " - Dashboard";
         }
 
-        // 2) 화면 내 H1 타이틀
+        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
         var h1 = document.getElementById("pageTitle");
         if (h1 && pageCfg.pageTitle) {
+
+          // 기존 텍스트 유지
           h1.textContent = pageCfg.pageTitle;
+
+          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
+          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
+            var img = document.createElement("img");
+            img.src = cfg.faviconHref;
+            img.className = "title-icon";
+
+            // 텍스트 크기에 자동 맞춤
+            img.style.height = "1em";       // 텍스트 높이와 동일
+            img.style.width = "auto";       // 비율 유지
+            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
+            img.style.marginRight = "8px";
+
+            h1.prepend(img);
+          }
         }
 
-        // 3) favicon (link[rel=icon] 교체)
+        // 3) favicon link 교체 (브라우저 탭 아이콘)
         if (cfg.faviconHref) {
           var existing = document.querySelector('link[rel="icon"]');
           if (!existing) {
@@ -1938,6 +1934,12 @@
             document.head.appendChild(existing);
           }
           existing.href = cfg.faviconHref;
+
+          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
+          var titleIcon = document.querySelector("#pageTitle .title-icon");
+          if (titleIcon) {
+            titleIcon.src = cfg.faviconHref;
+          }
         }
       }
 

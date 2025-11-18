@@ -1,33 +1,18 @@
 {
+  "targetName": "4Dist",
+  "faviconHref": "web/images/4dist.ico",      
+  "targetName-23xi": "23XI",
+  "faviconHref-23xi": "web/images/23xi-black.ico",    
+  "targetName-sfg": "San francisco Giants",
+  "faviconHref-sfg": "web/images/sfg.ico",  
   "appName": "4DReplay",
   "version": "V5",
-
-  "faviconHref": "web/images/23xi-black.ico",
-
   "pages": {
-    "dmsConfig": {
-      "htmlTitle": "[4D] Config/Node",
-      "pageTitle": "23XI - Node Config"
-    },
-    "dmsSystem": {
-      "htmlTitle": "[4D] Node",
-      "pageTitle": "23XI - Node Manager"
-    },
-    "omsCamera": {
-      "htmlTitle": "[4D] Camera",
-      "pageTitle": "23XI - Camera Manager"
-    },
-    "omsConfig": {
-      "htmlTitle": "[4D] Config/System",
-      "pageTitle": "23XI - System Config"
-    },
-    "omsDashboard": {
-      "htmlTitle": "[4D] Dashboard",
-      "pageTitle": "23XI - Dashboard"
-    },
-    "omsSystem": {
-      "htmlTitle": "[4D] System",
-      "pageTitle": "23XI - System Manager"
-    }
+    "dmsConfig":   { "htmlTitle": "[4D] Config/Node",   "pageTitle": "Node Config" },
+    "dmsSystem":   { "htmlTitle": "[4D] Node",          "pageTitle": "Node Manager" },
+    "omsCamera":   { "htmlTitle": "[4D] Camera",        "pageTitle": "Camera Manager" },
+    "omsConfig":   { "htmlTitle": "[4D] Config/System", "pageTitle": "System Config" },
+    "omsDashboard":{ "htmlTitle": "[4D] Dashboard",     "pageTitle": "Dashboard" },
+    "omsSystem":   { "htmlTitle": "[4D] System",        "pageTitle": "System Manager" }
   }
 }

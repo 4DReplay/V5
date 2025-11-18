@@ -137,50 +137,86 @@ pre{background:#0b1220;border:1px solid var(--line2);border-radius:8px;padding:1
   let CONFIG_URL;
 
   if (path.includes("/web/")) {
-    // /web/xxx.html 로 열리는 페이지
-    // 예: /web/oms-dashboard.html, /proxy/DMS-1/web/oms-system.html
-    // → 같은 폴더에 4d-common.json
+    // /web/xxx.html 로 열리는 페이지 → 같은 폴더에 4d-common.json
     CONFIG_URL = "4d-common.json";
   } else {
-    // /web 바깥에서 열리는 페이지
-    // 예: /dms-system.html, /proxy/DMS-1/dms-system.html
-    // → /web/4d-common.json 을 바라보게 함
+    // /web 바깥에서 열리는 페이지 → /web/4d-common.json
     CONFIG_URL = "web/4d-common.json";
   }
 
   const BUST = "?v=" + Date.now(); // 캐시 방지
 
+  // page slug → config.pages 키 맵
+  const SLUG_TO_KEY = {
+    "dms-config": "dmsConfig",
+    "dms-system": "dmsSystem",
+    "oms-camera": "omsCamera",
+    "oms-config": "omsConfig",
+    "oms-dashboard": "omsDashboard",
+    "oms-system": "omsSystem",
+  };
+
+  // targetName을 모든 pageTitle 앞에 붙여주는 helper
+  function applyTargetNameToPages(cfg) {
+    if (!cfg || typeof cfg !== "object") return cfg || {};
+    const target = (cfg.targetName || "").trim();
+    if (!target) return cfg;
+
+    const pages = cfg.pages || {};
+    for (const key in pages) {
+      const p = pages[key];
+      if (!p || typeof p.pageTitle !== "string") continue;
+      const base = p.pageTitle.trim();
+      if (!base) continue;
+
+      // 이미 "23XI - XXX" 형태면 중복으로 안 붙이게 방지
+      const prefix = target + " - ";
+      if (!base.startsWith(prefix)) {
+        p.pageTitle = prefix + base;
+      }
+    }
+    return cfg;
+  }
+
   // 전역으로 노출
   window.OmsCommonConfig = window.OmsCommonConfig || null;
-  window.OmsCommonConfigPromise = window.OmsCommonConfigPromise || (async function () {
-    try {
-      const res = await fetch(CONFIG_URL + BUST, { cache: "no-store" });
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      const json = await res.json();
-      window.OmsCommonConfig = json;
-
+  window.OmsCommonConfigPromise =
+    window.OmsCommonConfigPromise ||
+    (async function () {
       try {
-        window.dispatchEvent(
-          new CustomEvent("oms:config-ready", { detail: json })
-        );
-      } catch (e) {}
+        const res = await fetch(CONFIG_URL + BUST, { cache: "no-store" });
+        if (!res.ok) throw new Error("HTTP " + res.status);
 
-      return json;
-    } catch (e) {
-      console.warn("[OmsCommonConfig] load failed:", e);
-      window.OmsCommonConfig = {};
-      return {};
-    }
-  })();
+        const raw = await res.json();
+        const cfg = applyTargetNameToPages(raw);  // ← 여기서 한 번에 prefix 적용
+
+        window.OmsCommonConfig = cfg;
+
+        try {
+          window.dispatchEvent(
+            new CustomEvent("oms:config-ready", { detail: cfg })
+          );
+        } catch (e) {}
+
+        return cfg;
+      } catch (e) {
+        console.warn("[OmsCommonConfig] load failed:", e);
+        window.OmsCommonConfig = {};
+        return {};
+      }
+    })();
+
+  // 필요하면 다른 곳에서도 SLUG_TO_KEY를 쓸 수 있게 전역에 노출
+  window.__4D_SLUG_TO_KEY__ = window.__4D_SLUG_TO_KEY__ || SLUG_TO_KEY;
 })();
 
 // ─────────────────────────────────────────────
-// HTML Title & Favicon 자동 적용
+// HTML Title & Favicon 자동 적용 (공통)
 // ─────────────────────────────────────────────
 window.OmsCommonConfigPromise.then(cfg => {
   if (!cfg) return;
 
-  // --- Favicon 적용만 남김 ---
+  // 1) favicon 공통 적용
   if (cfg.faviconHref) {
     let link = document.querySelector("link[rel='icon']");
     if (!link) {
@@ -191,4 +227,45 @@ window.OmsCommonConfigPromise.then(cfg => {
     link.href = cfg.faviconHref;
   }
 
+  // 2) 현재 페이지에 맞는 page config 찾기
+  const pages = cfg.pages || {};
+  const slugMap = window.__4D_SLUG_TO_KEY__ || {
+    "dms-config": "dmsConfig",
+    "dms-system": "dmsSystem",
+    "oms-camera": "omsCamera",
+    "oms-config": "omsConfig",
+    "oms-dashboard": "omsDashboard",
+    "oms-system": "omsSystem",
+  };
+
+  const path = location.pathname.toLowerCase();
+  const fname = path.split("/").pop().split("?")[0].split("#")[0]; // e.g. "oms-system.html"
+  const base = fname.replace(/\.html?$/,"");                        // "oms-system"
+  const pageKey = slugMap[base];
+  const pageCfg = pageKey ? pages[pageKey] : null;
+
+  function applyTitles() {
+    if (!pageCfg) return;
+
+    // HTML <title>
+    if (pageCfg.htmlTitle) {
+      document.title = pageCfg.htmlTitle;
+    } else {
+      const appName = cfg.appName || "4DReplay";
+      const version = cfg.version || "V5";
+      document.title = appName + " " + version + (pageCfg.pageTitle ? " - " + pageCfg.pageTitle : "");
+    }
+
+    // 화면 상단 #pageTitle (있으면)
+    const h = document.getElementById("pageTitle");
+    if (h && pageCfg.pageTitle) {
+      h.textContent = pageCfg.pageTitle; // 이미 "23XI - Node Config" 형식으로 들어 있음
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", applyTitles);
+  } else {
+    applyTitles();
+  }
 });

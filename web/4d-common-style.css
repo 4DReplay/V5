@@ -314,6 +314,15 @@ tr.other td {
   color: var(--fg)
 }
 
+.divider {
+  width: 2px;
+  height: 36px;        /* 버튼보다 약간 작게 */
+  background-color: rgba(196, 196, 249, 0.3);   /* 더 진하게 */
+  display: inline-block;
+  margin: -2 -4px;
+  vertical-align: middle;
+}
+
 .badge-connected {
   border-color: var(--ok);
   color: #a7f3d0;
