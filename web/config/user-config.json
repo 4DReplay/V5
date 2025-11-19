@@ -1,4 +1,8 @@
-{
+{ 
+  "title" : {
+    "targetName": "4Dist [KR-#1]",
+    "icon": "/web/images/4dist.ico"
+  }, 
   "prefix": [
     {
       "name": "Team_A",

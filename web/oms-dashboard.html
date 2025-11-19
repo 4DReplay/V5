@@ -6,22 +6,12 @@
   <title>4DReplay V5 - Dashboard</title>
   <meta http-equiv="Cache-Control" content="no-store" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- Hint browsers that both color schemes are supported; default to dark via CSS -->
-  <meta name="color-scheme" content="dark light" />
-  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
-  <!-- Theme bootstrap: lock theme via data-theme; allow override by ?theme=light|dark -->
+  <!-- proxy-safe loader (최대 oms-camera.html 과 동일) -->
+  <script src="/web/oms-common.js"></script>
   <script>
-    (function () {
-      const qs = new URLSearchParams(location.search);
-      const pref = qs.get('theme');
-      const saved = (typeof localStorage !== 'undefined' && localStorage.getItem('theme')) || '';
-      const theme = (pref || saved || 'dark').toLowerCase();
-      document.documentElement.setAttribute('data-theme', theme);
-      window.setTheme = function (t) {
-        document.documentElement.setAttribute('data-theme', t);
-        try { localStorage.setItem('theme', t); } catch (e) { }
-      };
-    })();
+    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.applyPageConfig("Dashboard");
+    OMS.initActions();            // oms-actions.js 자동 로딩
   </script>
 
   <!-- proxy-safe common loader (robust paths + no camera/system script on dashboard) -->
@@ -611,8 +601,7 @@
     aria-label="Toggle fullscreen">
     ⤢
   </button>
-  <h1 class="page-title" id="pageTitle">
-    4DReplay V5 — Dashboard
+  <h1 class="page-title" id="pageTitle"> 
   </h1>
   <!-- 전체 타이틀 바로 아래 줄로 진행 메시지 칩 이동 -->
   <div class="page-title-chip-row">

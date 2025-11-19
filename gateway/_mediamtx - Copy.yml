@@ -41,23 +41,29 @@ paths:
   cam_10_82_104_11:
     source: rtsp://10.82.104.11/stream
     sourceOnDemand: yes
+    webrtc: yes
 
   cam_10_82_104_12:
     source: rtsp://10.82.104.12/stream
     sourceOnDemand: yes
+    webrtc: yes
 
   cam_10_82_104_13:
-    source: rtsp://10.82_104.13/stream
+    source: rtsp://10.82.104.13/stream
     sourceOnDemand: yes
+    webrtc: yes
 
   cam_10_82_104_14:
     source: rtsp://10.82.104.14/stream
     sourceOnDemand: yes
+    webrtc: yes
 
   cam_10_82_104_15:
     source: rtsp://10.82.104.15/stream
     sourceOnDemand: yes
+    webrtc: yes
 
   cam_10_82_104_16:
     source: rtsp://10.82.104.16/stream
     sourceOnDemand: yes
+    webrtc: yes

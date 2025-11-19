@@ -9,6 +9,7 @@ import http.client, sys
 import json, re, time, threading, traceback
 import subprocess
 import errno
+import requests
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -17,6 +18,7 @@ from urllib.parse import urlsplit, parse_qs, unquote
 from collections import defaultdict, deque
 from copy import deepcopy
 from src.fd_communication.server_mtd_connect import tcp_json_roundtrip, MtdTraceError
+from live_mtx_manager import MTX
 
 ###################################################################################
 # debug
@@ -99,7 +101,7 @@ if str(ROOT/"src") not in sys.path: sys.path.insert(0, str(ROOT/"src"))
 
 WEB  = ROOT / "web"
 CFG  = ROOT / "config" / "oms_config.json"
-
+CFG_RECORD  = ROOT / "config" / "user_config.json"
 # ─────────────────────────────────────────────────────────────
 # --- hard-coded timeouts ---
 # ─────────────────────────────────────────────────────────────
@@ -389,7 +391,6 @@ def _update_camera_ping_state(timeout_sec: float = 0.8) -> None:
     st["updated_at"] = time.time()
     STATE[key] = st
 
-
 def append_mtd_debug(direction, host, port, message=None, response=None, error=None, tag=None):
     """
     direction: 'send' | 'recv' | 'error'
@@ -479,16 +480,15 @@ def _state_for_host(host: str) -> dict:
             best, best_ts = st, ts
     return best or {}
 
-
 # ─────────────────────────────────────────────────────────────
 # Record
 # ─────────────────────────────────────────────────────────────
-
 def load_record_prefix_list():
     """record_config.json에서 prefix 목록 읽는 함수"""
     try:
+        fd_log.info(f"CFG_RECORD = {CFG_RECORD}")
         if not CFG_RECORD.exists():
-            return {"ok": False, "message": "record_config.json not found"}
+            return {"ok": False, "message": "user_config.json not found"}
 
         data = json.loads(CFG_RECORD.read_text("utf-8"))
         return {"ok": True, "prefix": data.get("prefix", [])}
@@ -1323,6 +1323,124 @@ class Orchestrator:
                 message="[camera][connect] unexpected error",
                 error=str(e),
             )
+            return {"ok": False, "error": str(e)}
+    def _camera_action_autofocus(self):
+        try:
+            fd_log.info("_camera_action_autofocus")
+            # 1) Load current OMs state exactly like _connect_all_cameras()
+            try:
+                raw = _http_fetch(
+                    "127.0.0.1",
+                    self.http_port,
+                    "GET",
+                    "/oms/state",
+                    None,
+                    {},
+                    timeout=3.0,
+                )
+                raw_body = self._extract_http_body(raw)
+
+                if isinstance(raw_body, dict):
+                    state = raw_body
+                elif isinstance(raw_body, (bytes, str)):
+                    state = json.loads(raw_body if isinstance(raw_body, str)
+                                    else raw_body.decode("utf-8"))
+                else:
+                    raise ValueError("Unsupported body type")
+            except Exception as e:
+                return {"ok": False, "error": f"STATE_LOAD_FAIL: {e}"}
+
+            # 2) Collect camera list (same style as _connect_all_cameras)
+            state_cams = state.get("cameras") or []
+
+            ip_list = []
+            for cam in state_cams:
+                ip = cam.get("IP") or cam.get("IPAddress")
+                if ip:
+                    ip_list.append(ip)
+
+            if not ip_list:
+                return {"ok": False, "error": "NO_CAMERAS_FOUND"}
+
+            fd_log.info(f"camera list:{ip_list}")
+
+            # 3) Select DMPDIP (same logic as connect_all_cameras)
+            command_dmpdip = None
+
+            for u in state.get("presd") or []:
+                ip = (u or {}).get("IP")
+                if ip:
+                    command_dmpdip = ip
+                    break
+
+            if not command_dmpdip:
+                dmp = state.get("dmpdip")
+                if dmp and dmp != "127.0.0.1":
+                    command_dmpdip = dmp
+
+            if not command_dmpdip:
+                cfg_dmp = CFG.get("dmpdip")
+                if cfg_dmp:
+                    command_dmpdip = cfg_dmp
+
+            if not command_dmpdip:
+                return {"ok": False, "error": "NO_DMPDIP"}
+
+            # 4) Build AF command
+            req = {
+                "Cameras": [
+                    {"IPAddress": ip, "OneShotAF": {"arg": "none"}}
+                    for ip in ip_list
+                ],
+                "Section1": "Camera",
+                "Section2": "Information",
+                "Section3": "SetCameraInfo",
+                "SendState": "request",
+                "From": "4DOMS",
+                "To": "CCd",
+                "Token": _make_token(),
+                "Action": "set",
+                "DMPDIP": command_dmpdip,
+            }
+
+            fd_log.info(f"request:{req}")
+
+            # 5) Send CCd command with retry logic identical to connect
+            def _send_ccd(msg, timeout=10.0, retry=3, wait_after=0.8):
+                last_err = None
+                for attempt in range(1, retry + 1):
+                    try:
+                        resp, tag = tcp_json_roundtrip(
+                            command_dmpdip, 19765, msg, timeout=timeout
+                        )
+                        time.sleep(wait_after)
+                        return resp
+                    except Exception as e:
+                        last_err = e
+                        time.sleep(0.5)
+                raise last_err
+
+            res = _send_ccd(req)
+
+            # 6) Parse results
+            ok_count = 0
+            fail_count = 0
+
+            for cam in res.get("Cameras", []):
+                st = cam.get("OneShotAF", {}).get("Status")
+                if st == "OK":
+                    ok_count += 1
+                else:
+                    fail_count += 1
+
+            return {
+                "ok": fail_count == 0,
+                "ok_count": ok_count,
+                "fail_count": fail_count,
+                "response": res,
+            }
+
+        except Exception as e:
             return {"ok": False, "error": str(e)}
 
     # main functions
@@ -2442,7 +2560,14 @@ class Orchestrator:
                 self.end_headers()
                 try: self.wfile.write(body)
                 except: pass
-
+            def _send_json(self, obj, status=200):
+                body = json.dumps(obj).encode("utf-8")
+                self.send_response(status)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+            
             # ─────────────────────────────────────────────────────────────────────────────────────
             # do_GET
             # ─────────────────────────────────────────────────────────────────────────────────────         
@@ -2927,6 +3052,13 @@ class Orchestrator:
                         res = load_record_prefix_list()
                         body = json.dumps(res, ensure_ascii=False).encode("utf-8")
                         return self._write(200, body, "application/json; charset=utf-8")
+                    # ──────────────────────────────────────────────────────
+                    # GET [liveview][connect]
+                    # ──────────────────────────────────────────────────────
+                    if parts == ["oms","liveview","status"]:
+                        running = MTX.is_running()
+                        self._send_json({"running": running})
+                        return
                     # ──────────────────────────────────────────────────────
                     # GET /N/O/T/ /F/O/U/N/D/
                     # ──────────────────────────────────────────────────────                    
@@ -3579,7 +3711,30 @@ class Orchestrator:
                                 ensure_ascii=False,
                             ).encode("utf-8")
                             return self._write(500, body)
-
+                    # ──────────────────────────────────────────────────────
+                    # POST [camera][action][autofocus]
+                    # ──────────────────────────────────────────────────────     
+                    if parts == ["oms", "cam-action", "autofocus"]:
+                        fd_log.debug("oms/cam-action/autofocus")
+                        res = orch._camera_action_autofocus() or {}
+                        ok = bool(res.get("ok", False))
+                        self._send_json({
+                            "ok": ok,
+                            "detail": res
+                        })
+                        return
+                    # ──────────────────────────────────────────────────────
+                    # Live 
+                    # ────────────────────────────────────────────────────── 
+                    if parts == ["oms", "liveview", "on"]:
+                        ok = MTX.start()
+                        self._send_json({"ok": ok})
+                        return
+                    if parts == ["oms", "liveview", "off"]:
+                        ok = MTX.stop()
+                        self._send_json({"ok": ok})
+                        return
+                    
                     return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
                     return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())
@@ -3587,7 +3742,6 @@ class Orchestrator:
             def log_message(self, fmt, *args):
                 orch._log("[HTTP] " + (fmt % args))
         return H
-
     def _log(self, msg:str):
         line = time.strftime("%Y-%m-%d %H:%M:%S ") + msg + "\n"
         (LOGD / "OMS.log").open("a", encoding="utf-8").write(line)

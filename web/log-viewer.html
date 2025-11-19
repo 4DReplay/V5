@@ -5,49 +5,11 @@
   <meta charset="utf-8" />
   <title>Log Viewer</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
+  <script src="/web/oms-common.js"></script>
   <script>
-    (function () {
-      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-      const bust = "?v=" + Date.now();
-
-      const CSS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.css",
-        "./4d-common-style.css",
-      ];
-      const JS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.js",
-        "./4d-common-style.js",
-      ];
-
-      function injectCSS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("link");
-        el.rel = "stylesheet";
-        el.href = list[i] + bust;
-        el.onerror = () => {
-          console.warn("[CSS miss]", list[i]);
-          injectCSS(list, i + 1);
-        };
-        document.head.appendChild(el);
-      }
-
-      function injectJS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("script");
-        el.defer = true;
-        el.src = list[i] + bust;
-        el.onerror = () => {
-          console.warn("[JS miss]", list[i]);
-          injectJS(list, i + 1);
-        };
-        document.head.appendChild(el);
-      }
-
-      injectCSS(CSS_CANDIDATES);
-      injectJS(JS_CANDIDATES);
-    })();
+    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.applyPageConfig("Log Viewer");
+    OMS.initActions();            // oms-actions.js 자동 로딩
   </script>
   <style>
     :root {
@@ -140,8 +102,9 @@
 
 <body>
   <header>
-    <h2 id="title">Logs</h2>
-
+    <h2 class="page-title">
+      <span id="pageTitle"></span>      
+    </h2>
     <input id="tbName" type="text" placeholder="process name" style="min-width:140px">
     <select id="selDate" title="date"></select>
     <select id="selTail" title="tail bytes">

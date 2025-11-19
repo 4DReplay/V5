@@ -2,87 +2,24 @@
 <html>
 <head>
   <meta charset="utf-8" />
-  <title>4DReplay V5 - OMs System</title>
   <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
-
-  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <script src="/web/oms-common.js"></script>
   <script>
-    (function () {
-      // /proxy/<node>/... 환경에서도 동작
-      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-      const PROXY = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-      const bust = "?v=" + Date.now();
-
-      const ACTIONS_CANDIDATES = [
-        PROXY + "/web/oms-actions.js",
-        "./web/oms-actions.js",
-        "./oms-actions.js",
-        "/web/oms-actions.js"
-      ];
-
-      function injectJS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("script");
-        el.defer = true;
-        el.src = list[i] + bust;
-        el.onerror = () => {
-          console.warn("[OMS actions miss]", list[i]);
-          injectJS(list, i + 1);
-        };
-        document.head.appendChild(el);
-      }
-      injectJS(ACTIONS_CANDIDATES);
-    })();
-  </script>
-  
-  <!-- e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1 -->
-  <script>
-    (function () {
-      // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
-      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-      const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
-
-      const CSS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.css",
-        "./4d-common-style.css",
-      ];
-      const JS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.js",
-        "./4d-common-style.js",
-      ];
-
-      function injectCSS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("link");
-        el.rel = "stylesheet"; el.href = list[i] + bust;
-        el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i + 1); };
-        document.head.appendChild(el);
-      }
-      function injectJS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("script");
-        el.defer = true; el.src = list[i] + bust;
-        el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i + 1); };
-        document.head.appendChild(el);
-      }
-      injectCSS(CSS_CANDIDATES);
-      injectJS(JS_CANDIDATES);
-    })();
+    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.applyPageConfig("System");
+    OMS.initActions();            // oms-actions.js 자동 로딩
   </script>
 </head>
-
 
 <!----------------------------------------------------------------------------------
 BODY
 ------------------------------------------------------------------------------------>
 <body>
   <h2 class="page-title">
-    <span id="pageTitle">4DReplay V5 - OMs System</span>
+    <span id="pageTitle"></span>
     <small id="meta"></small>
   </h2>
-
+  
   <div class="toolbar">
     <button id="btnDashboard">📊 Dashboard</button>
     <span class="divider"></span>
@@ -727,85 +664,6 @@ BODY
         PROG.style.visibility = msg ? "visible" : "hidden";
         applyLockFromMessage(msg);
       });
-    })();
-  </script>
-
-  <!-- Common Title -->
-  <script>
-    (function () {
-      function applyCommonConfig(cfg) {
-        if (!cfg || typeof cfg !== "object") return;
-
-        // 공통 prefix (원하면 사용)
-        var appName = cfg.appName || "4DReplay";
-        var version = cfg.version || "V5";
-        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
-
-        // 1) HTML <title>
-        if (pageCfg.htmlTitle) {
-          document.title = pageCfg.htmlTitle;
-        } else {
-          document.title = appName + " " + version + " - Dashboard";
-        }
-
-        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
-        var h1 = document.getElementById("pageTitle");
-        if (h1 && pageCfg.pageTitle) {
-
-          // 기존 텍스트 유지
-          h1.textContent = pageCfg.pageTitle;
-
-          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
-          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
-            var img = document.createElement("img");
-            img.src = cfg.faviconHref;
-            img.className = "title-icon";
-
-            // 텍스트 크기에 자동 맞춤
-            img.style.height = "1em";       // 텍스트 높이와 동일
-            img.style.width = "auto";       // 비율 유지
-            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
-            img.style.marginRight = "8px";
-
-            h1.prepend(img);
-          }
-        }
-
-        // 3) favicon link 교체 (브라우저 탭 아이콘)
-        if (cfg.faviconHref) {
-          var existing = document.querySelector('link[rel="icon"]');
-          if (!existing) {
-            existing = document.createElement("link");
-            existing.rel = "icon";
-            existing.type = "image/x-icon";
-            document.head.appendChild(existing);
-          }
-          existing.href = cfg.faviconHref;
-
-          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
-          var titleIcon = document.querySelector("#pageTitle .title-icon");
-          if (titleIcon) {
-            titleIcon.src = cfg.faviconHref;
-          }
-        }
-      }
-      function init() {
-        // 이미 로딩돼 있으면 즉시 한 번 적용
-        if (window.OmsCommonConfig) {
-          applyCommonConfig(window.OmsCommonConfig);
-        }
-        // 4d-common-style.js에서 oms:config-ready 이벤트 쏘니까 그것도 구독
-        try {
-          window.addEventListener("oms:config-ready", function (e) {
-            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
-          });
-        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
-      }
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-      } else {
-        init();
-      }
     })();
   </script>
 </body>

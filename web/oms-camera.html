@@ -2,50 +2,21 @@
 <html>
 
 <head>
-  <meta charset="utf-8" />
-  <title>4DReplay V5 - Camera Manager</title>
-  <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
-  <!-- proxy-safe asset loader: works for /proxy/<node>/... and direct port -->
+  <meta charset="utf-8" />  
+  <meta http-equiv="Cache-Control" content="no-store" />  
+  <!-- common title/style -->
+  <script src="/web/oms-common.js"></script>
   <script>
-    (function () {
-      // e.g., /proxy/DMS-1/oms-system.html  =>  /proxy/DMS-1
-      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-      const bust = "?v=" + Date.now(); // cache-buster to avoid stale css/js
-
-      const CSS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.css",
-        "./4d-common-style.css",
-      ];
-      const JS_CANDIDATES = [
-        PROXY_PREFIX + "/web/4d-common-style.js",
-        "./4d-common-style.js",
-      ];
-
-      function injectCSS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("link");
-        el.rel = "stylesheet"; el.href = list[i] + bust;
-        el.onerror = () => { console.warn("[CSS miss]", list[i]); injectCSS(list, i + 1); };
-        document.head.appendChild(el);
-      }
-      function injectJS(list, i = 0) {
-        if (i >= list.length) return;
-        const el = document.createElement("script");
-        el.defer = true; el.src = list[i] + bust;
-        el.onerror = () => { console.warn("[JS miss]", list[i]); injectJS(list, i + 1); };
-        document.head.appendChild(el);
-      }
-      injectCSS(CSS_CANDIDATES); injectJS(JS_CANDIDATES);
-    })();
+    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.applyPageConfig("Camera");
+    OMS.initActions();            // oms-actions.js 자동 로딩
   </script>
 </head>
 
 <body>
   <!-- Title -->
   <h2 class="page-title">
-    <span id="pageTitle">4DReplay V5 - Camera Manager</span>
+    <span id="pageTitle"></span>
     <small id="camStats" class="muted" style="font-size:13px;">cameras: 0 • connected: 0</small>    
   </h1>
 
@@ -100,6 +71,13 @@
       </tbody>
     </table>
   </div>
+  
+  <!-- Camera Tools -->
+  <div class="toolbar" style="margin-top:16px; justify-content:flex-start;">
+    <button id="btnLiveview" class="btn-primary">▶ Liveview</button>
+    <button id="btnAutoFocus" class="btn-primary">🎯 Auto Focus</button>
+  </div>
+
   <!-- Camera Detail Table -->
   <div class="panel" style="margin-top:16px">
     <h3 style="margin:0 0 6px">📷 Camera Details</h3>
@@ -183,88 +161,6 @@
         document.addEventListener("DOMContentLoaded", initCameraPage);
       } else {
         initCameraPage();
-      }
-    })();
-  </script>
-  
-  <!-- Common Title -->
-  <script>
-    (function () {
-      function applyCommonConfig(cfg) {
-        if (!cfg || typeof cfg !== "object") return;
-
-        // 공통 prefix (원하면 사용)
-        var appName = cfg.appName || "4DReplay";
-        var version = cfg.version || "V5";
-        var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
-
-        // 1) HTML <title>
-        if (pageCfg.htmlTitle) {
-          document.title = pageCfg.htmlTitle;
-        } else {
-          document.title = appName + " " + version + " - Dashboard";
-        }
-
-        // 2) 화면 내 H1 타이틀 + favicon 이미지 prepend
-        var h1 = document.getElementById("pageTitle");
-        if (h1 && pageCfg.pageTitle) {
-
-          // 기존 텍스트 유지
-          h1.textContent = pageCfg.pageTitle;
-
-          // 아이콘이 이미 붙어 있으면 중복 삽입 금지
-          if (!h1.querySelector(".title-icon") && cfg.faviconHref) {
-            var img = document.createElement("img");
-            img.src = cfg.faviconHref;
-            img.className = "title-icon";
-
-            // 텍스트 크기에 자동 맞춤
-            img.style.height = "1em";       // 텍스트 높이와 동일
-            img.style.width = "auto";       // 비율 유지
-            img.style.verticalAlign = "-0.15em"; // 텍스트 baseline에 맞추기
-            img.style.marginRight = "8px";
-
-            h1.prepend(img);
-          }
-        }
-
-        // 3) favicon link 교체 (브라우저 탭 아이콘)
-        if (cfg.faviconHref) {
-          var existing = document.querySelector('link[rel="icon"]');
-          if (!existing) {
-            existing = document.createElement("link");
-            existing.rel = "icon";
-            existing.type = "image/x-icon";
-            document.head.appendChild(existing);
-          }
-          existing.href = cfg.faviconHref;
-
-          // 만약 Title에 이미 아이콘이 있었으면 src도 업데이트
-          var titleIcon = document.querySelector("#pageTitle .title-icon");
-          if (titleIcon) {
-            titleIcon.src = cfg.faviconHref;
-          }
-        }
-      }
-      
-      function init() {
-        // 이미 로딩돼 있으면 바로 적용
-        if (window.OmsCommonConfig) {
-          applyCommonConfig(window.OmsCommonConfig);
-        }
-
-        // 나중에 로딩될 수도 있으니 이벤트도 구독
-        try {
-          window.addEventListener("oms:config-ready", function (e) {
-            applyCommonConfig(e.detail || window.OmsCommonConfig || {});
-          });
-        } catch (e) { /* 이벤트 미지원 브라우저면 무시 */ }
-      }
-
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-      } else {
-        init();
       }
     })();
   </script>
@@ -434,5 +330,55 @@
     })();
   </script>
 
+  <script>
+  (function(){
+    function sendAutoFocus(){
+      fetch("/oms/cam-action/autofocus", { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+
+          // 실패한 경우 처리
+          if (!data.ok) {
+            // detail이 없으면 data 전체를 출력
+            const detail = data.detail || data.error || data || "Unknown Error";
+            alert("Auto Focus Fail\n\n" + JSON.stringify(detail, null, 2));
+            return;
+          }
+
+          // 성공 처리
+          alert(
+            `Auto Focus Finish\n\n` +
+            `Success: ${data.detail.ok_count}\n` +
+            `Fail: ${data.detail.fail_count}`
+          );
+        })
+        .catch(err => {
+          alert("Auto Focus Request Fail: " + err);
+        });
+    }
+
+    function bind(){
+      // Liveview 이동
+      const btnLive = document.getElementById("btnLiveview");
+      if(btnLive){
+        btnLive.onclick = () => {
+          window.location.href = "/liveview";
+        };
+      }
+
+      // Auto Focus 실행
+      const btnAF = document.getElementById("btnAutoFocus");
+      if(btnAF){
+        btnAF.onclick = sendAutoFocus;
+      }
+    }
+
+    if(document.readyState === "loading"){
+      document.addEventListener("DOMContentLoaded", bind);
+    } else {
+      bind();
+    }
+  })();
+  </script>
 </body>
 </html>

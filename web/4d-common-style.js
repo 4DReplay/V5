@@ -136,12 +136,12 @@ pre{background:#0b1220;border:1px solid var(--line2);border-radius:8px;padding:1
   const path = location.pathname.toLowerCase();
   let CONFIG_URL;
 
-  if (path.includes("/web/")) {
+  if (path.includes("/web//config/")) {
     // /web/xxx.html 로 열리는 페이지 → 같은 폴더에 4d-common.json
-    CONFIG_URL = "4d-common.json";
+    CONFIG_URL = "user-config.json";
   } else {
     // /web 바깥에서 열리는 페이지 → /web/4d-common.json
-    CONFIG_URL = "web/4d-common.json";
+    CONFIG_URL = "/web/config/user-config.json";
   }
 
   const BUST = "?v=" + Date.now(); // 캐시 방지

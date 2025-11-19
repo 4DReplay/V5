@@ -1,45 +1,13 @@
 ﻿<!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <title>4DReplay V5 - Record</title>
+  <meta charset="utf-8" />  
   <meta http-equiv="Cache-Control" content="no-store" />
-  <link rel="icon" type="image/x-icon" href="web/images/4DMain.ico">
-
-  <!-- proxy-safe loader (최대 oms-camera.html 과 동일) -->
+  <script src="/web/oms-common.js"></script>
   <script>
-    (function () {
-      const m = location.pathname.match(/^\/proxy\/([^/]+)/);
-      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
-      const bust = "?v=" + Date.now();
-
-      const CSS = [
-        PROXY_PREFIX + "/web/4d-common-style.css",
-        "./4d-common-style.css"
-      ];
-      const JS = [
-        PROXY_PREFIX + "/web/4d-common-style.js",
-        "./4d-common-style.js"
-      ];
-
-      function loadCSS(list, i=0) {
-        if (i >= list.length) return;
-        const el = document.createElement("link");
-        el.rel = "stylesheet"; el.href = list[i] + bust;
-        el.onerror = () => loadCSS(list, i+1);
-        document.head.appendChild(el);
-      }
-      function loadJS(list, i=0) {
-        if (i >= list.length) return;
-        const el = document.createElement("script");
-        el.defer = true; el.src = list[i] + bust;
-        el.onerror = () => loadJS(list, i+1);
-        document.head.appendChild(el);
-      }
-
-      loadCSS(CSS);
-      loadJS(JS);
-    })();
+    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.applyPageConfig("Record");
+    OMS.initActions();            // oms-actions.js 자동 로딩
   </script>
   <style>
     /* Indicator styles (카메라 스타일과 충돌 안 되게 최소 변경) */
@@ -85,7 +53,7 @@
 <body>
   <!-- Title -->
   <h2 class="page-title">
-    <span id="pageTitle">4DReplay V5 - Record</span>
+    <span id="pageTitle"></span>
     <small id="recordInfo" class="muted" style="font-size:13px;"></small>
   </h2>
 
@@ -284,21 +252,22 @@
     }
 
     function load_prefix() {
-        fetch("/oms/record/prefix_list")
-            .then(r => r.json())
-            .then(res => {
-                if (!res.ok) return;
-                const sel = document.getElementById("prefixSelect");
-                sel.innerHTML = "";
+      console.log(load_prefix)
+      fetch("/oms/record/prefix_list")
+          .then(r => r.json())
+          .then(res => {
+              if (!res.ok) return;
+              const sel = document.getElementById("prefixSelect");
+              sel.innerHTML = "";
 
-                (res.prefix || []).forEach(p => {
-                    const opt = document.createElement("option");
-                    opt.value = p.name;
-                    opt.innerText = `${p.name} (${p.owner})`;
-                    sel.appendChild(opt);
-                });
-            })
-            .catch(err => console.error("prefix load error:", err));
+              (res.prefix || []).forEach(p => {
+                  const opt = document.createElement("option");
+                  opt.value = p.name;
+                  opt.innerText = `${p.name} (${p.owner})`;
+                  sel.appendChild(opt);
+              });
+          })
+          .catch(err => console.error("prefix load error:", err));
     }
 
     function load_record_table() {
