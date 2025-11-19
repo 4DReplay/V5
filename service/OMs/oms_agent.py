@@ -952,7 +952,7 @@ class Orchestrator:
         fd_log.debug("[OMS] _connect_all_cameras")
 
         try:
-            # 초기 상태 설정
+            # 0) Init cam-connect state
             self._cam_connect_set(
                 state="running",
                 message="Camera connect start",
@@ -961,9 +961,7 @@ class Orchestrator:
                 started_at=time.time(),
             )
 
-            # ─────────────────────────────────────
-            # 1) 현재 OMs state 먼저 로드
-            # ─────────────────────────────────────
+            # 1) Load current OMs state from HTTP
             try:
                 raw = _http_fetch(
                     "127.0.0.1",
@@ -992,38 +990,40 @@ class Orchestrator:
             fd_log.debug(f"[OMS] Loaded state: {state}")
             state_cams = state.get("cameras") or []
 
-            # ─────────────────────────────────────
-            # 2) DMPDIP 결정 (카메라/CCD 명령용)
-            #    - 1순위: self.nodes[*].host / ip (127.0.0.1 제외)
-            #    - 2순위: CFG["dmpdip"] (127.0.0.1 제외)
-            #    - 3순위: state["dmpdip"] (127.0.0.1 제외)
-            # ─────────────────────────────────────
-            dmpdip = None
+            # 2) Decide command DMPDIP (never hard-code)
+            command_dmpdip = None
 
-            # 1) 노드 리스트에서 실제 DMS PC IP 찾기
-            if self.nodes:
+            # 2-1) Prefer presd[0].IP from current state
+            for u in state.get("presd") or []:
+                ip = (u or {}).get("IP")
+                if ip:
+                    command_dmpdip = ip
+                    break
+
+            # 2-2) Fallback to state's dmpdip if it looks valid
+            if not command_dmpdip:
+                dmpdip_from_state = state.get("dmpdip")
+                if dmpdip_from_state and dmpdip_from_state != "127.0.0.1":
+                    command_dmpdip = dmpdip_from_state
+
+            # 2-3) Fallback to CFG
+            if not command_dmpdip:
+                cfg_dmpdip = CFG.get("dmpdip")
+                if cfg_dmpdip:
+                    command_dmpdip = cfg_dmpdip
+
+            # 2-4) Fallback to nodes list (DMS host)
+            if not command_dmpdip and self.nodes:
                 for node in self.nodes:
                     if not isinstance(node, dict):
                         continue
-                    cand = (node.get("host") or node.get("ip") or "").strip()
-                    if cand and cand != "127.0.0.1":
-                        dmpdip = cand
+                    ip = node.get("host") or node.get("ip")
+                    if ip:
+                        command_dmpdip = ip
                         break
 
-            # 2) CFG 에 dmpdip 가 설정돼 있으면 사용 (단, 127.0.0.1 은 무시)
-            if (not dmpdip) and CFG.get("dmpdip"):
-                cand = str(CFG.get("dmpdip")).strip()
-                if cand and cand != "127.0.0.1":
-                    dmpdip = cand
-
-            # 3) state["dmpdip"] 도 후보로만 사용 (127.0.0.1 이면 버림)
-            if (not dmpdip) and state.get("dmpdip"):
-                cand = str(state.get("dmpdip")).strip()
-                if cand and cand != "127.0.0.1":
-                    dmpdip = cand
-
-            if not dmpdip:
-                msg = "[camera][connect] DMPDIP not found in nodes/CFG/state (non-loopback)"
+            if not command_dmpdip:
+                msg = "[camera][connect] command DMPDIP not found (state/CFG/nodes)"
                 fd_log.error(msg)
                 self._cam_connect_set(
                     state="error",
@@ -1032,16 +1032,14 @@ class Orchestrator:
                 )
                 return {"ok": False, "error": msg}
 
-            fd_log.info(f"DMPDIP(for camera connect) = {dmpdip}")
+            fd_log.info(f"[cam-connect] command DMPDIP = {command_dmpdip}")
 
-            # ─────────────────────────────────────
-            # 3) CCD / MTd 통신 함수 (항상 dmpdip 사용)
-            # ─────────────────────────────────────
+            # 3) CCD / MTd helper using command_dmpdip
             def _send_ccd(msg, timeout=10.0, retry=3, wait_after=0.8):
                 last_err = None
                 for attempt in range(1, retry + 1):
                     try:
-                        resp, tag = tcp_json_roundtrip(dmpdip, 19765, msg, timeout=timeout)
+                        resp, tag = tcp_json_roundtrip(command_dmpdip, 19765, msg, timeout=timeout)
                         fd_log.debug(f"[cam-connect] CCD response tag={tag}: {resp}")
                         time.sleep(wait_after)
                         return resp
@@ -1051,9 +1049,7 @@ class Orchestrator:
                         time.sleep(0.5)
                 raise last_err
 
-            # ─────────────────────────────────────
-            # 4) 카메라 IP 목록 생성
-            # ─────────────────────────────────────
+            # 4) Build camera IP list / AddCamera payload
             cam_add_list = []
             ip_list = []
             fd_log.debug(f"[CCd] ip list = {state_cams}")
@@ -1065,10 +1061,12 @@ class Orchestrator:
                     continue
 
                 ip_list.append(ip)
-                cam_add_list.append({
-                    "IPAddress": ip,
-                    "Model": cam.get("Model") or cam.get("ModelName") or "BGH1",
-                })
+                cam_add_list.append(
+                    {
+                        "IPAddress": ip,
+                        "Model": cam.get("Model") or cam.get("ModelName") or "BGH1",
+                    }
+                )
 
             if not cam_add_list:
                 self._cam_connect_set(
@@ -1079,13 +1077,11 @@ class Orchestrator:
                 )
                 return {"ok": False, "error": "No cameras in OMs state"}
 
-            # ─────────────────────────────────────
             # 5) MTd connect
-            # ─────────────────────────────────────
             mtd_payload = {
                 "DaemonList": {
-                    "SCd": dmpdip,
-                    "CCd": dmpdip,
+                    "SCd": command_dmpdip,
+                    "CCd": command_dmpdip,
                 },
                 "Section1": "mtd",
                 "Section2": "connect",
@@ -1095,7 +1091,7 @@ class Orchestrator:
                 "To": "MTd",
                 "Token": _make_token(),
                 "Action": "run",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[MTd.connect] request:{mtd_payload}")
@@ -1108,9 +1104,7 @@ class Orchestrator:
                 )
                 return {"ok": False, "step": "MTd.connect", "response": mtd_res}
 
-            # ─────────────────────────────────────
             # 6) CCd Select
-            # ─────────────────────────────────────
             select_payload = {
                 "Section1": "CCd",
                 "Section2": "Select",
@@ -1120,7 +1114,7 @@ class Orchestrator:
                 "To": "EMd",
                 "Token": _make_token(),
                 "Action": "get",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[CCd.Select] request:{select_payload}")
@@ -1133,11 +1127,7 @@ class Orchestrator:
                 )
                 return {"ok": False, "step": "CCd.Select", "response": select_res}
 
-            # 필요하면 여기서 select_res["ResultArray"]를 state_cams에 반영하는 로직도 추가 가능
-
-            # ─────────────────────────────────────
             # 7) AddCamera
-            # ─────────────────────────────────────
             add_payload = {
                 "Cameras": cam_add_list,
                 "Section1": "Camera",
@@ -1148,7 +1138,7 @@ class Orchestrator:
                 "To": "CCd",
                 "Token": _make_token(),
                 "Action": "set",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[CCd.1.AddCamera] request:{add_payload}")
@@ -1161,9 +1151,7 @@ class Orchestrator:
                 )
                 return {"ok": False, "step": "AddCamera", "response": add_res}
 
-            # ─────────────────────────────────────
             # 8) Camera Connect
-            # ─────────────────────────────────────
             conn_payload = {
                 "Section1": "Camera",
                 "Section2": "Operation",
@@ -1173,7 +1161,7 @@ class Orchestrator:
                 "To": "CCd",
                 "Token": _make_token(),
                 "Action": "run",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[CCd.2.Connect] request:{conn_payload}")
@@ -1198,9 +1186,7 @@ class Orchestrator:
                 if ip in status_by_ip:
                     cam["connected"] = status_by_ip[ip]
 
-            # ─────────────────────────────────────
             # 9) GetCameraInfo
-            # ─────────────────────────────────────
             info_payload = {
                 "Cameras": ip_list,
                 "Section1": "Camera",
@@ -1211,7 +1197,7 @@ class Orchestrator:
                 "To": "CCd",
                 "Token": _make_token(),
                 "Action": "get",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[CCd.3.GetCameraInfo] request:{info_payload}")
@@ -1228,9 +1214,7 @@ class Orchestrator:
                 if ip in info_by_ip:
                     cam.setdefault("info", {}).update(info_by_ip[ip])
 
-            # ─────────────────────────────────────
             # 10) GetVideoFormat
-            # ─────────────────────────────────────
             fmt_payload = {
                 "Cameras": ip_list,
                 "Section1": "Camera",
@@ -1241,7 +1225,7 @@ class Orchestrator:
                 "To": "CCd",
                 "Token": _make_token(),
                 "Action": "get",
-                "DMPDIP": dmpdip,
+                "DMPDIP": command_dmpdip,
             }
 
             fd_log.debug(f"[CCd.4.GetVideoFormat] request:{fmt_payload}")
@@ -1257,31 +1241,29 @@ class Orchestrator:
                 ip = cam.get("IP")
                 fmt = fmt_by_ip.get(ip)
                 if fmt:
-                    cam.setdefault("info", {}).update({
-                        "StreamType": fmt.get("StreamType"),
-                        "VideoFormatMain": fmt.get("VideoFormatMain"),
-                        "VideoBitrateMain": fmt.get("VideoBitrateMain"),
-                        "VideoGop": fmt.get("VideoGop"),
-                        "VideoGopMain": fmt.get("VideoGopMain"),
-                        "Codec": fmt.get("Codec"),
-                    })
+                    cam.setdefault("info", {}).update(
+                        {
+                            "StreamType": fmt.get("StreamType"),
+                            "VideoFormatMain": fmt.get("VideoFormatMain"),
+                            "VideoBitrateMain": fmt.get("VideoBitrateMain"),
+                            "VideoGop": fmt.get("VideoGop"),
+                            "VideoGopMain": fmt.get("VideoGopMain"),
+                            "Codec": fmt.get("Codec"),
+                        }
+                    )
 
-            # ─────────────────────────────────────
-            # 11) summary / 상태 필드 (뷰용) 계산
-            # ─────────────────────────────────────
+            # 11) Summary / camera-status in local "state" (for HTTP response, etc.)
             summary = {
                 "cameras": len(state_cams),
                 "connected": sum(1 for c in state_cams if c.get("connected")),
                 "on": sum(
-                    1 for c in state_cams
+                    1
+                    for c in state_cams
                     if c.get("status") == "on" and not c.get("connected")
                 ),
                 "off": sum(1 for c in state_cams if c.get("status") == "off"),
             }
 
-            # This 'state' object is the HTTP-level view used by /oms/state or /oms/status.
-            # You can keep these fields in `state` if some other code reads them,
-            # but DO NOT assign this whole `state` into `STATE[dmpdip]`.
             state["cameras"] = state_cams
             state["summary"] = summary
 
@@ -1296,12 +1278,18 @@ class Orchestrator:
                 camera_status[ip] = "on" if cam.get("connected") else "off"
             state["camera_status"] = camera_status
 
-            # ─────────────────────────────────────
-            # 12) Update only connection STATE (do NOT overwrite whole STATE entry)
-            # ─────────────────────────────────────
-            st = STATE.get(dmpdip) or {}
+            # 12) Update global STATE (merge to existing system state entry)
+            base_key, extra = _latest_state()
+            if not base_key:
+                base_key = command_dmpdip
 
-            # 카메라 리스트 + connected 정보까지 그대로 넣기
+            # Copy existing system-level state so we don't lose connected_daemons, versions, etc.
+            st = (STATE.get(base_key) or {}).copy()
+
+            # Keep dmpdip consistent with where we actually send commands
+            st["dmpdip"] = command_dmpdip
+
+            # Camera list with connection flag
             st["cameras"] = [
                 {
                     "Index": cam.get("Index"),
@@ -1312,18 +1300,18 @@ class Orchestrator:
                         or cam.get("ModelName")
                         or "BGH1"
                     ),
-                    "connected": bool(cam.get("connected")),   # ★ 추가
-                    "status": cam.get("status") or ("on" if cam.get("connected") else "off"),
+                    "connected": bool(cam.get("connected")),
+                    "status": cam.get("status")
+                    or ("on" if cam.get("connected") else "off"),
                 }
                 for cam in state_cams
             ]
 
-            # 연결된 IP 목록 / 상태도 STATE 에 같이 저장
-            st["connected_ips"] = connected_ips          # ★ 추가
-            st["camera_status"] = camera_status          # ★ 추가
+            st["connected_ips"] = connected_ips
+            st["camera_status"] = camera_status
             st["updated_at"] = time.time()
 
-            STATE[dmpdip] = st
+            STATE[base_key] = st
             _state_save()
 
             return {"ok": True}
@@ -1336,6 +1324,7 @@ class Orchestrator:
                 error=str(e),
             )
             return {"ok": False, "error": str(e)}
+
     # main functions
     def run(self):
         threading.Thread(target=self._loop, daemon=True).start()
