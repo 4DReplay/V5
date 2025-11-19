@@ -20,25 +20,30 @@ from src.fd_communication.server_mtd_connect import tcp_json_roundtrip, MtdTrace
 
 ###################################################################################
 # debug
-# logging.debug
+# fd_log.debug
 # powershell -> Get-Content "C:\4DReplay\V5\logs\OMs\server.log" -Wait -Tail 20
-# logging.debug(f"{value} message")
+# fd_log.debug(f"{value} message")
 ###################################################################################
 import logging
 logfile = r"C:\4DReplay\V5\logs\OMs\server.log"
 os.makedirs(os.path.dirname(logfile), exist_ok=True)
+# 1) root logger 설정
 logger = logging.getLogger()  # root logger
-logger.setLevel(logging.DEBUG)
+logger.setLevel(logging.DEBUG)  # ✅ 레벨 상수 사용
 # 핸들러 중복 방지
 if not logger.handlers:
     fh = logging.FileHandler(logfile, encoding='utf-8')
-    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+    fmt = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
     fh.setFormatter(fmt)
     logger.addHandler(fh)
-logging.debug("🔥 Logging now works - test message")
+# 2) 이름 있는 로거 생성 (root 설정을 그대로 상속받음)
+fd_log = logging.getLogger("fd_log")  # ✅ 이제 여기서 정의
+# 3) 사용
+fd_log.info("🔥 Logging now works")
 
-
-
+# ─────────────────────────────────────────────────────────────
+# --- Path
+# ─────────────────────────────────────────────────────────────
 PROCESS_ALIAS_DEFAULT = {
     "MTd":  "Message Transport",
     "EMd":  "Enterprise Manager",
@@ -65,43 +70,35 @@ def _tagged(scope: str, mode: str, msg: str | None) -> str:
         return s
     return f"{prefix} {s}"
 
-# ─────────────────────────────────────────────────────────────
 # --- Paths ---------------------------------------------------
-# ─────────────────────────────────────────────────────────────
-env_root = os.environ.get("OMS_ROOT")
-if not env_root:
-    env_root = os.environ.get("FOURD_V5_ROOT") or os.environ.get("V5_ROOT")
-if env_root and Path(env_root).exists():
-    V5_ROOT = Path(env_root).resolve()
-else:
-    HERE = Path(__file__).resolve()
-    V5_ROOT = HERE
-    for i in range(1, 8):
-        cand = HERE.parents[i-1]
-        if (cand / "config" / "oms_config.json").exists():
-            V5_ROOT = cand
-            break
-
-# --- Subdirectories -------------------------------------------
-WEB = V5_ROOT / "web"
-CONFIG_DIR = V5_ROOT / "config"
-CFG_OMS = CONFIG_DIR / "oms_config.json"         # 기존 config editor에서 참고
-CFG_RECORD = CONFIG_DIR / "record_config.json"   # prefix 목록 API가 참고
-
-# --- Logs ------------------------------------------------------
-LOGD = Path(os.environ.get("OMS_LOG_DIR", str(V5_ROOT / "logs" / "OMS")))
+# V5 루트:  C:\4DReplay\V5  (기본)  — 필요시 OMS_ROOT/OMS_LOG_DIR로 오버라이드 가능
+V5_ROOT = Path(os.environ.get("OMS_ROOT", Path(__file__).resolve().parents[2]))
+LOGD    = Path(os.environ.get("OMS_LOG_DIR", str(V5_ROOT / "logs" / "OMS")))
 LOGD.mkdir(parents=True, exist_ok=True)
 
-STATE_FILE = LOGD / "oms_state.json"
-VERS_FILE = LOGD / "oms_versions.json"
-TRACE_DIR = LOGD / "trace"
+STATE_FILE = LOGD / "oms_state.json"         # 연결/상태 스냅샷
+VERS_FILE  = LOGD / "oms_versions.json"      # 버전 캐시(선택)
+TRACE_DIR  = LOGD / "trace"                  # 개별 트레이스 파일 모음
 TRACE_DIR.mkdir(parents=True, exist_ok=True)
 
-# --- Python import path ---------------------------------
-if str(V5_ROOT) not in sys.path:
-    sys.path.insert(0, str(V5_ROOT))
-if str(V5_ROOT / "src") not in sys.path:
-    sys.path.insert(0, str(V5_ROOT / "src"))
+HERE = Path(__file__).resolve()
+env_root = os.environ.get("FOURD_V5_ROOT") or os.environ.get("V5_ROOT")
+if env_root and Path(env_root).exists():
+    ROOT = Path(env_root).resolve()
+else:
+    ROOT = HERE
+    for i in range(1, 7):
+        cand = HERE.parents[i-1]
+        if (cand / "config" / "oms_config.json").exists():
+            ROOT = cand
+            break
+
+# ---- MTd TCP util
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+if str(ROOT/"src") not in sys.path: sys.path.insert(0, str(ROOT/"src"))
+
+WEB  = ROOT / "web"
+CFG  = ROOT / "config" / "oms_config.json"
 
 # ─────────────────────────────────────────────────────────────
 # --- hard-coded timeouts ---
@@ -113,6 +110,18 @@ STATUS_FETCH_TIMEOUT = 10.0
 # state
 # ─────────────────────────────────────────────────────────────
 
+# connection state 
+STATE = {
+    # dmpdip: {
+    #   "mtd_host": "...",
+    #   "mtd_port": 19765,
+    #   "daemon_map": {name: ip, ...},
+    #   "connected_daemons": {name: bool, ...},   # SPd↔MMd 정규화 반영
+    #   "presd": [{"IP":..., "Mode":"replay", "Cameras":[...]}],
+    #   "cameras": [{"Index":..,"IP":..,"CameraModel":..}, ...],
+    #   "updated_at": epoch
+    # }
+}
 def _state_load():
     global STATE
     try:
@@ -122,14 +131,14 @@ def _state_load():
         pass
 def _state_save():
     try:
-        logging.debug(f"[STATE_SAVE] content = {json.dumps(STATE, ensure_ascii=False)}")
+        fd_log.debug(f"[STATE_SAVE] content = {json.dumps(STATE, ensure_ascii=False)}")
         STATE_FILE.write_text(
             json.dumps(STATE, ensure_ascii=False, indent=2),
             encoding="utf-8"
         )
-        logging.debug("/oms/state/upsert _state_save")
+        fd_log.debug("/oms/state/upsert _state_save")
     except Exception as e:
-        logging.error(f"/oms/state/upsert _state_save ERROR: {e}")
+        fd_log.error(f"/oms/state/upsert _state_save ERROR: {e}")
 def _latest_state():
     if not STATE:
         return None, {}
@@ -153,7 +162,34 @@ def _latest_state():
         "daemon_map":        st.get("daemon_map", {}),
         "updated_at":        st.get("updated_at", 0),
     }
+def _clear_connect_state() -> bool:
+    """
+    CONNECTED 스냅샷을 메모리/디스크 모두 초기화.
+    - STATE.clear()
+    - STATE_FILE 삭제
+    실패해도 예외는 바깥으로 올리지 않고 False 반환.
+    """
+    try:
+        STATE.clear()
+        try:
+            STATE_FILE.unlink(missing_ok=True)
+        except Exception:
+            pass
+        return True
+    except Exception:
+        return False
 
+
+def inward_name(n: str) -> str:  return "MMd" if n == "SPd" else n
+def _make_token() -> str:
+    ts = int(time.time() * 1000)
+    lt = time.localtime()
+    return f"{lt.tm_hour:02d}{lt.tm_min:02d}_{ts}_{hex(ts)[-3:]}"
+
+
+# ─────────────────────────────────────────────────────────────
+# Util
+# ─────────────────────────────────────────────────────────────
 def _same_subnet(ip1, ip2, mask_bits=24):
     a = list(map(int, ip1.split(".")))
     b = list(map(int, ip2.split(".")))
@@ -212,12 +248,12 @@ def _read_proc_snapshot(host, port, proc_name, timeout=4.0):
 def _is_restarted(base: dict, cur: dict, sent_at: float, saw_down: bool) -> bool:
     """
     재시작 '증거' 기반 판정:
-      - cur.running 이 True 여야 함
-      - 아래 중 하나라도 만족하면 OK
-         * PID 변경
-         * start_ts 가 sent_at 이후
-         * uptime 이 뚜렷하게 리셋(예: base.uptime 이 있었고, cur.uptime < 0.5*base.uptime 또는 cur.uptime <= 5)
-      - 위 지표가 전혀 없으면, POST 이후 down->up 전이가 있었는지(saw_down)로 판정
+    - cur.running 이 True 여야 함
+    - 아래 중 하나라도 만족하면 OK
+        * PID 변경
+        * start_ts 가 sent_at 이후
+        * uptime 이 뚜렷하게 리셋(예: base.uptime 이 있었고, cur.uptime < 0.5*base.uptime 또는 cur.uptime <= 5)
+    - 위 지표가 전혀 없으면, POST 이후 down->up 전이가 있었는지(saw_down)로 판정
     """
     if not cur or not cur.get("running"):
         return False
@@ -239,10 +275,11 @@ def _is_restarted(base: dict, cur: dict, sent_at: float, saw_down: bool) -> bool
         return True
     # 메타정보가 전혀 없으면, down→up 전이로만 인정
     meta_present = any(base.get(k) is not None for k in ("pid","start_ts","uptime")) \
-                   or any(cur.get(k) is not None for k in ("pid","start_ts","uptime"))
+                or any(cur.get(k) is not None for k in ("pid","start_ts","uptime"))
     if not meta_present:
         return bool(saw_down)
     return False
+
 
 # ─────────────────────────────────────────────────────────────
 # ping
@@ -293,7 +330,7 @@ def _ping_check(ip: str, method: str = "auto", port: int = 554, timeout_sec: flo
     """
     method: 'tcp' | 'icmp' | 'auto'
     반환: (alive, used_method)
-      alive: True/False/None(None은 판단불가)
+    alive: True/False/None(None은 판단불가)
     """
     m = (method or "auto").lower()
     if m == "tcp":
@@ -353,43 +390,6 @@ def _update_camera_ping_state(timeout_sec: float = 0.8) -> None:
     STATE[key] = st
 
 
-# ─────────────────────────────────────────────────────────────
-# connection state 
-# ─────────────────────────────────────────────────────────────
-STATE = {
-    # dmpdip: {
-    #   "mtd_host": "...",
-    #   "mtd_port": 19765,
-    #   "daemon_map": {name: ip, ...},
-    #   "connected_daemons": {name: bool, ...},   # SPd↔MMd 정규화 반영
-    #   "presd": [{"IP":..., "Mode":"replay", "Cameras":[...]}],
-    #   "cameras": [{"Index":..,"IP":..,"CameraModel":..}, ...],
-    #   "updated_at": epoch
-    # }
-}
-
-def outward_name(n: str) -> str: return "SPd" if n == "MMd" else n
-def inward_name(n: str) -> str:  return "MMd" if n == "SPd" else n
-def _make_token() -> str:
-    ts = int(time.time() * 1000)
-    lt = time.localtime()
-    return f"{lt.tm_hour:02d}{lt.tm_min:02d}_{ts}_{hex(ts)[-3:]}"
-def _clear_connect_state() -> bool:
-    """
-    CONNECTED 스냅샷을 메모리/디스크 모두 초기화.
-    - STATE.clear()
-    - STATE_FILE 삭제
-    실패해도 예외는 바깥으로 올리지 않고 False 반환.
-    """
-    try:
-        STATE.clear()
-        try:
-            STATE_FILE.unlink(missing_ok=True)
-        except Exception:
-            pass
-        return True
-    except Exception:
-        return False
 def append_mtd_debug(direction, host, port, message=None, response=None, error=None, tag=None):
     """
     direction: 'send' | 'recv' | 'error'
@@ -413,23 +413,6 @@ def append_mtd_debug(direction, host, port, message=None, response=None, error=N
     except Exception:
         # 로깅 실패가 서비스에 영향 주지 않도록 무시
         pass
-
-# ─────────────────────────────────────────────────────────────
-# Camera Conenct
-# ─────────────────────────────────────────────────────────────
-def recalc_summary(state):
-    cams = state.get("cameras", [])
-    total = len(cams)
-    connected = sum(1 for c in cams if c.get("connected"))
-    on = sum(1 for c in cams if (not c.get("connected")) and c.get("status") == "on")
-    off = total - connected - on
-
-    state["summary"] = {
-    "cameras": total,
-    "connected": connected,
-    "on": on,
-    "off": off,
-    }
 
 # ─────────────────────────────────────────────────────────────
 # Static helpers
@@ -476,7 +459,7 @@ def _http_fetch(host:str, port:int, method:str, path:str, body:bytes|None, heade
 def _state_for_host(host: str) -> dict:
     # --- NEW (module-level): pick best-matching STATE for a node host
     """노드 host와 가장 그럴듯한 STATE 항목을 선택한다.
-       우선순위: (1) 키 == host  (2) daemon_map 값 중 host 포함  (3) updated_at 최신
+    우선순위: (1) 키 == host  (2) daemon_map 값 중 host 포함  (3) updated_at 최신
     """
     best = None
     best_ts = -1.0
@@ -500,6 +483,7 @@ def _state_for_host(host: str) -> dict:
 # ─────────────────────────────────────────────────────────────
 # Record
 # ─────────────────────────────────────────────────────────────
+
 def load_record_prefix_list():
     """record_config.json에서 prefix 목록 읽는 함수"""
     try:
@@ -511,7 +495,7 @@ def load_record_prefix_list():
 
     except Exception as e:
         return {"ok": False, "message": str(e)}
-    
+
 # ─────────────────────────────────────────────────────────────
 # Orchestrator
 # ─────────────────────────────────────────────────────────────
@@ -579,6 +563,7 @@ class Orchestrator:
             "updated_at": 0.0,
         }
         self._cam_connect_lock = threading.RLock()
+        _state_load()
 
     # ── restart state helpers
     def _restart_get(self):
@@ -964,7 +949,7 @@ class Orchestrator:
     # connect camera
     def _connect_all_cameras(self):
         logger = logging.getLogger("OMS")
-        logger.debug("[OMS] _connect_all_cameras")
+        fd_log.debug("[OMS] _connect_all_cameras")
 
         try:
             # 초기 상태 설정
@@ -976,21 +961,9 @@ class Orchestrator:
                 started_at=time.time(),
             )
 
-            # CCD 통신 함수
-            def _send_ccd(msg, timeout=10.0, retry=3, wait_after=0.8):
-                last_err = None
-                for attempt in range(1, retry + 1):
-                    try:
-                        resp, tag = tcp_json_roundtrip("127.0.0.1", 19765, msg, timeout=timeout)
-                        logger.debug(f"[cam-connect] CCD response tag={tag}: {resp}")
-                        time.sleep(wait_after)
-                        return resp
-                    except MtdTraceError as e:
-                        last_err = e
-                        logger.warning(f"[cam-connect] attempt {attempt}/{retry} failed: {e}")
-                        time.sleep(0.5)
-                raise last_err
-
+            # ─────────────────────────────────────
+            # 1) 현재 OMs state 먼저 로드
+            # ─────────────────────────────────────
             try:
                 raw = _http_fetch(
                     "127.0.0.1",
@@ -1001,29 +974,93 @@ class Orchestrator:
                     {},
                     timeout=3.0,
                 )
-                logger.debug(f"[OMS] /oms/state raw({type(raw)}): {raw}")
+                fd_log.debug(f"[OMS] /oms/state raw({type(raw)}): {raw}")
 
                 raw_body = self._extract_http_body(raw)
-                # dict directly
-                if isinstance(raw_body, dict):      state = raw_body
-                elif isinstance(raw_body, bytes):   state = json.loads(raw_body.decode("utf-8"))
-                elif isinstance(raw_body, str):     state = json.loads(raw_body)
+                if isinstance(raw_body, dict):
+                    state = raw_body
+                elif isinstance(raw_body, bytes):
+                    state = json.loads(raw_body.decode("utf-8"))
+                elif isinstance(raw_body, str):
+                    state = json.loads(raw_body)
                 else:
-                    raise ValueError(f"Unsupported HTTP body type: {type(raw_body)}")                
+                    raise ValueError(f"Unsupported HTTP body type: {type(raw_body)}")
             except Exception as e:
                 logger.error(f"[OMS] FAILED to load state: {e}")
                 state = {}
 
-            logger.debug(f"[OMS] Loaded state: {state}")
+            fd_log.debug(f"[OMS] Loaded state: {state}")
             state_cams = state.get("cameras") or []
-            # 카메라 IP 목록 생성
+
+            # ─────────────────────────────────────
+            # 2) DMPDIP 결정 (카메라/CCD 명령용)
+            #    - 1순위: self.nodes[*].host / ip (127.0.0.1 제외)
+            #    - 2순위: CFG["dmpdip"] (127.0.0.1 제외)
+            #    - 3순위: state["dmpdip"] (127.0.0.1 제외)
+            # ─────────────────────────────────────
+            dmpdip = None
+
+            # 1) 노드 리스트에서 실제 DMS PC IP 찾기
+            if self.nodes:
+                for node in self.nodes:
+                    if not isinstance(node, dict):
+                        continue
+                    cand = (node.get("host") or node.get("ip") or "").strip()
+                    if cand and cand != "127.0.0.1":
+                        dmpdip = cand
+                        break
+
+            # 2) CFG 에 dmpdip 가 설정돼 있으면 사용 (단, 127.0.0.1 은 무시)
+            if (not dmpdip) and CFG.get("dmpdip"):
+                cand = str(CFG.get("dmpdip")).strip()
+                if cand and cand != "127.0.0.1":
+                    dmpdip = cand
+
+            # 3) state["dmpdip"] 도 후보로만 사용 (127.0.0.1 이면 버림)
+            if (not dmpdip) and state.get("dmpdip"):
+                cand = str(state.get("dmpdip")).strip()
+                if cand and cand != "127.0.0.1":
+                    dmpdip = cand
+
+            if not dmpdip:
+                msg = "[camera][connect] DMPDIP not found in nodes/CFG/state (non-loopback)"
+                fd_log.error(msg)
+                self._cam_connect_set(
+                    state="error",
+                    message=msg,
+                    error=msg,
+                )
+                return {"ok": False, "error": msg}
+
+            fd_log.info(f"DMPDIP(for camera connect) = {dmpdip}")
+
+            # ─────────────────────────────────────
+            # 3) CCD / MTd 통신 함수 (항상 dmpdip 사용)
+            # ─────────────────────────────────────
+            def _send_ccd(msg, timeout=10.0, retry=3, wait_after=0.8):
+                last_err = None
+                for attempt in range(1, retry + 1):
+                    try:
+                        resp, tag = tcp_json_roundtrip(dmpdip, 19765, msg, timeout=timeout)
+                        fd_log.debug(f"[cam-connect] CCD response tag={tag}: {resp}")
+                        time.sleep(wait_after)
+                        return resp
+                    except MtdTraceError as e:
+                        last_err = e
+                        logger.warning(f"[cam-connect] attempt {attempt}/{retry} failed: {e}")
+                        time.sleep(0.5)
+                raise last_err
+
+            # ─────────────────────────────────────
+            # 4) 카메라 IP 목록 생성
+            # ─────────────────────────────────────
             cam_add_list = []
             ip_list = []
-            logger.debug(f"[CCd] ip list = {state_cams}")
+            fd_log.debug(f"[CCd] ip list = {state_cams}")
 
             for cam in state_cams:
                 ip = cam.get("IP") or cam.get("IPAddress")
-                logger.debug(f"[CCd] {ip}")
+                fd_log.debug(f"[CCd] {ip}")
                 if not ip:
                     continue
 
@@ -1042,9 +1079,65 @@ class Orchestrator:
                 )
                 return {"ok": False, "error": "No cameras in OMs state"}
 
-            dmpdip = state.get("dmpdip") or "10.82.104.210"
+            # ─────────────────────────────────────
+            # 5) MTd connect
+            # ─────────────────────────────────────
+            mtd_payload = {
+                "DaemonList": {
+                    "SCd": dmpdip,
+                    "CCd": dmpdip,
+                },
+                "Section1": "mtd",
+                "Section2": "connect",
+                "Section3": "",
+                "SendState": "request",
+                "From": "4DOMS",
+                "To": "MTd",
+                "Token": _make_token(),
+                "Action": "run",
+                "DMPDIP": dmpdip,
+            }
 
-            # --- 1) AddCamera ---
+            fd_log.debug(f"[MTd.connect] request:{mtd_payload}")
+            mtd_res = _send_ccd(mtd_payload, timeout=10.0, wait_after=0.3)
+            if int(mtd_res.get("ResultCode", 0)) != 1000:
+                self._cam_connect_set(
+                    state="error",
+                    message="[system][connect] MTd connect failed",
+                    error=f"MTd connect failed: {mtd_res}",
+                )
+                return {"ok": False, "step": "MTd.connect", "response": mtd_res}
+
+            # ─────────────────────────────────────
+            # 6) CCd Select
+            # ─────────────────────────────────────
+            select_payload = {
+                "Section1": "CCd",
+                "Section2": "Select",
+                "Section3": "",
+                "SendState": "request",
+                "From": "4DOMS",
+                "To": "EMd",
+                "Token": _make_token(),
+                "Action": "get",
+                "DMPDIP": dmpdip,
+            }
+
+            fd_log.debug(f"[CCd.Select] request:{select_payload}")
+            select_res = _send_ccd(select_payload, timeout=10.0, wait_after=0.3)
+            if int(select_res.get("ResultCode", 0)) != 1000:
+                self._cam_connect_set(
+                    state="error",
+                    message="[camera][connect] CCd Select failed",
+                    error=f"CCd Select failed: {select_res}",
+                )
+                return {"ok": False, "step": "CCd.Select", "response": select_res}
+
+            # 필요하면 여기서 select_res["ResultArray"]를 state_cams에 반영하는 로직도 추가 가능
+
+            # ─────────────────────────────────────
+            # 7) AddCamera
+            # ─────────────────────────────────────
             add_payload = {
                 "Cameras": cam_add_list,
                 "Section1": "Camera",
@@ -1058,7 +1151,7 @@ class Orchestrator:
                 "DMPDIP": dmpdip,
             }
 
-            logger.debug(f"[CCd.1.AddCamera] request:{add_payload}")
+            fd_log.debug(f"[CCd.1.AddCamera] request:{add_payload}")
             add_res = _send_ccd(add_payload, timeout=10.0, wait_after=0.3)
             if int(add_res.get("ResultCode", 0)) != 1000:
                 self._cam_connect_set(
@@ -1068,7 +1161,9 @@ class Orchestrator:
                 )
                 return {"ok": False, "step": "AddCamera", "response": add_res}
 
-            # --- 2) Connect ---
+            # ─────────────────────────────────────
+            # 8) Camera Connect
+            # ─────────────────────────────────────
             conn_payload = {
                 "Section1": "Camera",
                 "Section2": "Operation",
@@ -1081,7 +1176,7 @@ class Orchestrator:
                 "DMPDIP": dmpdip,
             }
 
-            logger.debug(f"[CCd.2.Connect] request:{conn_payload}")
+            fd_log.debug(f"[CCd.2.Connect] request:{conn_payload}")
             conn_res = _send_ccd(conn_payload, timeout=30.0, wait_after=0.3)
 
             if int(conn_res.get("ResultCode", 0)) != 1000:
@@ -1092,7 +1187,6 @@ class Orchestrator:
                 )
                 return {"ok": False, "step": "Connect", "response": conn_res}
 
-            # 연결 결과 적용
             status_by_ip = {
                 c["IPAddress"]: (c.get("Status") == "OK")
                 for c in conn_res.get("Cameras", [])
@@ -1104,7 +1198,9 @@ class Orchestrator:
                 if ip in status_by_ip:
                     cam["connected"] = status_by_ip[ip]
 
-            # --- 3) GetCameraInfo ---
+            # ─────────────────────────────────────
+            # 9) GetCameraInfo
+            # ─────────────────────────────────────
             info_payload = {
                 "Cameras": ip_list,
                 "Section1": "Camera",
@@ -1118,7 +1214,7 @@ class Orchestrator:
                 "DMPDIP": dmpdip,
             }
 
-            logger.debug(f"[CCd.3.GetCameraInfo] request:{info_payload}")
+            fd_log.debug(f"[CCd.3.GetCameraInfo] request:{info_payload}")
             info_res = _send_ccd(info_payload, timeout=10.0, wait_after=0.3)
 
             info_by_ip = {
@@ -1132,7 +1228,9 @@ class Orchestrator:
                 if ip in info_by_ip:
                     cam.setdefault("info", {}).update(info_by_ip[ip])
 
-            # --- 4) GetVideoFormat ---
+            # ─────────────────────────────────────
+            # 10) GetVideoFormat
+            # ─────────────────────────────────────
             fmt_payload = {
                 "Cameras": ip_list,
                 "Section1": "Camera",
@@ -1146,7 +1244,7 @@ class Orchestrator:
                 "DMPDIP": dmpdip,
             }
 
-            logger.debug(f"[CCd.4.GetVideoFormat] request:{fmt_payload}")
+            fd_log.debug(f"[CCd.4.GetVideoFormat] request:{fmt_payload}")
             fmt_res = _send_ccd(fmt_payload, timeout=10.0, wait_after=0.3)
 
             fmt_by_ip = {
@@ -1168,23 +1266,28 @@ class Orchestrator:
                         "Codec": fmt.get("Codec"),
                     })
 
-            # --- summary 계산 ---
+            # ─────────────────────────────────────
+            # 11) summary / 상태 필드 (뷰용) 계산
+            # ─────────────────────────────────────
             summary = {
                 "cameras": len(state_cams),
                 "connected": sum(1 for c in state_cams if c.get("connected")),
-                "on": sum(1 for c in state_cams if c.get("status") == "on" and not c.get("connected")),
+                "on": sum(
+                    1 for c in state_cams
+                    if c.get("status") == "on" and not c.get("connected")
+                ),
                 "off": sum(1 for c in state_cams if c.get("status") == "off"),
             }
 
+            # This 'state' object is the HTTP-level view used by /oms/state or /oms/status.
+            # You can keep these fields in `state` if some other code reads them,
+            # but DO NOT assign this whole `state` into `STATE[dmpdip]`.
             state["cameras"] = state_cams
             state["summary"] = summary
 
-            # ★★★★★ ADD THIS ★★★★★
-            # 연결된 카메라 IP 목록
             connected_ips = [ip for ip, ok in status_by_ip.items() if ok]
             state["connected_ips"] = connected_ips
 
-            # 카메라 상태 맵
             camera_status = {}
             for cam in state_cams:
                 ip = cam.get("IP")
@@ -1192,14 +1295,35 @@ class Orchestrator:
                     continue
                 camera_status[ip] = "on" if cam.get("connected") else "off"
             state["camera_status"] = camera_status
-            # ★★★★★ END ★★★★★
 
-            # legacy 필드 제거 금지 (절대 제거하지 말 것)
-            # state.pop("connected_ips", None)  # 지우면 안 됨
-            # state.pop("camera_status", None)  # 지우면 안 됨
+            # ─────────────────────────────────────
+            # 12) Update only connection STATE (do NOT overwrite whole STATE entry)
+            # ─────────────────────────────────────
+            st = STATE.get(dmpdip) or {}
 
-            dmpdip = "127.0.0.1"
-            STATE[dmpdip] = state
+            # 카메라 리스트 + connected 정보까지 그대로 넣기
+            st["cameras"] = [
+                {
+                    "Index": cam.get("Index"),
+                    "IP": cam.get("IP") or cam.get("IPAddress"),
+                    "CameraModel": (
+                        cam.get("CameraModel")
+                        or cam.get("Model")
+                        or cam.get("ModelName")
+                        or "BGH1"
+                    ),
+                    "connected": bool(cam.get("connected")),   # ★ 추가
+                    "status": cam.get("status") or ("on" if cam.get("connected") else "off"),
+                }
+                for cam in state_cams
+            ]
+
+            # 연결된 IP 목록 / 상태도 STATE 에 같이 저장
+            st["connected_ips"] = connected_ips          # ★ 추가
+            st["camera_status"] = camera_status          # ★ 추가
+            st["updated_at"] = time.time()
+
+            STATE[dmpdip] = st
             _state_save()
 
             return {"ok": True}
@@ -1336,7 +1460,7 @@ class Orchestrator:
                     status_code, body = raw
                     headers = None
                 else:
-                    logging.debug(f"[Connect.5.2] unexpected _http_fetch tuple length: {len(raw)}")
+                    fd_log.debug(f"[Connect.5.2] unexpected _http_fetch tuple length: {len(raw)}")
                     return {}
 
                 raw = body
@@ -1347,23 +1471,23 @@ class Orchestrator:
                 try:
                     payload = json.loads(raw.decode("utf-8", "ignore"))
                 except Exception as e:
-                    logging.debug(f"[Connect.5.2] JSON decode failed: {e}")
+                    fd_log.debug(f"[Connect.5.2] JSON decode failed: {e}")
                     return {}
             elif isinstance(raw, str):
                 try:
                     payload = json.loads(raw)
                 except Exception as e:
-                    logging.debug(f"[Connect.5.2] JSON loads failed: {e}")
+                    fd_log.debug(f"[Connect.5.2] JSON loads failed: {e}")
                     return {}
             elif isinstance(raw, dict):
                 payload = raw
             else:
-                logging.debug(f"[Connect.5.2] unexpected body type after unwrap: {type(raw)}")
+                fd_log.debug(f"[Connect.5.2] unexpected body type after unwrap: {type(raw)}")
                 return {}
 
             # MTd proxy 응답 구조: {"ok": true, "response": {...}} 라고 가정
             resp = payload.get("response") or {}
-            logging.debug(f"[Connect.5.2] _request_version response = {resp!r}")
+            fd_log.debug(f"[Connect.5.2] _request_version response = {resp!r}")
             return resp
         def _get_connected_map_from_status(orch, dmpdip):
             """
@@ -1388,7 +1512,7 @@ class Orchestrator:
                         status_code, body = raw
                         headers = None
                     else:
-                        logging.debug(f"[Connect.5.1] unexpected _http_fetch tuple length: {len(raw)}")
+                        fd_log.debug(f"[Connect.5.1] unexpected _http_fetch tuple length: {len(raw)}")
                         return {}
 
                     raw = body
@@ -1403,7 +1527,7 @@ class Orchestrator:
                 elif isinstance(raw, dict):
                     status_json = raw
                 else:
-                    logging.debug(f"[Connect.5.1] unexpected _http_fetch type after unwrap: {type(raw)}")
+                    fd_log.debug(f"[Connect.5.1] unexpected _http_fetch type after unwrap: {type(raw)}")
                     return {}
 
                 extra = (status_json.get("extra") or {}) if isinstance(status_json, dict) else {}
@@ -1438,7 +1562,7 @@ class Orchestrator:
                 elif isinstance(raw, dict):
                     state_json = raw
                 else:
-                    logging.debug(f"[State] unexpected _http_fetch type: {type(raw)}")
+                    fd_log.debug(f"[State] unexpected _http_fetch type: {type(raw)}")
                     state_json = {}
 
                 # /oms/state 가 이미 extra 구조를 그대로 줄 수도 있고,
@@ -1448,7 +1572,7 @@ class Orchestrator:
                     extra = state_json
 
                 orch.state = extra or {}
-                logging.debug(f"[State] reload_state_from_server: orch.state = {orch.state}")
+                fd_log.debug(f"[State] reload_state_from_server: orch.state = {orch.state}")
 
             except Exception as e:
                 orch._log(f"[OMS][WARN] reload_state_from_server failed: {e}")
@@ -1601,7 +1725,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────────────────────────────
             # 1. EMd Daemon Connect
             # ─────────────────────────────────────────────────────────────────────────────────────
-            logging.debug(f"[Connect.1] Daemon Connect")
+            fd_log.debug(f"[Connect.1] Daemon Connect")
             orch._sys_connect_set(message="Essential Daemons connect")
             r1 = via_mtd_connect(
                 "Connect Essential Daemons",
@@ -1614,7 +1738,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────────────────────────────
             # 2. CCd Select
             # ─────────────────────────────────────────────────────────────────────────────────────
-            logging.debug(f"[Connect.2] CCd.Select")
+            fd_log.debug(f"[Connect.2] CCd.Select")
             orch._sys_connect_set(message="Camera Information")
             pkt2 = {
                 "Section1": "CCd",
@@ -1647,7 +1771,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────────────────────────────
             # 3. CCd.Select 결과를 기반으로 PreSd/Camera 리스트 구성 후 PCd에 전달 ---
             # ─────────────────────────────────────────────────────────────────────────────────────
-            logging.debug(f"[Connect.3] PreSd Conenct")
+            fd_log.debug(f"[Connect.3] PreSd Conenct")
             presd_map = {}
             cameras   = []
             switch_ips = set()   # 🔹 스위치 IP 저장용 (중복 제거)
@@ -1733,7 +1857,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────
             #  4. AIc Connect (AI Clients)
             # ─────────────────────────────────────────────────────────────
-            logging.debug(f"[Connect.4] AIc Connect (AI Clients)")
+            fd_log.debug(f"[Connect.4] AIc Connect (AI Clients)")
             try:
                 aic_list = _build_aic_list_from_status(orch)
                 if aic_list and isinstance(aic_list, dict):
@@ -1823,7 +1947,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────
             #  5. Get Version
             # ─────────────────────────────────────────────────────────────
-            logging.debug(f"[Connect.5] Get Version")
+            fd_log.debug(f"[Connect.5] Get Version")
             orch._sys_connect_set(message="Get Daemon Version ...")
             _reload_state_from_server(orch)
             try:
@@ -1878,7 +2002,7 @@ class Orchestrator:
 
                 # preparing camera infomation
                 # 5-2) Switch Model 정보 수집                
-                logging.debug(f">> Get Switch Infomation: {switch_ips}")
+                fd_log.debug(f">> Get Switch Infomation: {switch_ips}")
                 if switch_ips:
                     switches_info = []
                     last_error = None
@@ -1897,7 +2021,7 @@ class Orchestrator:
                                 "Switches": [{"ip": ip} for ip in switch_ips],
                             }
 
-                            logging.debug(
+                            fd_log.debug(
                                 f"<< Get Switch Infomation try {attempt}/{MAX_TRY}: {switch_ips}"
                             )
 
@@ -1912,7 +2036,7 @@ class Orchestrator:
                                 if not ip:
                                     continue
 
-                                logging.debug(
+                                fd_log.debug(
                                     f">> Switch IP:{ip}, Brand:{brand}, Model:{model}"
                                 )
                                 switches_info.append({
@@ -1926,7 +2050,7 @@ class Orchestrator:
                                 break
 
                             # 여기까지 왔다는 건 응답은 왔는데 Switches 가 비었거나 유효한 IP가 없는 경우
-                            logging.debug(
+                            fd_log.debug(
                                 f"[OMS][WARN] Switch info empty on try {attempt}/{MAX_TRY}"
                             )
 
@@ -1973,7 +2097,7 @@ class Orchestrator:
                             )
                         orch._sys_connect_set(message="Switch Infomation Fail")
                 else:
-                    logging.debug(">> Not Switch IP")
+                    fd_log.debug(">> Not Switch IP")
                     # 스위치가 아예 없는 경우는 바로 완료 처리
                     orch._sys_connect_set(message="Finish Connection")
 
@@ -2037,7 +2161,7 @@ class Orchestrator:
             # ─────────────────────────────────
             # 2. PreSd 여러 IP 요청 (presd_ips 인자는 그대로 사용)
             # ─────────────────────────────────
-            logging.debug(f"[Connect.5.3] presd_ips = {presd_ips}")
+            fd_log.debug(f"[Connect.5.3] presd_ips = {presd_ips}")
             orch._sys_connect_set(message="Get PreSd Version ...")
 
             # ─────────────────────────────────
@@ -2077,7 +2201,7 @@ class Orchestrator:
                         if ip:
                             presd_ips.append(str(ip).strip())      
 
-            logging.debug(f"[Connect.5.3] presd_ips = {presd_ips}")
+            fd_log.debug(f"[Connect.5.3] presd_ips = {presd_ips}")
             if presd_ips:                
                 # ---- NEW: PreSd Version 요청을 '한 번에 하나의 패킷'으로 묶어서 보냄 ----
                 try:
@@ -2100,11 +2224,11 @@ class Orchestrator:
                         "Expect": expect
                     }
 
-                    logging.debug(f"[Connect.5.3] Request PreSd version (batched) → {msg}")
+                    fd_log.debug(f"[Connect.5.3] Request PreSd version (batched) → {msg}")
 
                     # ⬇ 이 호출은 기존 _request_version 대신 직접 MTD 요청 사용
                     resp = tcp_json_roundtrip("127.0.0.1", 19765, msg, timeout=7.0)[0]
-                    logging.debug(f"[Connect.5.3] PreSd batched version response = {resp}")
+                    fd_log.debug(f"[Connect.5.3] PreSd batched version response = {resp}")
                     
                     # ---- response parcing
                     resp_versions = resp.get("Version", {})
@@ -2123,11 +2247,11 @@ class Orchestrator:
                             "version": v_presd.get("version", "-"),
                             "date": v_presd.get("date", "-"),
                         }
-                        logging.debug(f"[Connect.5.3] PreSd Version[{ip}] = {presd_versions[ip]}")
+                        fd_log.debug(f"[Connect.5.3] PreSd Version[{ip}] = {presd_versions[ip]}")
 
                     # SenderIP mismatch 는 정상 → 경고 대신 INFO
                     if sender_ip and sender_ip != dmpdip:
-                        logging.info(
+                        fd_log.info(
                             f"[Connect.5.3] PreSd SenderIP differs (cluster master): "
                             f"DMPDIP={dmpdip}, SenderIP={sender_ip}"
                         )
@@ -2135,7 +2259,7 @@ class Orchestrator:
                 except Exception as e:
                     orch._log(f"[OMS][WARN] PreSd batch version fetch failed: {e}")
             else:
-                logging.debug(f"[Connect.5.3] non presd_ips")
+                fd_log.debug(f"[Connect.5.3] non presd_ips")
 
             # ─────────────────────────────────
             # 3. AId → AId Version + all AIc Versions (with retry and fallback)
@@ -2195,7 +2319,7 @@ class Orchestrator:
 
                     last_vmap = None
                     for attempt in range(1, max_retry + 1):
-                        logging.debug(
+                        fd_log.debug(
                             f"[Connect.5.4] Request AId(+AIc) version (try {attempt}/{max_retry})"
                         )
                         r_aid = _request_version(orch, "AId", dmpdip)
@@ -2205,16 +2329,16 @@ class Orchestrator:
                         # AId self-version
                         if "AId" in vmap and isinstance(vmap["AId"], dict):
                             versions["AId"] = vmap["AId"]
-                            logging.debug(f"[Connect.5.4] AId Version = {vmap['AId']}")
+                            fd_log.debug(f"[Connect.5.4] AId Version = {vmap['AId']}")
 
                         # Try to fill AIc versions
                         if _fill_aic_versions_from_vmap(vmap):
-                            logging.debug(
+                            fd_log.debug(
                                 f"[Connect.5.4] AIc Versions(ip/proc) = {aic_versions}"
                             )
                             break
 
-                        logging.debug(
+                        fd_log.debug(
                             f"[Connect.5.4] AIc list is empty or missing on try {attempt}, retrying..."
                         )
                         if attempt < max_retry:
@@ -2222,7 +2346,7 @@ class Orchestrator:
 
                     # After retry loop, if still nothing new, log it
                     if not aic_versions and isinstance(last_vmap, dict):
-                        logging.debug(
+                        fd_log.debug(
                             f"[Connect.5.4] AIc versions not available after {max_retry} tries "
                             f"(last vmap.AIc={last_vmap.get('AIc', None)})"
                         )
@@ -2242,7 +2366,7 @@ class Orchestrator:
                                         "date": "-",
                                     }
                                 }
-                                logging.debug(
+                                fd_log.debug(
                                     f"[Connect.5.4][WARN] Missing AIc version for {ip}, "
                                     f"filled placeholder using aic_connected alias '{alias}'"
                                 )
@@ -2263,7 +2387,7 @@ class Orchestrator:
                 "updated_at": time.time(),
             }
 
-            logging.debug(f"[Connect.5.5] Version upsert payload = {up_payload}")
+            fd_log.debug(f"[Connect.5.5] Version upsert payload = {up_payload}")
             orch._sys_connect_set(message="Version Info Set ...")
 
             # ------------------------------------------------------------
@@ -2749,7 +2873,7 @@ class Orchestrator:
                         )
                     # ── Connect progress (state)
                     if parts == ["oms", "sys-connect", "state"]:
-                        s = orch._connect_get()
+                        s = orch._sys_connect_get()
                         return self._write(200, json.dumps(s, ensure_ascii=False).encode("utf-8","ignore"))
                     # ── Connect progress stream (SSE)
                     if parts == ["oms", "sys-connect", "stream"]:
@@ -3445,7 +3569,7 @@ class Orchestrator:
                     # POST [camera][connect]
                     # ──────────────────────────────────────────────────────                  
                     if parts == ["oms", "cam-connect", "all"]:
-                        logging.debug("oms/cam-connect/all")
+                        fd_log.debug("oms/cam-connect/all")
                         try:
                             res = orch._connect_all_cameras() or {}
                             ok = bool(res.get("ok", False))
@@ -3460,7 +3584,7 @@ class Orchestrator:
                             return self._write(200, body)
 
                         except Exception as e:
-                            logging.exception("[OMS] connect_all_cameras error")
+                            fd_log.exception("[OMS] connect_all_cameras error")
                             body = json.dumps(
                                 {"ok": False, "error": str(e)},
                                 ensure_ascii=False,

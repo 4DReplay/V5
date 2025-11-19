@@ -1,59 +1,112 @@
 {
   "127.0.0.1": {
-    "ok": true,
-    "dmpdip": "127.0.0.1",
+    "daemon_map": {
+      "EMd": "127.0.0.1",
+      "SCd": "10.82.104.232",
+      "CCd": "127.0.0.1",
+      "PCd": "127.0.0.1",
+      "SPd": "127.0.0.1",
+      "AId": "127.0.0.1"
+    },
+    "updated_at": 1763532219.1116607,
+    "presd": [
+      {
+        "IP": "10.82.104.210",
+        "Mode": "replay",
+        "Cameras": [
+          {
+            "Index": 1,
+            "IP": "10.82.104.11",
+            "CameraModel": "BGH1"
+          },
+          {
+            "Index": 2,
+            "IP": "10.82.104.12",
+            "CameraModel": "BGH1"
+          }
+        ]
+      },
+      {
+        "IP": "10.82.104.211",
+        "Mode": "replay",
+        "Cameras": [
+          {
+            "Index": 3,
+            "IP": "10.82.104.13",
+            "CameraModel": "BGH1"
+          },
+          {
+            "Index": 4,
+            "IP": "10.82.104.14",
+            "CameraModel": "BGH1"
+          }
+        ]
+      },
+      {
+        "IP": "10.82.104.212",
+        "Mode": "replay",
+        "Cameras": [
+          {
+            "Index": 5,
+            "IP": "10.82.104.15",
+            "CameraModel": "BGH1"
+          },
+          {
+            "Index": 6,
+            "IP": "10.82.104.16",
+            "CameraModel": "BGH1"
+          }
+        ]
+      }
+    ],
     "cameras": [
       {
         "Index": 1,
         "IP": "10.82.104.11",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.210",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       },
       {
         "Index": 2,
         "IP": "10.82.104.12",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.210",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       },
       {
         "Index": 3,
         "IP": "10.82.104.13",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.211",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       },
       {
         "Index": 4,
         "IP": "10.82.104.14",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.211",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       },
       {
         "Index": 5,
         "IP": "10.82.104.15",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.212",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       },
       {
         "Index": 6,
         "IP": "10.82.104.16",
-        "CameraModel": "BGH1",
-        "PreSdIP": "10.82.104.212",
-        "SCdIP": "10.82.104.232"
+        "CameraModel": "BGH1"
       }
     ],
-    "connected_ips": [
-      "10.82.104.11",
-      "10.82.104.12",
-      "10.82.104.13",
-      "10.82.104.14",
-      "10.82.104.15",
-      "10.82.104.16"
-    ],
+    "connected_daemons": {
+      "PreSd": 3,
+      "AIc": 3,
+      "EMd": 1,
+      "SCd": 1,
+      "CCd": 1,
+      "PCd": 1,
+      "MMd": 1,
+      "AId": 1,
+      "MTd": 1
+    },
+    "aic_connected": {
+      "AI Client [#1]": "10.82.104.210",
+      "AI Client [#2]": "10.82.104.211",
+      "AI Client [#3]": "10.82.104.212"
+    },
     "camera_status": {
       "10.82.104.11": "on",
       "10.82.104.12": "on",
@@ -61,6 +114,143 @@
       "10.82.104.14": "on",
       "10.82.104.15": "on",
       "10.82.104.16": "on"
+    },
+    "versions": {
+      "CCd": {
+        "version": "4.3.0.8",
+        "date": "Dec 17 2024 - 17:59:29",
+        "mac": "08:8A:F1:40:FD:63"
+      },
+      "EMd": {
+        "version": "4.3.0.3",
+        "date": "Jul 20 2023 - 10:53:26"
+      },
+      "MTd": {
+        "version": "5.0.0.1",
+        "date": "Nov 11 2025 - 16:13:33"
+      },
+      "PCd": {
+        "version": "4.2.0.2",
+        "date": "Aug 12 2024 - 13:48:12"
+      },
+      "SCd": {
+        "version": "4.2.0.1",
+        "date": "Aug 12 2024 - 13:48:56"
+      },
+      "MMd": {
+        "version": "4.2.0.11",
+        "date": "Nov 11 2025 - 16:49:13"
+      },
+      "PreSd": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      },
+      "AId": {
+        "version": "5.0.0.0",
+        "date": "Nov 16 2025 - 15:44:27"
+      }
+    },
+    "presd_versions": {
+      "10.82.104.210": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      },
+      "10.82.104.211": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      },
+      "10.82.104.212": {
+        "version": "4.3.0.5",
+        "date": "Aug 12 2024 - 13:48:39"
+      }
+    },
+    "aic_versions": {
+      "10.82.104.210": {
+        "AI Client [#1]": {
+          "version": "5.0.0.1",
+          "date": "Nov 16 2025 - 15:44:00"
+        }
+      },
+      "10.82.104.211": {
+        "AI Client [#2]": {
+          "version": "5.0.0.1",
+          "date": "Nov 16 2025 - 17:08:55"
+        }
+      },
+      "10.82.104.212": {
+        "AI Client [#3]": {
+          "version": "5.0.0.1",
+          "date": "Nov 16 2025 - 17:10:18"
+        }
+      }
+    },
+    "presd_ips": [
+      "10.82.104.210",
+      "10.82.104.211",
+      "10.82.104.212"
+    ]
+  },
+  "10.82.104.210": {
+    "cameras": [
+      {
+        "Index": 1,
+        "IP": "10.82.104.11",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      },
+      {
+        "Index": 2,
+        "IP": "10.82.104.12",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      },
+      {
+        "Index": 3,
+        "IP": "10.82.104.13",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      },
+      {
+        "Index": 4,
+        "IP": "10.82.104.14",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      },
+      {
+        "Index": 5,
+        "IP": "10.82.104.15",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      },
+      {
+        "Index": 6,
+        "IP": "10.82.104.16",
+        "CameraModel": "BGH1",
+        "connected": true,
+        "status": "on"
+      }
+    ],
+    "updated_at": 1763532678.479372,
+    "camera_status": {
+      "10.82.104.11": "on",
+      "10.82.104.12": "on",
+      "10.82.104.13": "on",
+      "10.82.104.14": "on",
+      "10.82.104.15": "on",
+      "10.82.104.16": "on"
+    },
+    "daemon_map": {
+      "EMd": "10.82.104.210",
+      "SCd": "10.82.104.232",
+      "CCd": "10.82.104.210",
+      "PCd": "10.82.104.210",
+      "SPd": "10.82.104.210",
+      "AId": "10.82.104.210"
     },
     "presd": [
       {
@@ -112,21 +302,6 @@
         ]
       }
     ],
-    "updated_at": 1763468282.4295757,
-    "summary": {
-      "cameras": 6,
-      "connected": 6,
-      "on": 0,
-      "off": 0
-    },
-    "daemon_map": {
-      "EMd": "127.0.0.1",
-      "SCd": "10.82.104.232",
-      "CCd": "127.0.0.1",
-      "PCd": "127.0.0.1",
-      "SPd": "127.0.0.1",
-      "AId": "127.0.0.1"
-    },
     "connected_daemons": {
       "PreSd": 3,
       "AIc": 3,
@@ -151,7 +326,7 @@
       "CCd": {
         "version": "4.3.0.8",
         "date": "Dec 17 2024 - 17:59:29",
-        "mac": "08:8A:F1:40:FD:63"
+        "mac": "10:FF:E0:CD:61:95"
       },
       "EMd": {
         "version": "4.3.0.3",
@@ -223,6 +398,14 @@
         "Brand": "NETGEAR",
         "Model": "GS110TUP"
       }
+    ],
+    "connected_ips": [
+      "10.82.104.11",
+      "10.82.104.12",
+      "10.82.104.13",
+      "10.82.104.14",
+      "10.82.104.15",
+      "10.82.104.16"
     ]
   }
 }
