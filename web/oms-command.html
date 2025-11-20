@@ -8,9 +8,9 @@
   <!-- common title/style -->
   <script src="/web/oms-common.js"></script>
   <script>
-    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.initAssets();             // common CSS/JS auto loading
     OMS.applyPageConfig("Command");
-    OMS.initActions();            // oms-actions.js 자동 로딩
+    OMS.initActions();            // oms-actions.js 
   </script>    
   <style>
     :root {
@@ -133,6 +133,10 @@
       padding: 12px
     }
 
+    #inputJson {
+      height: 200px !important;
+    }
+
     label {
       display: flex;
       align-items: center;
@@ -154,7 +158,7 @@
     }
 
     textarea {
-      height: 240px;
+      height: 500px;
       resize: vertical
     }
 
@@ -238,7 +242,7 @@
           <input id="inputPort" type="number" min="1" max="65535" value="19765">
         </div>
         <p class="hint" style="margin-top:8px">
-          HTTP request is sent to <code>/oms/mtd-connect</code>, and the server relays it to MTd via TCP.
+          HTTP request is sent to <code>/oms/mtd-query</code>, and the server relays it to MTd via TCP.
         </p>
       </div>
 
@@ -257,7 +261,7 @@
   "Token":"...",
   "Action":"set",
   "DMPDIP":"10.82.x.x",
-  "DaemonList":{"EMd":"10.82.x.x","CCd":"10.82.x.x","SCd":"10.82.x.x","GCd":"10.82.x.x","PCd":"10.82.x.x","SPd":"10.82.x.x"}
+  "DaemonList":{"EMd":"10.82.x.x","CCd":"10.82.x.x","SCd":"10.82.x.x","PCd":"10.82.x.x","SPd":"10.82.x.x"}
 }'></textarea>
 
         <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
@@ -545,7 +549,7 @@
 
       const t0 = Date.now();
       try {
-        const r = await api("/oms/mtd-connect", {
+        const r = await api("/oms/mtd-query", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
@@ -563,6 +567,11 @@
       }
     }
 
+    /* Auto-execute Pick MTd on page load */
+    window.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("btnPickMTd");
+      if (btn) btn.click();
+    });
   </script>
 </body>
 </html>

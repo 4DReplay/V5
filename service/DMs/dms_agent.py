@@ -45,18 +45,22 @@ def _strip_json5_comments(text: str) -> str:
             buf.append(ch); i += 1
         lines.append("".join(buf))
     return "\n".join(lines)
+
 def _json5_load(p: Path) -> dict:
     text = p.read_text(encoding="utf-8")
     cleaned = _strip_json5_comments(text)
     cleaned = re.sub(r'(?m)(?<!["\w])([A-Za-z_][A-Za-z0-9_]*)\s*:(?!\s*")', r'"\1":', cleaned)  # unquoted key
     cleaned = re.sub(r",\s*([\]})])", r"\1", cleaned)  # trailing comma
     return json.loads(cleaned)
+
 def load_config(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Config not found: {path}")
     return _json5_load(path)
+
 def ensure_dir(p: Path) -> None:
     p.mkdir(parents=True, exist_ok=True)
+
 def now_ms() -> int:
     return int(time.time() * 1000)
 
@@ -69,6 +73,7 @@ def _taskkill_pid(pid: int, force: bool = True) -> None:
                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
     except Exception:
         pass
+
 def _pids_by_image_name(image: str) -> List[int]:
     try:
         out = subprocess.check_output(
@@ -80,6 +85,7 @@ def _pids_by_image_name(image: str) -> List[int]:
         return [int(m.group(1)) for m in rx.finditer(out)]
     except Exception:
         return []
+
 def _pids_by_exact_path(path: Path) -> List[int]:
     p = str(path.resolve())
     try:
@@ -96,11 +102,13 @@ def _pids_by_exact_path(path: Path) -> List[int]:
         return [int(s) for s in re.findall(r"\d+", out)]
     except Exception:
         return []
+
 def _kill_all_by_path(path: Path) -> int:
     pids = _pids_by_exact_path(path)
     for pid in pids:
         _taskkill_pid(pid, True)
     return len(pids)
+
 def _pids_by_cmd_contains(substr: str) -> List[int]:
     """CommandLine에 substr(대소문자 무시)이 포함된 프로세스 PID 목록"""
     if not substr:
@@ -119,15 +127,18 @@ def _pids_by_cmd_contains(substr: str) -> List[int]:
         return [int(x) for x in re.findall(r"\d+", out)]
     except Exception:
         return []
+
 def _kill_by_cmd_contains(substr: str) -> int:
     cnt = 0
     for pid in _pids_by_cmd_contains(substr):
         _taskkill_pid(pid, True)
         cnt += 1
     return cnt
+
 def _is_wrapper_exe(p: Path) -> bool:
     nm = p.name.lower()
     return nm in ("cmd.exe", "python.exe", "pythonw.exe", "powershell.exe")
+
 def _guess_type(p: Path) -> str:
     suf = p.suffix.lower()
     if suf in (".html", ".htm"): return "text/html; charset=utf-8"
@@ -136,9 +147,11 @@ def _guess_type(p: Path) -> str:
     if suf == ".json": return "application/json; charset=utf-8"
     if suf in (".png", ".jpg", ".jpeg", ".gif", ".svg"): return "image/" + suf.lstrip(".")
     return "application/octet-stream"
+
 def _log_dirs_for_exe(exe_path: Path) -> list[Path]:
     base = exe_path.parent
     return [base / "log", base / "logs"]
+
 def _list_logs_in_dir(d: Path) -> list[Path]:
     try:
         if not d.exists():
@@ -146,6 +159,7 @@ def _list_logs_in_dir(d: Path) -> list[Path]:
         return [p for p in d.glob("*.log") if p.is_file()]
     except Exception:
         return []
+
 def _serve_static_safe(handler, rel_path: str):
     rel = rel_path.lstrip("/")
     fp = (STATIC_ROOT / rel).resolve()

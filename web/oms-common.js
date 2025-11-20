@@ -42,7 +42,7 @@
     const cfg = await OMS.loadCommonJSON();
 
     const titleCfg = cfg.title || {};
-    const baseName = titleCfg.targetName || "4DReplay";
+    const baseName = titleCfg.Name || "4DReplay";
     const iconPath = titleCfg.icon ? OMS.prefix(titleCfg.icon) : null;
 
     // Final HTML title

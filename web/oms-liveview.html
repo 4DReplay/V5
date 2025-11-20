@@ -4,8 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta http-equiv="Cache-Control" content="no-store" />
-
-  <!-- Common OMS Loader -->
+  <!-- common title/style -->
   <script src="/web/oms-common.js"></script>
   <script src="/web/oms-actions.js"></script>
   <script>
@@ -13,31 +12,24 @@
     OMS.applyPageConfig("Liveview");
     OMS.initActions();
   </script>
-
   <style>
+    /* body — common과 다른 부분만 */
     body {
-      background-color: #0b0f14;
-      color: #eee;
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
+      color: #eee;              /* common: #eef2f7 → 다름 */
+      margin: 0;                /* common: 24px → 다름 */
+      padding: 0;               /* common: 없음 → 다름 */
+      font-family: Arial, sans-serif;  /* common과 다름 */
+      background-color: #0b0f14; /* 같지만 유지 (페이지 독립적) */
     }
-
+    /* .btn — 다른 값만 */
     .btn {
-      background: #1e40af;
-      color: #fff;
-      border: 0;
-      border-radius: 8px;
-      padding: 8px 14px;
-      cursor: pointer;
-      font-weight: bold;
-      transition: 0.2s;
+      border-radius: 8px;       /* common: 10px → 다름 */
+      padding: 8px 14px;        /* common: 8px 12px → 다름 */
     }
-
     .btn:hover {
-      filter: brightness(1.15);
+      filter: brightness(1.15); /* common과 동일 → 제거 가능하지만 유지해도 무해 */
     }
-
+    /* #statusLed — common에 없음 → 유지 */
     #statusLed {
       display: inline-block;
       width: 12px;
@@ -46,36 +38,29 @@
       background: #555;
       margin-left: 6px;
     }
-
+    /* .page-wrap — common에 없음 → 유지 */
     .page-wrap {
       padding: 20px;
       width: 100%;
     }
-
-    .card {
-      background: #1a1a1a;
-      border-radius: 10px;
-      padding: 20px;
-      margin-bottom: 15px;
-    }
-
+     /* .row — common에 없음 → 유지 */
     .row {
       display: flex;
       gap: 12px;
       align-items: center;
       flex-wrap: wrap;
     }
-
+    /* select — 모두 common과 다름 */
     select {
-      padding: 10px;
+      padding: 10px;            /* common 없음 */
+      border: 1px solid #444;   /* common: #243045 → 다름 */
+      background: #222;         /* common: #0b1220 → 다름 */
+      color: #fff;              /* common: #e5e7eb → 다름 */
       border-radius: 6px;
-      border: 1px solid #444;
-      background: #222;
-      color: #fff;
       width: 100%;
       max-width: 280px;
     }
-
+    /* iframe — common에 없음 → 유지 */
     iframe {
       width: 100%;
       height: 72vh;
@@ -85,6 +70,7 @@
       margin-top: 12px;
     }
 
+    /* 버튼 풀스크린 — common에 없음 → 유지 */
     #btnFull {
       margin-top: 10px;
       background: #555;

@@ -651,6 +651,11 @@
       render(); touchDirty("Edited");
     });
 
+    /* ---- Add: auto-reload on start ---- */
+    window.addEventListener("DOMContentLoaded", () => {
+      reloadConfig();
+    });
+
 </script>
 </body>
 </html>

@@ -3,51 +3,13 @@
 <head>
   <meta charset="utf-8" />  
   <meta http-equiv="Cache-Control" content="no-store" />
+  <!-- common title/style -->
   <script src="/web/oms-common.js"></script>
   <script>
-    OMS.initAssets();             // 공통 CSS/JS 자동 로딩
+    OMS.initAssets();             // common CSS/JS auto loading
     OMS.applyPageConfig("Record");
-    OMS.initActions();            // oms-actions.js 자동 로딩
+    OMS.initActions();            // oms-actions.js auto loading
   </script>
-  <style>
-    /* Indicator styles (카메라 스타일과 충돌 안 되게 최소 변경) */
-    .indicator {
-      margin-top: 12px;
-      width: 200px;
-      padding: 10px;
-      border-radius: 6px;
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      color: #000;
-    }
-    .ind-ready  { background:#ffe66d; }
-    .ind-record { background:#1fff5a; }
-    .ind-making { background:#ff4e4e; }
-
-    select {
-      padding:8px 12px;
-      border-radius:6px;
-      border:none;
-      background:#222;
-      color:#fff;
-      font-size:15px;
-      min-width:180px;
-    }
-
-    table {
-      width:100%;
-      border-collapse:collapse;
-    }
-    th, td {
-      padding:10px;
-      border-bottom:1px solid #333;
-      color:#ddd;
-    }
-    th { background:#222; font-weight:600; }
-    .file-link { color:#00c8ff; text-decoration:none; }
-    .file-link:hover { text-decoration:underline; }
-  </style>
 </head>
 
 <body>

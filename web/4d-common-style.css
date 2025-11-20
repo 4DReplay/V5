@@ -399,3 +399,495 @@ pre {
   padding: 10px;
   overflow: auto
 }
+
+:root {
+  color-scheme: dark;
+}
+/* Default: DARK THEME */
+:root,
+:root[data-theme="dark"] {
+  --board--bg-start: #0b0c10;
+  --board--bg-end: #111216;
+  --board--panel-bg: rgba(22, 24, 28, .52);
+  --board--panel-border: rgba(255, 255, 255, .16);
+  --board--panel-highlight: rgba(255, 255, 255, .06);
+  --board--text-primary: #f4f5f7;
+  --board--text-secondary: rgba(240, 242, 245, .76);
+  --board--accent-blue: #76b5f3;
+  /* iOS blue */
+  --board--accent-green: #34C759;
+  /* iOS green */
+  --board--accent-yellow: #ffd60a;
+  --shadow-soft: 0 10px 30px rgba(0, 0, 0, .35), 0 2px 0 rgba(255, 255, 255, .04) inset;
+  --radius-xl: 20px;
+}
+/* LIGHT THEME */
+:root[data-theme="light"] {
+  --board--bg-start: #eef1f7;
+  --board--bg-end: #e7ebf2;
+  --board--panel-bg: rgba(255, 255, 255, .75);
+  --board--panel-border: rgba(0, 0, 0, .10);
+  --board--panel-highlight: rgba(0, 0, 0, .06);
+  --board--text-primary: #0b0c10;
+  --board--text-secondary: rgba(12, 13, 15, .66);
+  --board--accent-blue: #76b5f3;
+  --board--accent-green: #30D158;
+  --board--accent-yellow: #e0b200;
+}
+/* Base */
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+  color: var(--board--text-primary);
+  background: radial-gradient(1200px 900px at 10% -10%, #152032 0%, transparent 60%),
+    radial-gradient(1200px 900px at 90% 0%, #0f1a2a 0%, transparent 60%),
+    linear-gradient(180deg, var(--board--bg-start), var(--board--bg-end));
+}
+/* ───────── 더 깔끔한 iOS 스타일 전체화면 버튼 ───────── */
+.fullscreen-btn {
+  position: fixed;
+  top: 18px;
+  right: 24px;
+  z-index: 20;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+
+  /* 더 눈에 띄는 iOS 블루 컨트롤 스타일 */
+  background: linear-gradient(135deg, var(--board--accent-blue), #5ac8fa);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  cursor: pointer;
+  color: #03101f;
+  /* 파란 버튼 위에서 살짝 짙은 남색 텍스트 */
+
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: transform .08s ease, background .15s ease, box-shadow .12s ease;
+}
+.fullscreen-btn:hover {
+  background: linear-gradient(135deg, #1b8fff, #6ed5ff);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+}
+.fullscreen-btn:active {
+  background: linear-gradient(135deg, #0866d1, #47b6f2);
+  transform: translateY(1px);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .5);
+}
+/* Light theme background needs brighter radial tones */
+:root[data-theme="light"] body {
+  background:
+    radial-gradient(1200px 900px at 10% -10%, #eaf0ff 0%, transparent 60%),
+    radial-gradient(1200px 900px at 90% 0%, #e7efff 0%, transparent 60%),
+    linear-gradient(180deg, var(--board--bg-start), var(--board--bg-end));
+}
+.page-title {
+  font-size: clamp(22px, 2.4vw, 28px);
+  font-weight: 700;
+  letter-spacing: .2px;
+  margin: 6px 4px 18px;
+  color: var(--board--text-primary);
+  position: relative;
+}
+.page-title-chip-row {
+  margin: -6px 4px 18px;
+  /* 타이틀과 간격 조정 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /* 좌/우 배치 */
+  text-align: left; /* 기존 설정 유지 */
+}
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 18px;
+}
+/* 휴대폰에서도 좌우 유지: 단일열 전환 임계값 낮춤 */
+@media (max-width: 520px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}
+/* Card */
+.card {
+  position: relative;
+  border-radius: var(--radius-xl);
+  background: var(--board--panel-bg);
+  border: 1px solid var(--board--panel-border);
+  box-shadow: var(--shadow-soft);
+  padding: 22px 22px 20px;
+  /* extra bottom for stats + actions */
+  backdrop-filter: saturate(160%) blur(18px);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  overflow: hidden;  
+  isolation: isolate;
+  min-height: auto !important;
+  /* keep inner glows inside */
+}
+.card-dashboard-card{
+  position: relative;
+  border-radius: var(--radius-xl);
+  background: var(--board--panel-bg);
+  border: 1px solid var(--board--panel-border);
+  box-shadow: var(--shadow-soft);
+  padding: 22px 22px 20px;
+  /* extra bottom for stats + actions */
+  backdrop-filter: saturate(160%) blur(18px);
+  -webkit-backdrop-filter: saturate(160%) blur(18px);
+  overflow: hidden;
+  min-height: 350px;
+  isolation: isolate;
+  /* keep inner glows inside */
+}
+.card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, var(--board--panel-highlight), transparent 30%);
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+.card h2 {
+  margin: 0 0 10px;
+  font-weight: 700;
+  letter-spacing: .4px;
+}
+/* 제목 버튼 아이콘 정렬 보정 */
+.card h2 .title-icon {
+  display: inline-block;
+  line-height: 1;
+  transform: translateY(-1px);
+  /* 필요하면 -2px, -3px로 더 올릴 수 있음 */
+  margin-right: 4px;
+}
+.card h2 .title-text {
+  line-height: 1.1;
+}
+/* System / Camera 헤더 버튼 스타일 */
+.card h2 .title-btn {
+  -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 12px;
+  margin: 0;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 0.7em;
+  font-weight: 700;
+  letter-spacing: .3px;
+  cursor: pointer;
+  outline: none;
+
+  /* ➜ 훨씬 덜 튀는 플랫한 pill 스타일 */
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.40);
+
+  color: var(--board--text-primary);
+  text-decoration: none;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transform: translateY(0);
+  transition:
+    transform .08s ease,
+    box-shadow .12s ease,
+    filter .12s ease,
+    background .12s ease;
+}
+.card h2 .title-btn:hover {
+  filter: brightness(1.05);
+  transform: translateY(-0.5px);
+  box-shadow: 0 5px 12px rgba(0, 0, 0, .45);
+}
+.card h2 .title-btn:active {
+  transform: translateY(1px);
+  filter: brightness(.96);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .5);
+}
+.card h2 .title-btn:focus-visible {
+  box-shadow:
+    0 0 0 2px rgba(10, 132, 255, .6),
+    0 6px 14px rgba(0, 0, 0, .45);
+}
+/* Status word */
+.ready {
+  font-size: clamp(38px, 10vw, 60px);
+  line-height: 1;
+  font-weight: 1000;
+  color: var(--board--accent-green);
+  letter-spacing: -1px;
+  margin: 2px 0 4px;
+  text-shadow: 0 10px 32px rgba(0, 0, 0, .45);
+}
+.status-ready {
+  color: var(--board--accent-green);
+}
+.status-warn {
+  color: var(--board--accent-blue);
+}
+.status-init {
+  color: var(--board--accent-yellow);   /* 기존 Apple Yellow 톤 (#ffd60a) */      
+}
+/* Needs Restart 전용 강한 경고 색 (Apple Red 톤) */
+.status-danger {
+  color: #ff3b30;        /* Apple system red */
+}
+#sysReady.status-danger {
+  color: #ff3b30;        /* System 배너에서도 같은 톤 유지 */
+}
+.ready .prefix {
+  display: block;
+  font-size: .36em;
+  line-height: 1.05;
+  font-weight: 800;
+  margin-bottom: 0.3em;
+}
+.ready .main {
+  display: block;
+  line-height: 1;
+}
+.ready+.stats,
+.ready+.stat {
+  margin-top: 2px;
+}
+/* Stats -> bottom aligned block */
+.stats-wrapper {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.stats {
+  display: block;
+}
+.stat {
+  font-size: 14px;
+  font-weight: 700;
+  margin-top: 0;
+  line-height: 1.4;
+  color: var(--board--text-primary);
+}
+.stat small {
+  color: var(--board--text-secondary);
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+.stat-merged {
+  text-align: center;
+  width: 100%;
+  max-width: 420px;
+}
+.stat-line {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+/* Chips */
+/* ───────── System / Camera 카드 우측 상단 poll 칩 ───────── */
+.chip-poll {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--board--text-secondary);
+  background: rgba(0, 0, 0, 0.32);
+  border: 1px solid rgba(255, 255, 255, 0.20);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  /* 상태 표시용이라 클릭 X */
+}
+
+/* ───────── Title 아래 메시지 라벨 (버튼 X, 순수 메시지 UI) ───────── */
+.chip-title {
+  z-index: 2;
+  max-width: 100ch;
+  white-space: nowrap;
+  font-weight: 500 !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+
+  /* 버튼 스타일 제거 → 더 라벨 같은 차분한 스타일 */
+  padding: 6px 12px;
+  font-size: 12px;
+  border-radius: 10px;
+
+  background: rgba(255, 255, 255, 0.10);
+  /* 아주 은은한 패널 */
+  border: 1px solid rgba(255, 255, 255, 0.12);
+
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+
+  /* 버튼처럼 보이는 그림자 제거 */
+  box-shadow: none;
+  color: var(--board--text-secondary);
+  /* 너무 튀지 않는 중간톤 */
+}
+
+/* Title 우측 메시지칩: h1 내부 오른쪽 정렬 */
+.chip-title {
+  position: static;
+  /* page-title 아래 줄로 이동하므로 absolute 해제 */
+  top: auto;
+  right: auto;
+  display: inline-flex;
+  z-index: 2;
+  max-width: 80ch;
+  white-space: nowrap;
+  font-weight: 400;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  /* 칩 위 클릭 방해 제거 (선택 사항) */
+}
+
+/* Actions */
+.actions {
+  display: flex;
+  gap: 25px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Refined circular button design */
+.btn-neo {
+  -webkit-tap-highlight-color: transparent;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .12), rgba(0, 0, 0, .25));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .45), inset 0 2px 0 rgba(255, 255, 255, .25);
+  transition: transform .08s ease, box-shadow .12s ease, filter .12s ease;
+  user-select: none;
+}
+
+.btn-neo:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, .4), 0 8px 24px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .26);
+}
+
+.btn-neo:active {
+  transform: translateY(2px);
+  filter: brightness(.96);
+}
+
+.btn-neo span.top {
+  font-size: 12px;
+  font-weight: 800;
+  opacity: 0.85;
+}
+
+.btn-neo span.bottom {
+  font-size: 22px;
+  font-weight: 900;
+  margin-top: -12px;
+  letter-spacing: .1px;
+  text-transform: uppercase;
+  text-shadow: 0 5px 10px rgba(0, 0, 0, .45);
+}
+
+.btn-green {
+  background: linear-gradient(180deg, #4ce67c, #2ebb58);
+}
+
+.btn-yellow {
+  background: linear-gradient(180deg, #ffe066, #ffcc00);
+  color: #4a3f00;
+}
+
+.btn-blue {
+  color: #061b35;
+  background: linear-gradient(180deg, #8fd0ff, #5aa9ff);
+}
+
+/* Small screens */
+@media (max-width: 520px) {
+  body {
+    padding: 12px;
+  }
+
+  .grid {
+    gap: 12px;
+  }
+
+  .card {
+    padding: 16px 16px 136px;
+    min-height: 360px;
+  }
+
+  .ready {
+    font-size: clamp(36px, 14vw, 72px);
+  }
+
+  .stats {
+    gap: 4px;
+  }
+
+  .actions {
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .btn-neo {
+    flex: 1;
+    padding: 12px 14px;
+    font-size: 15px;
+    width: auto;
+    height: 120px;
+    border-radius: 24px;
+  }
+}
+
+/* High Contrast / Forced Colors: prevent system from overriding palette */
+@media (forced-colors: active) {
+  * {
+    forced-color-adjust: none;
+  }
+
+  body {
+    background: #111 !important;
+    color: #f4f5f7 !important;
+  }
+
+  .card {
+    background: #1b1d22 !important;
+    border-color: #3a3d44 !important;
+  }
+
+  .ready {
+    color: #34C759 !important;
+  }
+}
+  

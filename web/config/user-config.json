@@ -1,20 +1,28 @@
-{ 
-  "title" : {
-    "targetName": "4Dist [KR-#1]",
+{
+  "title": {
+    "Name": "4Dist [KR-#1]",
     "icon": "/web/images/4dist.ico"
-  }, 
+  },
+  "output": {
+    "resolution": "FHD",
+    "codec": "H.264",
+    "fps": "30",
+    "bitrate": "15",
+    "gop": "30",
+    "output_path": ""
+  },
   "prefix": [
     {
       "name": "Team_A",
-      "owner": "James"
+      "comment": "James"
     },
     {
       "name": "Team_B",
-      "owner": "Steve"
+      "comment": "Steve"
     },
     {
       "name": "Team_C",
-      "owner": "Austin"
+      "comment": "Austin"
     }
   ]
 }

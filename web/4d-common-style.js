@@ -159,7 +159,7 @@ pre{background:#0b1220;border:1px solid var(--line2);border-radius:8px;padding:1
   // targetName을 모든 pageTitle 앞에 붙여주는 helper
   function applyTargetNameToPages(cfg) {
     if (!cfg || typeof cfg !== "object") return cfg || {};
-    const target = (cfg.targetName || "").trim();
+    const target = (cfg.Name || "").trim();
     if (!target) return cfg;
 
     const pages = cfg.pages || {};

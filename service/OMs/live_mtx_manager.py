@@ -39,5 +39,4 @@ class MediaMTXManager:
                 p.terminate()
         return True
 
-
 MTX = MediaMTXManager()

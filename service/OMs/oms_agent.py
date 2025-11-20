@@ -9,7 +9,6 @@ import http.client, sys
 import json, re, time, threading, traceback
 import subprocess
 import errno
-import requests
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -390,11 +389,10 @@ def _update_camera_ping_state(timeout_sec: float = 0.8) -> None:
     # 여기서 connected_ips/connected_camera_ips는 절대 건드리지 않음
     st["updated_at"] = time.time()
     STATE[key] = st
-
 def append_mtd_debug(direction, host, port, message=None, response=None, error=None, tag=None):
     """
     direction: 'send' | 'recv' | 'error'
-    각 /oms/mtd-connect 호출마다 JSONL 한 줄씩 기록.
+    각 /oms/mtd-query 호출마다 JSONL 한 줄씩 기록.
     """
     try:
         TRACE_DIR.mkdir(parents=True, exist_ok=True)
@@ -1594,7 +1592,7 @@ class Orchestrator:
                 "127.0.0.1",
                 orch.http_port,
                 "POST",
-                "/oms/mtd-connect",
+                "/oms/mtd-query",
                 json.dumps({
                     "host": "127.0.0.1",
                     "port": MTD_PORT,
@@ -1816,7 +1814,7 @@ class Orchestrator:
         def _sys_connect_sequence(orch, mtd_host, mtd_port, dmpdip, daemon_map,
                                             *, trace=False, return_partial=False, dry_run=False):
             """기존 POST /oms/sys-connect/sequence의 로직을 재사용하기 위해
-            자기 자신에게 /oms/mtd-connect 프록시를 치는 방식으로 수행."""
+            자기 자신에게 /oms/mtd-query 프록시를 치는 방식으로 수행."""
             events = []
             # Connect 작업 시작 시점 표시
             orch._sys_connect_set(state="running", message="Connect start")
@@ -1846,10 +1844,10 @@ class Orchestrator:
                     pass
 
                 try:
-                    conn.request("POST", "/oms/mtd-connect", body=payload, headers={"Content-Type":"application/json"})
+                    conn.request("POST", "/oms/mtd-query", body=payload, headers={"Content-Type":"application/json"})
                     res = conn.getresponse(); data = res.read()
                     if res.status != 200:
-                        raise MtdTraceError(f"/oms/mtd-connect HTTP {res.status}", tag(step))
+                        raise MtdTraceError(f"/oms/mtd-query HTTP {res.status}", tag(step))
                     r = json.loads(data.decode("utf-8","ignore")).get("response")
                     add_event(step, msg, r, used="proxy")
                     try:
@@ -2620,6 +2618,7 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────────────────────────────         
             def do_GET(self):
                 try:
+                    path = self.path
                     parts=[p for p in self.path.split("?")[0].split("/") if p]
                     clean = (urlsplit(self.path).path.rstrip("/") or "/")
                     if clean in {"/","/dashboard"}: return _serve_static(self, "oms-dashboard.html")
@@ -2628,7 +2627,8 @@ class Orchestrator:
                     if clean in {"/camera"}: return _serve_static(self, "oms-camera.html")
                     if clean in {"/record"}: return _serve_static(self, "oms-record.html")
                     if clean in {"/liveview"}: return _serve_static(self, "oms-liveview.html")
-
+                    if clean in {"/user"}: return _serve_static(self, "user-config.html")
+                    
                     # ──────────────────────────────────────────────────────
                     # GET proxy
                     # ──────────────────────────────────────────────────────
@@ -2651,13 +2651,11 @@ class Orchestrator:
                         import re, glob
                         if not re.fullmatch(r"[A-Za-z0-9_]+", proc):
                             return self._write(400, b'{"ok":false,"error":"bad process name"}')
-
                         log_dir = (ROOT / "daemon" / proc / "log")
                         try:
                             log_dir.mkdir(parents=True, exist_ok=True)
                         except Exception:
                             pass
-
                         # /daemon/<PROC>/log/list
                         if len(parts) >= 4 and parts[3] == "list":
                             try:
@@ -2670,7 +2668,6 @@ class Orchestrator:
                             except Exception as e:
                                 err = json.dumps({"ok": False, "error": f"list failed: {e}"}, ensure_ascii=False).encode("utf-8")
                                 return self._write(500, err)
-
                         # /daemon/<PROC>/log?date=YYYY-MM-DD&tail=50000                        
                         qs = parse_qs(urlsplit(self.path).query)
                         date = (qs.get("date") or [""])[0].strip()
@@ -2679,12 +2676,8 @@ class Orchestrator:
                             tail_bytes = max(0, int(tail))
                         except Exception:
                             tail_bytes = 50000
-
-                        # 기본: 오늘 날짜
-                        if not date:
-                            import time
+                        if not date:                            
                             date = time.strftime("%Y-%m-%d", time.localtime())
-
                         log_file = log_dir / f"{date}.log"
                         if not log_file.exists():
                             body = json.dumps({
@@ -2695,14 +2688,11 @@ class Orchestrator:
                                 "tail": tail_bytes
                             }, ensure_ascii=False).encode("utf-8")
                             return self._write(200, body)
-
                         try:
                             size = log_file.stat().st_size
-                            # tail 읽기 (윈도우/대용량 고려)
                             with open(log_file, "rb") as f:
                                 if tail_bytes > 0 and size > tail_bytes:
                                     f.seek(size - tail_bytes)
-                                    # 줄 경계 맞추기 위해 처음 줄 버림
                                     _ = f.readline()
                                 data = f.read()
                             text = data.decode("utf-8", "ignore")
@@ -2767,7 +2757,7 @@ class Orchestrator:
                         client_ip = self.client_address[0]
                         ip = _guess_server_ip(peer or client_ip)
                         return self._write(200, json.dumps({"ok": True, "ip": ip, "client": client_ip}).encode())
-                    if parts == ["oms", "mtd-connect"]:
+                    if parts == ["oms", "mtd-query"]:
                         return self._write(
                             405,
                             json.dumps({
@@ -3120,12 +3110,17 @@ class Orchestrator:
             # ─────────────────────────────────────────────────────────────────────────────────────
             def do_POST(self):
                 try:
+                    # debug
+                    fd_log.info(f"do_POST:{self.path}")
+
                     parts=[p for p in self.path.split("?")[0].split("/") if p]
                     length=int(self.headers.get("Content-Length") or 0)
                     body = self.rfile.read(length)
 
-                    # ── MTd 단건 프록시(유지)
-                    if parts==["oms","mtd-connect"]:
+                    # ──────────────────────────────────────────────────────
+                    # MTd command
+                    # ──────────────────────────────────────────────────────                    # 
+                    if parts==["oms","mtd-query"]:
                         # 1) 빈 바디/Content-Type 점검
                         if length <= 0:
                             return self._write(400, b'{"ok":false,"error":"empty body"}')
@@ -3190,19 +3185,17 @@ class Orchestrator:
                         return self._write(st, data, ct)
                     # ──────────────────────────────────────────────────────
                     # POST config
-                    # ──────────────────────────────────────────────────────                                                            
+                    # ──────────────────────────────────────────────────────  
                     # config save/apply 그대로 (생략)
-                    if parts == ["oms","config"]:
+                    if parts==["oms","config"]:
                         CFG.parent.mkdir(parents=True, exist_ok=True)
                         txt=body.decode("utf-8","ignore"); CFG.write_text(txt, encoding="utf-8")
                         return self._write(200, json.dumps({"ok":True,"path":str(CFG),"bytes":len(txt)}).encode())
-                    if parts == ["oms","config","apply"]:
-                        try: 
-                            cfg = load_config(CFG)
-                        except Exception as e: 
-                            return self._write(400, json.dumps({"ok":False, "error":f"load_config: {e}"}).encode())
-                        changed = orch.apply_runtime(cfg)
-                        return self._write(200, json.dumps({"ok":True, "applied":changed}).encode())
+                    if parts==["oms","config","apply"]:
+                        try: cfg=load_config(CFG)
+                        except Exception as e: return self._write(400, json.dumps({"ok":False,"error":f"load_config: {e}"}).encode())
+                        changed=orch.apply_runtime(cfg)
+                        return self._write(200, json.dumps({"ok":True,"applied":changed}).encode())
                     # ── ALIAS CACHE CLEAR (DMS /config에서 끌어온 per-node alias 캐시 제거)
                     if parts == ["oms","alias","clear"]:
                         try:
@@ -3225,11 +3218,8 @@ class Orchestrator:
                         cur = orch._restart_get()
                         if cur.get("state") == "running":
                             return self._write(409, json.dumps({"ok":False,"error":"already_running"}).encode())
-
-                        # 🔴 요구사항: 재시작 시작 전에 CONNECT 정보 전체 초기화
                         try:
                             ok = _clear_connect_state()
-                            # 🔴 여기서 바로 상태 초기화
                             t0 = time.time()
                             orch._restart_set(
                                 state="running",
@@ -3243,20 +3233,12 @@ class Orchestrator:
                             orch._log(f"[OMS] connect state cleared before restart (ok={ok})")
                         except Exception as e:
                             orch._log(f"[OMS][WARN] connect state clear failed before restart: {e}")
-
-
-                        # 워커 스레드
                         def _worker():                            
                             try:
-                                t_start = time.time()
-                                # orch._restart_set(state="running", total=0, sent=0, done=0, fails=[], message="Preparing… (collecting jobs)", started_at=t_start)
-                                # UI가 'Preparing…'을 볼 수 있도록 최소 표시 보장
                                 time.sleep(max(0, orch._restart_min_prepare_ms/1000.0))
                                 orch._log("[OMS] Restart worker start")
                                 orch._log(f"[OMS] Restart worker nodes: {len(orch.nodes)}")
                                 orch._log(f"[OMS] Restart worker cache keys: {list(orch._cache.keys())}")
-
-                                # --- 잡 수집 ---
                                 with orch._lock:
                                     nodes = []
                                     for n in orch.nodes:
@@ -3267,18 +3249,10 @@ class Orchestrator:
                                             "port": int(n.get("port",19776)),
                                             "status": deepcopy(orch._cache.get(nm) or {})
                                         })
-
                                 jobs = []  # [(host, port, node_name, proc_name)]
-                                # orch._restart_set(message="Preparing… (collecting jobs)")
-
                                 def _unify_procs(st):
-                                    """
-                                    Normalize process lists coming from DMS status structures.
-                                    Accepts both {data:{}} and flat dict/list forms.
-                                    """
                                     if not st:
                                         return []
-                                    # most DMS send under "data"
                                     if "data" in st and isinstance(st["data"], dict):
                                         try:
                                             return [v for v in st["data"].values() if isinstance(v, dict)]
@@ -3288,11 +3262,9 @@ class Orchestrator:
                                         return [x for x in st["processes"] if isinstance(x, dict)]
                                     if "executables" in st and isinstance(st["executables"], list):
                                         return [x for x in st["executables"] if isinstance(x, dict)]
-                                    # if already a dict of processes
                                     if isinstance(st, dict) and all(isinstance(v, dict) for v in st.values()):
                                         return list(st.values())
                                     return []
-
                                 for nd in nodes:
                                     # ✅ robustly extract process list from nested status.data
                                     status_obj = nd.get("status") or {}
@@ -3303,40 +3275,26 @@ class Orchestrator:
                                         # include if selected or no explicit select flag
                                         if p.get("select", True):
                                             jobs.append((nd["host"], nd["port"], nd["name"], p["name"]))
-
                                 total = len(jobs)
-                                # 잡 수집 완료 즉시 total 반영해 UI가 “0/총개”를 바로 볼 수 있게.
                                 orch._restart_set(state="running", total=total, sent=0, done=0,
                                                     fails=[], message=f"Queued {total} process(es)… sending", started_at=time.time())
                                 if total == 0:
-                                    # 아무 것도 보낼 게 없으면 바로 done 처리 (UI가 Preparing…에서 못 빠지는 일 방지)
                                     orch._restart_set(state="done", message="Restart finished: nothing selected to restart · 0.0s")
                                     return
-
                                 # --- Utils ---
                                 def _overlay_connected_says_connected(proc_name: str, node_host: str) -> bool:
-                                    """
-                                    해당 노드의 STATE만 보고 '연결 OK' 판정.
-                                    - SPd → MMd 정규화
-                                    - MMc 는 MMd 연결 시 OK
-                                    """
                                     try:
                                         st = _state_for_host(node_host)
                                         conn = st.get("connected_daemons") or {}
 
                                         key = inward_name(proc_name)  # "SPd" -> "MMd", 나머지는 원형
-                                        # MMc는 MMd 연결되면 연결로 인정
                                         if proc_name == "MMc":
-                                            return bool(conn.get("MMd"))
-
-                                        # 일반 케이스: connected_daemons 에 동일 키가 True 면 연결로 인정
+                                            return bool(conn.get("MMd"))                                        
                                         return bool(conn.get(key))
                                     except Exception:
                                         return False
-
                                 def _fmt_secs():
-                                    s = time.time() - (orch._restart_get().get('started_at') or time.time())
-                                    # 소수 1자리로 표기: 1.0s, 10.3s
+                                    s = time.time() - (orch._restart_get().get('started_at') or time.time())                                    
                                     return f"{s:.1f}s"
                                 def _fmt_percent(n, d):
                                     try:
@@ -3345,18 +3303,11 @@ class Orchestrator:
                                         return int(round(100.0 * n / d))
                                     except Exception:
                                         return 0                                
-
                                 sent = 0; done = 0; fails = []
-                                # 실패는 정확한 식별을 위해 (node,proc) 튜플로 관리
-                                fail_set = set()  # {(node_name, proc)}
-                                fail_msgs = []    # 사람이 읽는 문자열
-
                                 base_map = {}
                                 for (host,port,node_name,proc) in jobs:
                                     base_map[(node_name,proc)] = _read_proc_snapshot(host, port, proc)
-
                                 # 1) Restart each selected process via POST (in parallel)
-                                from concurrent.futures import ThreadPoolExecutor, as_completed
                                 def send_restart(job):
                                     host,port,node_name,proc = job
                                     st,_,_ = _http_fetch(host, port, "POST",
@@ -3367,7 +3318,6 @@ class Orchestrator:
                                     if st>=400:
                                         raise RuntimeError(f"http {st}")
                                     return job
-
                                 sent = 0
                                 fails = []
                                 sent_at_map = {}
@@ -3393,7 +3343,6 @@ class Orchestrator:
                                                 fails=fails,
                                                 message=f"Sent {sent}/{total} ({pct}%) (fail {len(fails)})… waiting"
                                             )
-
                                 # 2) RUNNING 복귀 대기 (병렬 폴링)
                                 def wait_ready(job):
                                     host,port,node_name,proc = job
@@ -3417,7 +3366,6 @@ class Orchestrator:
                                                 return (job, True)
                                         except Exception:
                                             pass
-
                                         # (B) 메타 없음 + 빠른 재기동: 연속 running 관측 + 최소 대기
                                         meta_present = any(base.get(k) is not None for k in ("pid","start_ts","uptime")) \
                                                     or any(cur.get(k) is not None for k in ("pid","start_ts","uptime"))
@@ -3476,22 +3424,19 @@ class Orchestrator:
                                         failed_nodes=failed_nodes,
                                         failed_procs=failed_procs
                                     )
-
                                     # 3-2) settle loop: 일정 시간 동안 /oms/status 재검증
                                     t0 = time.time()
                                     while time.time() - t0 < orch._restart_settle_sec and targets:
                                         try:
                                             # 최신 상태 스냅샷
                                             snap = orch._status_core()
-                                            ok_set, bad_set = Orchestrator._all_targets_running(snap, targets)
+                                            ok_set, _ = Orchestrator._all_targets_running(snap, targets)
                                             # 회복된 항목 제거
                                             if ok_set:
                                                 targets -= ok_set
                                                 # fails 집합에서도 제거
                                                 fails = [x for x in fails if x.split(":")[0] not in ok_set]
                                                 done += len(ok_set)
-
-                                            # 진행 메시지 갱신
                                             if targets:
                                                 left = sorted(list(targets))[:10]
                                                 orch._restart_set(
@@ -3506,13 +3451,10 @@ class Orchestrator:
                                             else:
                                                 break
                                         except Exception:
-                                            # 상태 조회 실패 시 잠시 대기 후 재시도
                                             pass
                                         time.sleep(orch._restart_verify_iv)
-
                                     # 3-3) settle 종료 후 최종 확정
                                     if not targets:
-                                        # 모두 회복됨 → 실패 0으로 교정
                                         orch._restart_set(
                                             state="done",
                                             message=(
@@ -3526,7 +3468,6 @@ class Orchestrator:
                                             failed_procs=[]
                                         )
                                     else:
-                                        # 일부 남음 → 남은 대상 기준 최종 메시지
                                         summary_left = _compact(sorted(list(targets)), limit=10)
                                         orch._restart_set(
                                             state="done",
@@ -3540,7 +3481,6 @@ class Orchestrator:
                                             failed_nodes=sorted({x.split('/')[0] for x in targets}),
                                             failed_procs=sorted({x.split('/')[1] for x in targets if '/' in x})
                                         )
-
                                     try:
                                         (TRACE_DIR / f"restart_report_{int(time.time()*1000)}.json").write_text(
                                             json.dumps({
@@ -3565,12 +3505,10 @@ class Orchestrator:
                                         failed_nodes=[],
                                         failed_procs=[]
                                     )
-
                             except Exception as e:
                                 orch._log(f"[OMS] Restart worker exception: {e}")
                                 orch._log(traceback.format_exc())
                                 orch._restart_set(state="error", message=f"Error: {e}")
-
                         threading.Thread(target=_worker, daemon=True).start()
                         return self._write(200, json.dumps({"ok":True}).encode())
                     # ──────────────────────────────────────────────────────
@@ -3613,12 +3551,6 @@ class Orchestrator:
                             if ret_partial:
                                 return self._write(200, json.dumps({"ok":False,"error":repr(e)}).encode())
                             return self._write(502, json.dumps({"ok":False, "error":repr(e)}).encode())
-                    if parts == ["oms", "sys-connect", "clear"]:
-                        ok = _clear_connect_state()
-                        if ok:
-                            return self._write(200, b'{"ok":true}')
-                        else:
-                            return self._write(500, json.dumps({"ok":False,"error":"clear failed"}).encode())
                     # ── state upsert(연결/버전/리스트 반영 & 저장)
                     if parts == ["oms", "state", "upsert"]:
                         try:
@@ -3781,7 +3713,25 @@ class Orchestrator:
                         ok = MTX.stop()
                         self._send_json({"ok": ok})
                         return
-                    
+                        # 저장 경로 매칭
+                    # ──────────────────────────────────────────────────────
+                    # Save Config File 
+                    # ────────────────────────────────────────────────────── 
+                    if self.path == "/web/config/user-config.json":
+                        raw_body = body
+                        try:
+                            data = raw_body.decode("utf-8")
+                            file_path = os.path.join(WEB, "config", "user-config.json")
+                            with open(file_path, "w", encoding="utf-8") as f:
+                                f.write(data)
+                            self._send_json({"status": "ok"})
+                        except Exception as e:
+                            self._send_json({"status": "error", "msg": str(e)}, status=500)
+                        return
+                    # ──────────────────────────────────────────────────────
+                    # All other POST requests return 404
+                    # ──────────────────────────────────────────────────────
+                    self._write(404, b"Not Found", ct="text/plain")
                     return self._write(404, b'{"ok":false,"error":"not found"}')
                 except Exception as e:
                     return self._write(500, json.dumps({"ok":False,"error":repr(e)}).encode())

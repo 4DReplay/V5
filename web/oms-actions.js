@@ -201,7 +201,7 @@
       }
     };
     chipMsg(2,1,'Send Message to Switch')
-    const res = await fetch(API_BASE + "/oms/mtd-connect", {
+    const res = await fetch(API_BASE + "/oms/mtd-query", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -248,7 +248,7 @@
       chipMsg(1, 2, 'MTd message sending…');
       const host = extra.mtd_host || location.hostname;
       const port = Number(extra.mtd_port || 19765);
-      const url = API_BASE + '/oms/mtd-connect';
+      const url = API_BASE + '/oms/mtd-query';
       const body = { host, port, message: extra.mtdMessage };
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' });
       const ct = res.headers.get('content-type') || '';

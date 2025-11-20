@@ -8,7 +8,7 @@
       "SPd": "127.0.0.1",
       "AId": "127.0.0.1"
     },
-    "updated_at": 1763608530.2730608,
+    "updated_at": 1763635582.6722538,
     "presd": [
       {
         "IP": "10.82.104.210",
@@ -73,7 +73,7 @@
           "ModelName": "BGH1",
           "UUID": "BGH1-F17EB9",
           "FirmwareVersion": "2.51",
-          "ManualFocusPosition": 310,
+          "ManualFocusPosition": 640,
           "ZoomPosition": 14,
           "FocusMode": "Manual",
           "AutoFocusPoint": "1-Area",
@@ -533,14 +533,6 @@
       }
     ],
     "dmpdip": "10.82.104.210",
-    "connected_ips": [
-      "10.82.104.11",
-      "10.82.104.12",
-      "10.82.104.13",
-      "10.82.104.14",
-      "10.82.104.15",
-      "10.82.104.16"
-    ],
     "extra": {
       "cameras": [
         {
@@ -551,7 +543,7 @@
           "ModelName": "BGH1",
           "UUID": "BGH1-F17EB9",
           "FirmwareVersion": "2.51",
-          "ManualFocusPosition": 310,
+          "ManualFocusPosition": 640,
           "ZoomPosition": 14,
           "FocusMode": "Manual",
           "AutoFocusPoint": "1-Area",
@@ -874,6 +866,14 @@
           }
         }
       ]
-    }
+    },
+    "connected_ips": [
+      "10.82.104.11",
+      "10.82.104.12",
+      "10.82.104.13",
+      "10.82.104.14",
+      "10.82.104.15",
+      "10.82.104.16"
+    ]
   }
 }

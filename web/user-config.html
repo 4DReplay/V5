@@ -1,0 +1,388 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta charset="utf-8" />  
+  <meta http-equiv="Cache-Control" content="no-store" />
+  <script src="/web/oms-common.js"></script>
+  <script>
+    OMS.initAssets();
+    OMS.applyPageConfig("User Config");
+    OMS.initActions();
+  </script>
+
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --fg: #eef2f7;
+      --muted: #94a3b8;
+      --card: #0b1220;
+      --line: #243045;
+      --line2: #1f2937;
+      --btn: #1e40af;
+      --btn2: #334155;
+      --ok: #16a34a;
+      --bad: #ef4444;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial;
+      margin: 24px;
+    }
+
+    h2 {
+      font-size: 28px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 16px;
+    }
+
+    .section {
+      background: #0c121b;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--line2);
+      margin-bottom: 20px;
+      max-width: 880px;
+    }
+
+    .section h3 {
+      margin: 0 0 10px;
+      color: #a5b4fc;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input[type="text"],
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      background: #0b1220;
+      color: #e5e7eb;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font: 13px ui-monospace, monospace;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 6px;
+    }
+
+    th,
+    td {
+      border: 1px solid var(--line2);
+      padding: 6px 8px;
+    }
+
+    th {
+      background: #0f172a;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    button {
+      background: var(--btn);
+      color: #fff;
+      border: 0;
+      border-radius: 10px;
+      padding: 8px 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    button.btn-secondary {
+      background: var(--btn2);
+    }
+
+    button.btn-ghost {
+      background: transparent;
+      border: 1px solid var(--line);
+      color: #ccc;
+    }
+
+    .pill {
+      padding: 3px 10px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      background: #0f172a;
+      font-size: 12px;
+    }
+
+    .pill-ok {
+      border-color: var(--ok);
+      color: #a7f3d0;
+      background: #0d3b1a;
+    }
+
+    .pill-bad {
+      border-color: var(--bad);
+      color: #fecaca;
+      background: #3b0d0d;
+    }
+
+    .rowflex {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .file-btn {
+      white-space: nowrap;
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+
+    .btn-mini {
+      padding: 4px 8px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h2 class="page-title">
+    <span id="pageTitle"></span>
+  </h2>
+
+  <div class="toolbar">
+    <button class="btn" onclick="location.href='/dashboard'">📊 Dashboard</button>
+    <span class="divider"></span>
+    <button id="btnReload" class="btn-secondary">Reload</button>    
+    <button id="btnSave">Save</button>
+    <span id="saveState" class="pill">Idle</span>
+  </div>
+
+  <!-- Title Section -->
+  <div class="section">
+    <h3>📝Title</h3>
+    <label>Name</label>
+    <input id="titleName" type="text">
+    <label style="margin-top:6px;">Icon</label>
+    <div class="rowflex">
+      <input id="titleIcon" type="text">
+      <input id="localIconPicker" type="file" style="display:none" accept=".png,.jpg,.jpeg,.svg,.ico">
+      <button id="btnBrowseIcon" class="btn-secondary file-btn">📁Browse...</button>
+    </div>
+  </div>
+
+  <!-- Output Section -->
+  <div class="section">
+    <h3>🎬Output</h3>
+
+    <label>Resolution</label>
+    <select id="outRes">
+      <option value="4K">4K</option>
+      <option value="2K">2K</option>
+      <option value="FHD">FHD</option>
+      <option value="HD">HD</option>
+    </select>
+
+    <label style="margin-top:6px;">Codec</label>
+    <select id="outCodec">
+      <option value="H.264">H.264</option>
+      <option value="H.265">H.265</option>
+    </select>
+
+    <label style="margin-top:6px;">FPS</label>
+    <select id="outFPS">
+      <option value="25">25</option>
+      <option value="29.97">29.97</option>
+      <option value="30">30</option>
+      <option value="59.94">59.94</option>
+      <option value="60">60</option>
+    </select>
+
+    <label style="margin-top:6px;">Bitrate</label>
+    <input id="outBitrate" type="text">
+
+    <label style="margin-top:6px;">GOP</label>
+    <input id="outGop" type="text">    
+    <label style="margin-top:6px;">Output Path</label>
+    <input id="outPath" type="text">
+  </div>
+
+  <!-- Prefix Section -->
+  <div class="section">
+    <h3>🏷️Prefix List</h3>
+
+    <button id="btnAddPrefix" class="btn-ghost">Add Prefix</button>
+
+    <table>
+      <thead>
+        <tr>
+          <th style="width:150px">Name</th>
+          <th>Owner/Note</th>
+          <th style="width:120px">Order</th>
+          <th style="width:80px">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="prefixTable"></tbody>
+    </table>
+  </div>
+
+  <script>
+    let CONFIG = {};
+    const SaveTag = document.getElementById("saveState");
+    const T_PREFIX = document.getElementById("prefixTable");
+
+    // ─────────────────────────────────────────────
+    // 로컬 PC 파일 선택 후 서버 경로로 자동 변환
+    // ─────────────────────────────────────────────
+
+    // ICON PICKER
+    document.getElementById("btnBrowseIcon").onclick = () => {
+      document.getElementById("localIconPicker").click();
+    };
+
+    document.getElementById("localIconPicker").onchange = (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      // 파일 이름만 추출
+      const fname = file.name;
+
+      // 서버 경로로 자동 설정
+      document.getElementById("titleIcon").value = "/web/images/" + fname;
+    };
+
+    /* ---------- API ---------- */
+    async function getConfig() {
+      return await fetch("/web/config/user-config.json?ts=" + Date.now()).then(r => r.text());
+    }
+
+    async function saveConfigFile(text) {
+      const r = await fetch("/web/config/user-config.json", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: text
+      });    
+      if (!r.ok) {
+        // 404, 500, 405 같은 경우 여기로 옴
+        throw new Error("Save HTTP " + r.status + " " + r.statusText);
+      }    
+      return await r.text();
+    }
+
+    /* ---------- Load JSON ---------- */
+    async function loadConfig() {
+      try {
+        const raw = await getConfig();
+        CONFIG = JSON.parse(raw);
+        fillUI();
+        SaveTag.textContent = "Loaded";
+      } catch (e) {
+        SaveTag.textContent = "Load Failed";
+        SaveTag.className = "pill pill-bad";
+        alert("Load failed: " + e);
+      }
+    }
+
+    /* ---------- JSON → UI ---------- */
+    function fillUI() {
+      document.getElementById("titleName").value = CONFIG.title?.Name || "";
+      document.getElementById("titleIcon").value = CONFIG.title?.icon || "";
+
+      document.getElementById("outRes").value = CONFIG.output?.resolution || "FHD";
+      document.getElementById("outCodec").value = CONFIG.output?.codec || "H.264";
+      document.getElementById("outFPS").value = CONFIG.output?.fps || "30";
+
+      document.getElementById("outBitrate").value = CONFIG.output?.bitrate || "";
+      document.getElementById("outGop").value = CONFIG.output?.gop || "";
+      renderPrefix();
+    }
+
+    /* ---------- UI → JSON ---------- */
+    function readUI() {
+      CONFIG.title = {
+        Name: document.getElementById("titleName").value,
+        icon: document.getElementById("titleIcon").value
+      };
+
+      CONFIG.output = {
+        resolution: document.getElementById("outRes").value,
+        codec: document.getElementById("outCodec").value,
+        fps: document.getElementById("outFPS").value,
+        bitrate: document.getElementById("outBitrate").value,
+        gop: document.getElementById("outGop").value,
+        output_path: document.getElementById("outPath").value,
+      };
+
+      CONFIG.prefix = [...T_PREFIX.children].map(tr => ({
+        name: tr.querySelector("[data-k='name']").value,
+        comment: tr.querySelector("[data-k='comment']").value
+      }));
+    }
+
+    /* ---------- Prefix List ---------- */
+    function renderPrefix() {
+      T_PREFIX.innerHTML = "";
+      (CONFIG.prefix || []).forEach(p => addPrefixRow(p.name, p.comment));
+    }
+
+    function addPrefixRow(name = "", comment = "") {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td><input type="text" data-k="name" value="${name}"></td>
+        <td><input type="text" data-k="comment" value="${comment}"></td>
+        <td>
+          <button class="btn-mini btn-ghost" data-up>▲</button>
+          <button class="btn-mini btn-ghost" data-down>▼</button>
+        </td>
+        <td><button class="btn-secondary btn-mini" data-del>Del</button></td>
+      `;
+
+      tr.querySelector("[data-del]").onclick = () => tr.remove();
+      tr.querySelector("[data-up]").onclick = () => {
+        const prev = tr.previousElementSibling;
+        if (prev) T_PREFIX.insertBefore(tr, prev);
+      };
+      tr.querySelector("[data-down]").onclick = () => {
+        const next = tr.nextElementSibling;
+        if (next) T_PREFIX.insertBefore(next, tr);
+      };
+
+      T_PREFIX.appendChild(tr);
+    }
+
+    document.getElementById("btnAddPrefix").onclick = () => addPrefixRow();
+
+    /* ---------- Save / Reload / Format ---------- */
+    async function saveConfig() {
+      try {
+        readUI();
+        const text = JSON.stringify(CONFIG, null, 2);
+        await saveConfigFile(text);
+        SaveTag.textContent = "Saved";
+        SaveTag.className = "pill pill-ok";
+      } catch (e) {
+        SaveTag.textContent = "Save Failed";
+        SaveTag.className = "pill pill-bad";
+        alert("Save failed: " + e);
+      }
+    }
+
+    document.getElementById("btnSave").onclick = saveConfig;
+    document.getElementById("btnReload").onclick = loadConfig;
+    /* ---------- 초기 바인딩 & 로드 ---------- */
+    window.addEventListener("DOMContentLoaded", () => {
+      loadConfig();
+    });
+  </script>
+</body>
+</html>
