@@ -7,6 +7,7 @@
 
   <!-- Common OMS Loader -->
   <script src="/web/oms-common.js"></script>
+  <script src="/web/oms-actions.js"></script>
   <script>
     OMS.initAssets();
     OMS.applyPageConfig("Liveview");
@@ -103,6 +104,8 @@
   <div class="toolbar">
     <button class="btn" onclick="location.href='/camera'">📸 Camera</button>
     <span class="divider"></span>
+    <button id="btnAutoFocus" class="btn">🎯 Auto Focus All</button>
+    <span class="divider"></span>
     <button id="btnRestart" class="btn" style="background:#334155;">🔄Restart</button>
     <button id="btnToggle" class="btn">ON / OFF</button>
     <span style="display:flex;align-items:center;">MediaMTX <span id="statusLed"></span></span>
@@ -115,6 +118,10 @@
       <label>📸 Select Camera</label>
       <div class="row">
         <select id="cameraSelect"></select>
+        <!-- 🔹 단일 카메라 Auto Focus 버튼 -->
+        <button id="btnAutoFocusOne" class="btn" style="background:#475569;">
+          🎯 Auto Focus
+        </button>
       </div>
     </div>
 
@@ -167,6 +174,24 @@
         cameraSelect.value = j.cameras[0].IP;
         openLive(j.cameras[0].IP);
       }
+    }
+
+    // ---- All Camera Auto Focus ----
+    const btnAF = document.getElementById("btnAutoFocus");
+    if (btnAF && window.OMS && OMS.Actions.autoFocus) {
+      btnAF.onclick = () => OMS.Actions.autoFocus(null);   // ← PointerEvent 제거
+    }
+    // ---- Single Camera Auto Focus ----
+    const btnAF1 = document.getElementById("btnAutoFocusOne");
+    if (btnAF1 && window.OMS && OMS.Actions.autoFocus) {
+      btnAF1.onclick = () => {
+        const ip = cameraSelect.value;
+        if (!ip) {
+          alert("No camera selected");
+          return;
+        }
+        OMS.Actions.autoFocus(ip);   // ▶ 단일 카메라 AF
+      };
     }
 
     // MediaMTX Status

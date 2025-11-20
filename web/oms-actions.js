@@ -103,6 +103,7 @@
     catch { return ''; }
   })();
   const API_BASE = EXPLICIT_PREFIX || PROXY_PREFIX || '';
+  window.API_BASE = API_BASE;   // 🔥 모든 IIFE에서 API_BASE 사용 가능하도록 전역 export
   async function api(path, init = {}) {
     const url = (typeof path === 'string' && path.startsWith('/')) ? (API_BASE + path) : path;
     const { timeoutMs, ...rest } = init || {};
@@ -158,7 +159,7 @@
   // ========================================================================
   async function getSwitchIpList() {
     try {
-      const res = await fetch("/oms/state", { cache: "no-store" });
+      const res = await fetch(API_BASE + "/oms/state", { cache: "no-store" });
       const data = await res.json();
 
       // cameras 배열에서 SCdIP만 추출
@@ -200,7 +201,7 @@
       }
     };
     chipMsg(2,1,'Send Message to Switch')
-    const res = await fetch("/oms/mtd-connect", {
+    const res = await fetch(API_BASE + "/oms/mtd-connect", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -247,7 +248,7 @@
       chipMsg(1, 2, 'MTd message sending…');
       const host = extra.mtd_host || location.hostname;
       const port = Number(extra.mtd_port || 19765);
-      const url = (typeof API_BASE === 'string' ? API_BASE : '') + '/oms/mtd-connect';
+      const url = API_BASE + '/oms/mtd-connect';
       const body = { host, port, message: extra.mtdMessage };
       const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body), cache: 'no-store' });
       const ct = res.headers.get('content-type') || '';
@@ -511,7 +512,7 @@
       OMS.Actions.setBusy("Connecting cameras...");
       console.log("Connecting cameras..")
 
-      const res = await fetch("/oms/cam-connect/all", {
+      const res = await fetch(API_BASE + "/oms/cam-connect/all", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -563,6 +564,48 @@
     chipMsg(2, 1, `Camera Stopping ...`);
     return sendSwitchCommand("Off");
   };
+
+  // ========================================================================
+  // 🔹 Auto Focus — Unified (All or Single)
+  // ========================================================================
+  OMS.Actions.autoFocus = async function (ip = null) {
+    try {
+      const payload = ip ? { ip } : {};
+
+      const res = await fetch(API_BASE + "/oms/cam-action/autofocus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        cache: "no-store"
+      });
+
+      const data = await res.json();
+
+      if (!data.ok) {
+        const detail = data.detail || data.error || data;
+        alert(
+          "Auto Focus Fail\n\n" +
+          JSON.stringify(detail, null, 2)
+        );
+        return;
+      }
+
+      // ★★★ 핵심 수정 부분 ★★★
+      const result = data.detail || {};
+      const counts = result.detail || {};
+
+      alert(
+        `Auto Focus Finish (Camera: ${ip ? ip : "All"})\n\n` +
+        `Success: ${counts.ok_count}\n` +
+        `Fail: ${counts.fail_count}`
+      );
+
+    } catch (err) {
+      alert("Auto Focus Request Fail: " + err);
+      console.error("AutoFocus error:", err);
+    }
+  };
+
 })(window);
 
 // ────────────────────────────────────────────────
@@ -587,7 +630,7 @@
     let stopped = false;
     let timeoutId = null;
     // SSE 구독
-    const evt = new EventSource((window.__OMS_API_PREFIX__ || "") + "/oms/sys-restart/stream");
+    const evt = new EventSource(API_BASE + "/oms/sys-restart/stream");
     const finish = (reason, last) => {
       if (stopped) return;
       stopped = true;
@@ -619,7 +662,7 @@
 
       let st = null;
       try {
-        const res = await fetch((window.__OMS_API_PREFIX__ || "") + "/oms/status", { cache: "no-store" });
+        const res = await fetch(API_BASE + "/oms/status", { cache: "no-store" });
         st = await res.json();
       } catch (e) {
         stableCount = 0;
@@ -674,7 +717,7 @@
   const API_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
   async function loadSwitchesFromStatus() {
     try {
-      const res = await fetch(API_PREFIX + "/oms/status", {
+      const res = await fetch(API_BASE + "/oms/status", {
         cache: "no-store",
       });
       if (!res.ok) {
@@ -693,7 +736,6 @@
   if (typeof window !== "undefined") {
     window.initSwitchDetailsFromStatus = loadSwitchesFromStatus;
   }
-
   function renderSwitchTable(list) {
     const tbody = document.getElementById("tblSwitch");
     if (!tbody) return;
@@ -774,12 +816,19 @@
       // 헤더 고정: Index | IP | Model | PreSd ip | Switch ip | Status
       thead.innerHTML = `
         <tr>
-          <th style="width:80px">Index</th>
+          <th style="width:60px">Index</th>
           <th>IP</th>
+          <th>Status</th>
           <th>Model</th>
-          <th>PreSd IP</th>
-          <th>Switch IP</th>
-          <th style="width:120px">Status</th>
+          <th>FW</th>
+          <th>Format</th>
+          <th>Codec</th>
+          <th>Bitrate</th>          
+          <th>Gop</th>
+          <th>Aperture</th>
+          <th>Shutter</th>
+          <th>ISO</th>
+          <th>WB</th>
         </tr>
       `;
 
@@ -830,13 +879,20 @@
             const status = "Unknown"; // 아직 Connection 정보를 모름
 
             html += `
-              <tr>
+              <tr data-ip="${ip}">
                 <td>${idx}</td>
                 <td>${ip}</td>
+                <td class="col-status"><span class="badge badge-muted">Unknown</span></td>
                 <td>${model}</td>
-                <td>${presd}</td>
-                <td>${swip}</td>
-                <td><span class="badge badge-muted">${status}</span></td>
+                <td class="col-fw">-</td>
+                <td class="col-format">-</td>
+                <td class="col-codec">-</td>
+                <td class="col-bitrate">-</td>
+                <td class="col-gop">-</td>
+                <td class="col-aperture">-</td>
+                <td class="col-shutter">-</td>
+                <td class="col-iso">-</td>
+                <td class="col-wb">-</td>
               </tr>
             `;
           }
@@ -876,4 +932,7 @@
       run();
     }
   })();
+
+
+
 })();

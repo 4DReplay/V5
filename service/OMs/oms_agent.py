@@ -1303,6 +1303,16 @@ class Orchestrator:
                     "connected": bool(cam.get("connected")),
                     "status": cam.get("status")
                     or ("on" if cam.get("connected") else "off"),
+                    "info": cam.get("info") or {},          # ← ★★★ Camera Info 저장 추가
+                }
+                for cam in state_cams
+            ]
+            # 그리고 extra.cameras 구성 (status API에서 사용)
+            st["extra"] = st.get("extra", {})
+            st["extra"]["cameras"] = [
+                {
+                    "IP": cam.get("IP"),
+                    **(cam.get("info") or {})              # ← ★★★ UI가 요구하는 상세항목 포함
                 }
                 for cam in state_cams
             ]
@@ -1324,10 +1334,34 @@ class Orchestrator:
                 error=str(e),
             )
             return {"ok": False, "error": str(e)}
-    def _camera_action_autofocus(self):
+    def _camera_action_autofocus(self, body):
         try:
             fd_log.info("_camera_action_autofocus")
-            # 1) Load current OMs state exactly like _connect_all_cameras()
+
+            # 0) 요청 body에서 target ip 추출
+            try:
+                raw_body = body
+                if isinstance(raw_body, bytes):
+                    payload = json.loads(raw_body.decode("utf-8") or "{}")
+                elif isinstance(raw_body, str):
+                    payload = json.loads(raw_body or "{}")
+                elif isinstance(raw_body, dict):
+                    payload = raw_body
+                else:
+                    payload = {}
+            except Exception as e:
+                fd_log.warning(f"autofocus: payload parse error: {e}")
+                payload = {}
+
+            # ⭐ target_ip 안전 파싱
+            val = payload.get("ip")
+            if isinstance(val, str):
+                target_ip = val.strip()
+            else:
+                target_ip = ""
+
+            fd_log.info(f"camera_action_autofocus -> Target IP: {target_ip}")
+            # 1) /oms/state 로드
             try:
                 raw = _http_fetch(
                     "127.0.0.1",
@@ -1343,30 +1377,34 @@ class Orchestrator:
                 if isinstance(raw_body, dict):
                     state = raw_body
                 elif isinstance(raw_body, (bytes, str)):
-                    state = json.loads(raw_body if isinstance(raw_body, str)
-                                    else raw_body.decode("utf-8"))
+                    state = json.loads(
+                        raw_body if isinstance(raw_body, str)
+                        else raw_body.decode("utf-8")
+                    )
                 else:
                     raise ValueError("Unsupported body type")
             except Exception as e:
                 return {"ok": False, "error": f"STATE_LOAD_FAIL: {e}"}
 
-            # 2) Collect camera list (same style as _connect_all_cameras)
+            # 2) 카메라 목록 필터링 (target_ip 있으면 해당 IP만)
             state_cams = state.get("cameras") or []
-
             ip_list = []
+
             for cam in state_cams:
                 ip = cam.get("IP") or cam.get("IPAddress")
-                if ip:
-                    ip_list.append(ip)
+                if not ip:
+                    continue
+                if target_ip and ip != target_ip:
+                    continue
+                ip_list.append(ip)
 
             if not ip_list:
                 return {"ok": False, "error": "NO_CAMERAS_FOUND"}
 
-            fd_log.info(f"camera list:{ip_list}")
+            fd_log.info(f"camera list for AF: {ip_list} (target_ip={target_ip!r})")
 
-            # 3) Select DMPDIP (same logic as connect_all_cameras)
+            # 3) DMPDIP 선택 (기존 로직 그대로)
             command_dmpdip = None
-
             for u in state.get("presd") or []:
                 ip = (u or {}).get("IP")
                 if ip:
@@ -1386,7 +1424,7 @@ class Orchestrator:
             if not command_dmpdip:
                 return {"ok": False, "error": "NO_DMPDIP"}
 
-            # 4) Build AF command
+            # 4) AF command 생성
             req = {
                 "Cameras": [
                     {"IPAddress": ip, "OneShotAF": {"arg": "none"}}
@@ -1403,9 +1441,9 @@ class Orchestrator:
                 "DMPDIP": command_dmpdip,
             }
 
-            fd_log.info(f"request:{req}")
+            fd_log.info(f"AF request: {req}")
 
-            # 5) Send CCd command with retry logic identical to connect
+            # 5) CCd 전송 (기존 로직)
             def _send_ccd(msg, timeout=10.0, retry=3, wait_after=0.8):
                 last_err = None
                 for attempt in range(1, retry + 1):
@@ -1422,21 +1460,30 @@ class Orchestrator:
 
             res = _send_ccd(req)
 
-            # 6) Parse results
+            # 6) 결과 집계 (요청한 ip_list 기준)
             ok_count = 0
             fail_count = 0
 
+            fd_log.info(f"AF response: {res}")
+
             for cam in res.get("Cameras", []):
+                ip = cam.get("IPAddress") or cam.get("IP")
+                if ip not in ip_list:
+                    continue
                 st = cam.get("OneShotAF", {}).get("Status")
                 if st == "OK":
                     ok_count += 1
                 else:
                     fail_count += 1
 
-            return {
-                "ok": fail_count == 0,
+            detail = {
                 "ok_count": ok_count,
                 "fail_count": fail_count,
+            }
+
+            return {
+                "ok": fail_count == 0,
+                "detail": detail,
                 "response": res,
             }
 
@@ -3716,7 +3763,7 @@ class Orchestrator:
                     # ──────────────────────────────────────────────────────     
                     if parts == ["oms", "cam-action", "autofocus"]:
                         fd_log.debug("oms/cam-action/autofocus")
-                        res = orch._camera_action_autofocus() or {}
+                        res = orch._camera_action_autofocus(body) or {}
                         ok = bool(res.get("ok", False))
                         self._send_json({
                             "ok": ok,

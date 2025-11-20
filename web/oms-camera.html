@@ -189,101 +189,129 @@
       return '<span class="pill off">OFF</span>';
     }
 
-    function updateCameraUI(data) {
-      if (!data || !Array.isArray(data.cameras)) return;
+    window.updateCameraUI = function updateCameraUI(state, status) {
+      if (!state) return;
 
-      const cameras = data.cameras;
-      const summary = data.summary || {};
+      const baseList = Array.isArray(state.cameras) ? state.cameras : [];
+      // 항상 /oms/state 에 있는 info 기반으로 사용
+      let detailList = [];
+      if (state && Array.isArray(state.cameras)) {
+        detailList = state.cameras.map(c => {
+          const info = c.info || {};
+          return {
+            IP: c.IP,
+            FirmwareVersion: info.FirmwareVersion,
+            VideoFormatMain: info.VideoFormatMain,
+            Codec: info.Codec,
+            VideoGop: info.VideoGop,
+            VideoBitrateMain: info.VideoBitrateMain,
+            Aperture: info.Aperture,
+            ShutterSpeed: info.ShutterSpeed,
+            ISO: info.ISO,
+            WhiteBalance: info.WhiteBalance,
+          };
+        });
+      }
+
+      // 상단 summary 갱신
+      const summary = state.summary || {};
       const statsSpan = document.getElementById("camStats");
-
-      // --- title right side with summary from backend ---
       if (statsSpan) {
-        const camCount = summary.cameras != null ? summary.cameras : cameras.length;
-        const connCount = summary.connected != null ? summary.connected : 0;
-        const onCount   = summary.on != null ? summary.on : 0;
-        const offCount  = summary.off != null ? summary.off : 0;
+        const camCount = summary.cameras ?? baseList.length;
+        const connCount = summary.connected ??
+          baseList.filter(c => c.connected === true || c.connected === 1 || c.connected === "true").length;
+        const onCount = summary.on ??
+          baseList.filter(c => String(c.status || "").toLowerCase() === "on").length;
+        const offCount = summary.off ?? (camCount - onCount);
 
         statsSpan.textContent =
           `cameras: ${camCount} ( connected: ${connCount} / on: ${onCount} / off: ${offCount} )`;
       }
 
+      const detailByIp = {};
+      for (const c of detailList) {
+        if (c && c.IP) detailByIp[String(c.IP).trim()] = c;
+      }
+
       const tbody = document.getElementById("tblUnified");
       if (!tbody) return;
 
-      const camByIp = {};
-      for (const cam of cameras) {
-        if (cam && cam.IP) {
-          camByIp[String(cam.IP).trim()] = cam;
-        }
-      }
-
-      const rows = tbody.querySelectorAll("tr");
-      rows.forEach((row) => {
-        let ip =
-          row.getAttribute("data-ip") &&
-          row.getAttribute("data-ip").trim();
-
-        if (!ip) {
-          const ipCell =
-            row.querySelector('[data-col="ip"]') ||
-            row.querySelector(".col-ip") ||
-            row.cells[1];
-          if (!ipCell) return;
-          ip = (ipCell.textContent || "").trim();
-        }
-
+      const rows = tbody.querySelectorAll("tr[data-ip]");
+      rows.forEach(row => {
+        const ip = (row.getAttribute("data-ip") || "").trim();
         if (!ip) return;
-        const cam = camByIp[ip];
-        if (!cam) return;
 
+        const base   = baseList.find(x => String(x.IP).trim() === ip) || {};
+        const detail = detailByIp[ip];
+
+        // Status 업데이트
         const statusCell =
-          row.querySelector('[data-col="status"]') ||
-          row.querySelector(".camera-status-cell") ||
           row.querySelector(".col-status") ||
-          row.cells[row.cells.length - 1];
+          row.querySelector('[data-col="status"]');
+        if (statusCell) {
+          statusCell.innerHTML = renderStatusIcon(base);
+        }
 
-        if (!statusCell) return;
+        if (!detail) return;
 
-        statusCell.innerHTML = renderStatusIcon(cam);
+        const setText = (sel, val) => {
+          const cell = row.querySelector(sel);
+          if (cell) cell.textContent = (val ?? "-");
+        };
+
+        setText(".col-fw",       detail.FirmwareVersion);
+        setText(".col-format",   detail.VideoFormatMain);
+        setText(".col-codec",    detail.Codec);
+        setText(".col-bitrate",  detail.VideoBitrateMain);
+        setText(".col-gop",      detail.VideoGop);
+        setText(".col-aperture", detail.Aperture);
+        setText(".col-shutter",  detail.ShutterSpeed);
+        setText(".col-iso",      detail.ISO);
+        setText(".col-wb",       detail.WhiteBalance);
       });
     }
 
-    function fetchCameraState() {
-      fetch("/oms/state", { cache: "no-store" })
-        .then(function (res) {
-          if (!res.ok) throw new Error("HTTP " + res.status);
-          return res.json();
-        })
-        .then(function (data) {
-          updateCameraUI(data);
-        })
-        .catch(function (err) {
-          console.error("Failed to fetch /oms/state:", err);
-        });
+    window.fetchCameraState = async function fetchCameraState() {
+      try {
+        const [stateRes, statusRes] = await Promise.all([
+          fetch("/oms/state",  { cache: "no-store" }),
+          fetch("/oms/status", { cache: "no-store" })
+        ]);
+
+        const state  = await stateRes.json();
+        const status = await statusRes.json();
+
+        if (window.updateCameraUI) {
+          window.updateCameraUI(state, status);
+        }
+      } catch (err) {
+        console.error("State update failed:", err);
+      }
     }
 
     // --- polling interval control ---
-    // NOTE: change this value to update polling interval (seconds)
     let CAMERA_POLL_SEC = 1;
     let cameraPollTimer = null;
 
     function startCameraPolling() {
-      // 기존 타이머 정리
       if (cameraPollTimer) {
         clearInterval(cameraPollTimer);
       }
       cameraPollTimer = setInterval(fetchCameraState, CAMERA_POLL_SEC * 1000);
 
-      // ✅ 버튼 모양 pollChip 텍스트 업데이트: "1 sec", "2 sec" …
       const chip = document.getElementById("pollChip");
       if (chip) {
         chip.textContent = `poll ${CAMERA_POLL_SEC}s`;
       }
     }
 
-    // 초기 1회 실행
-    fetchCameraState();
-    startCameraPolling();
+    document.addEventListener("DOMContentLoaded", () => {
+      // Camera table DOM 생성 이후 실행
+      setTimeout(() => {
+        fetchCameraState();
+        startCameraPolling();
+      }, 200);
+    });            // ← 닫는 괄호 추가
   </script>
 
   <!-- Connect Camera Button -->
@@ -332,31 +360,6 @@
 
   <script>
   (function(){
-    function sendAutoFocus(){
-      fetch("/oms/cam-action/autofocus", { method: "POST" })
-        .then(res => res.json())
-        .then(data => {
-
-          // 실패한 경우 처리
-          if (!data.ok) {
-            // detail이 없으면 data 전체를 출력
-            const detail = data.detail || data.error || data || "Unknown Error";
-            alert("Auto Focus Fail\n\n" + JSON.stringify(detail, null, 2));
-            return;
-          }
-
-          // 성공 처리
-          alert(
-            `Auto Focus Finish\n\n` +
-            `Success: ${data.detail.ok_count}\n` +
-            `Fail: ${data.detail.fail_count}`
-          );
-        })
-        .catch(err => {
-          alert("Auto Focus Request Fail: " + err);
-        });
-    }
-
     function bind(){
       // Liveview 이동
       const btnLive = document.getElementById("btnLiveview");
@@ -368,8 +371,8 @@
 
       // Auto Focus 실행
       const btnAF = document.getElementById("btnAutoFocus");
-      if(btnAF){
-        btnAF.onclick = sendAutoFocus;
+      if (btnAF && window.OMS && OMS.Actions.autoFocus) {
+        btnAF.onclick = () => OMS.Actions.autoFocus(null);   // ← PointerEvent 제거
       }
     }
 
