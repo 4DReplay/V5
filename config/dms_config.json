@@ -46,7 +46,7 @@
       "path": "daemon/PCd/PCd.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {
@@ -55,7 +55,7 @@
       "path": "daemon/MMd/MMdServer.exe",
       "args": [],
       "select": true,
-      "auto_restart": true,
+      "auto_restart": false,
       "start_on_boot": true
     },
     {

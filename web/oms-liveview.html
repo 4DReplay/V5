@@ -143,7 +143,7 @@
     });
 
     async function loadCameraList() {
-      const res = await fetch(withPrefix("/oms/state"));
+      const res = await fetch(withPrefix("/oms/camera/state"));
       const j = await res.json();
 
       cameraSelect.innerHTML = "";
@@ -192,7 +192,7 @@
 
     async function refreshStatus() {
       try {
-        const res = await fetch(withPrefix("/oms/liveview/status"));
+        const res = await fetch(withPrefix("/oms/camera/liveview/status"));
         const j = await res.json();
         updateLed(j.running);
         toggleBtn.dataset.state = j.running ? "on" : "off";
@@ -204,7 +204,7 @@
     // Toggle ON/OFF
     toggleBtn.onclick = async () => {
       const state = toggleBtn.dataset.state;
-      const endpoint = state === "on" ? "/oms/liveview/off" : "/oms/liveview/on";
+      const endpoint = state === "on" ? "/oms/camera/liveview/off" : "/oms/camera/liveview/on";
 
       await fetch(withPrefix(endpoint), { method: "POST" });
       await new Promise(r => setTimeout(r, 700));
@@ -216,9 +216,9 @@
 
     // Restart sequence
     restartBtn.onclick = async () => {
-      await fetch(withPrefix("/oms/liveview/off"), { method: "POST" });
+      await fetch(withPrefix("/oms/camera/liveview/off"), { method: "POST" });
       await new Promise(r => setTimeout(r, 800));
-      await fetch(withPrefix("/oms/liveview/on"), { method: "POST" });
+      await fetch(withPrefix("/oms/camera/liveview/on"), { method: "POST" });
       await new Promise(r => setTimeout(r, 800));
       refreshStatus();
 

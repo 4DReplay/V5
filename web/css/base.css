@@ -1,4 +1,4 @@
-﻿/* 4d-common.css — Pure CSS fallback for the 4DReplay dark theme */
+﻿/* base.css — Pure CSS fallback for the 4DReplay dark theme */
 :root {
   --bg: #0b0f14;
   --fg: #eef2f7;
@@ -87,6 +87,7 @@ h2 small {
 
 .toolbar {
   display: flex;
+  flex-wrap: wrap;   /* 새 줄 허용 */
   gap: 10px;
   align-items: center;
   margin: 10px 0 14px
@@ -312,6 +313,33 @@ tr.other td {
   padding: 2px 8px;
   font-size: 12px;
   color: var(--fg)
+}
+
+.sys-chip {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  display: inline-block;
+}
+
+.chip-orange {
+  background: #5b1a1a;
+  color: #ff6b6b;
+}
+
+.chip-yellow {
+  background: #5b4a1a;
+  color: #ffd86b;
+}
+
+.chip-blue {
+  background: #1a355b;
+  color: #6bb5ff;
+}
+
+.chip-green {
+  background: #1a5b28;
+  color: #6bff8c;
 }
 
 .divider {
@@ -542,12 +570,12 @@ body {
   background: var(--board--panel-bg);
   border: 1px solid var(--board--panel-border);
   box-shadow: var(--shadow-soft);
-  padding: 22px 22px 20px;
+  padding: 25px 25px 25px;
   /* extra bottom for stats + actions */
   backdrop-filter: saturate(160%) blur(18px);
   -webkit-backdrop-filter: saturate(160%) blur(18px);
   overflow: hidden;
-  min-height: 350px;
+  min-height: 300px;
   isolation: isolate;
   /* keep inner glows inside */
 }
@@ -644,20 +672,23 @@ body {
 }
 /* Needs Restart 전용 강한 경고 색 (Apple Red 톤) */
 .status-danger {
-  color: #ff3b30;        /* Apple system red */
+  color: #ff8c00;        /* Apple system red */
 }
 #sysReady.status-danger {
-  color: #ff3b30;        /* System 배너에서도 같은 톤 유지 */
+  color: #ff8c00;        /* System 배너에서도 같은 톤 유지 */
 }
+/* dashboard small title size */
 .ready .prefix {
   display: block;
-  font-size: .36em;
+  font-size: .30em;
   line-height: 1.05;
   font-weight: 800;
   margin-bottom: 0.3em;
 }
+/* dashboard big title size */
 .ready .main {
   display: block;
+  font-size: 46px !important;  
   line-height: 1;
 }
 .ready+.stats,
@@ -667,13 +698,13 @@ body {
 /* Stats -> bottom aligned block */
 .stats-wrapper {
   position: absolute;
-  left: 22px;
-  right: 22px;
+  left: 5px;
+  right: 5px;
   bottom: 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
 }
 .stats {
   display: block;
@@ -763,6 +794,24 @@ body {
   text-overflow: ellipsis;
   pointer-events: none;
   /* 칩 위 클릭 방해 제거 (선택 사항) */
+}
+
+/* system, camera 에서 사용하는 chip*/
+.chip-row {
+  display: flex;
+  gap: 8px;
+  width: 80%;        /* 버튼 줄 아래로 확실히 보냄 */
+  margin-top: 4px;
+}
+/* dashboard 에서 사용하는 chip*/
+.message-chip {
+  margin-top: 4px;
+  margin-bottom: 10px;
+  padding: 6px 12px;
+  border-radius: 12px;
+  background: #2b2b35;
+  font-size: 14px;
+  opacity: 0.85;
 }
 
 /* Actions */
@@ -890,4 +939,101 @@ body {
     color: #34C759 !important;
   }
 }
-  
+
+.ready {
+  margin-bottom: 5px !important;   /* 기본 20~40px까지 들어있을 가능성 → 확 줄임 */
+}
+
+.stats-wrapper {
+  margin-top: 0 !important;         /* 위쪽 여백 제거 */
+}
+
+/* 버튼 색상 */
+.btn-green  { background: linear-gradient(180deg, #4ce67c, #2ebb58); }
+.btn-blue   { background: linear-gradient(180deg, #8fd0ff, #5aa9ff); }
+.btn-yellow { background: linear-gradient(180deg, #ffe066, #ffcc00); }
+
+/* message-chip 기본 색상 */
+.message-chip.state-ready  { color: var(--accent-green) !important; }
+.message-chip.state-warn   { color: var(--accent-blue) !important; }
+.message-chip.state-init   { color: var(--accent-yellow) !important; }
+.message-chip.state-danger { color: #ff3b30 !important; }
+
+/* board 전용 색상 */
+#sysMessageChip.state-ready,
+#camMessageChip.state-ready {
+  color: var(--board--accent-green) !important;
+}
+
+#sysMessageChip.state-warn,
+#camMessageChip.state-warn {
+  color: var(--board--accent-blue) !important;
+}
+
+#sysMessageChip.state-init,
+#camMessageChip.state-init {
+  color: var(--board--accent-yellow) !important;
+}
+
+#sysMessageChip.state-danger,
+#camMessageChip.state-danger {
+  color: #ff3b30 !important;
+}
+
+/* 강조 색상 */
+.status-init.state-anim { color: var(--accent-yellow) !important; }
+.status-warn.state-anim { color: var(--accent-blue) !important; }
+
+/* 애니메이션 중에도 색상 유지 */
+#sysReady.status-ready.state-anim,
+#camReady.status-ready.state-anim {
+  color: var(--board--accent-green) !important;
+}
+
+#sysReady.status-warn.state-anim,
+#camReady.status-warn.state-anim {
+  color: var(--board--accent-blue) !important;
+}
+
+#sysReady.status-init.state-anim,
+#camReady.status-init.state-anim {
+  color: var(--board--accent-yellow) !important;
+}
+
+#sysReady.status-danger.state-anim,
+#camReady.status-danger.state-anim {
+  color: #ff3b30 !important;
+}
+
+/* message-chip 애니메이션 금지 */
+.message-chip.state-anim {
+  animation: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+}
+
+#sysReady,
+#camReady {
+  font-size: 2.5rem;
+}
+
+#sysReady.state-anim,
+#camReady.state-anim {
+  font-size: 2.8rem;
+  transform: none;  /* 크기 흔들리는 것 원치 않으면 */
+}
+
+/* 상태 텍스트 애니메이션 */
+.state-text.state-anim,
+.state-anim {
+  animation: dashPulseSoft 1.5s infinite cubic-bezier(.3,0,.6,1);
+  transform-origin: center;
+}
+
+/* 애니메이션 키프레임 */
+@keyframes dashPulseSoft {
+  0%   { opacity: 1.0;  transform: scale(1.00); }
+  50%  { opacity: 0.85; transform: scale(1.03); }
+  100% { opacity: 1.0;  transform: scale(1.00); }
+}
+

@@ -398,7 +398,7 @@
     document.getElementById("btnPickMTd").addEventListener("click", async () => {
       try {
         setPill("Detecting MTd...");
-        const st = await api("/oms/status");
+        const st = await api("/oms/system/state");
         const target = pickMTdTarget(st);
         if (!target) throw new Error("No MTd detected.");
         IN_HOST.value = target.host;

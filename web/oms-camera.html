@@ -21,7 +21,7 @@
   </h1>
 
   <!-- Controls under title -->
-  <div class="toolbar" style="justify-content:flex-start">
+  <div class="toolbar" id="camToolbar" style="justify-content:flex-start; flex-wrap:wrap;">
     <button id="btnDashboard">📊 Dashboard</button>
     <span class="divider"></span>
 
@@ -30,16 +30,22 @@
     <button id="btnCamStartAll" class="btn-secondary">▶ Start All</button>
     <span class="divider"></span>
 
-    <!-- Connect + progressChip -->
-    <button id="btnCamConnect" class="btn-secondary">📸 Connect</button>
-    <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
-
+    <button id="btnCamConnect" class="btn-secondary">📸 Connect</button>     
     <span class="spacer"></span>
-
     <span class="chip" id="pollChip">poll -</span>    
     <small id="busy" class="muted"></small>
   </div>
 
+  <!-- ✔ 버튼 아래로 이동한 message chips -->
+  <div id="camChipRow" style="
+       margin-top:8px;
+       display:flex;
+       gap:10px;
+       align-items:center;
+       ">
+      <span id="camStateChip" class="chip chip-blue"></span>
+      <span id="camMessageChip" class="chip"></span>
+  </div>
   <!-- Hidden (kept for JS compatibility) -->
   <div style="display:none">
     <input id="camHost" type="text" value="127.0.0.1" />
@@ -74,7 +80,9 @@
   
   <!-- Camera Tools -->
   <div class="toolbar" style="margin-top:16px; justify-content:flex-start;">
-    <button id="btnLiveview" class="btn-primary">▶ Liveview</button>
+    <button id="btnRecord" class="btn-primary">🎥 Record</button>
+    <button id="btnLiveview" class="btn-primary">👁️ Liveview</button>
+    <span class="divider"></span>
     <button id="btnAutoFocus" class="btn-primary">🎯 Auto Focus</button>
   </div>
 
@@ -119,25 +127,17 @@
     }
   </style>
 
-  <script src="/web/oms-actions.js" defer></script>
   <!-- bootstrap 1 -->
   <script>
-    (function bootstrap() {
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", () => {
-          const path = location.pathname || "";
-          if (path.endsWith("/web/oms-camera.html") || path.endsWith("oms-camera.html")) {
-            initSwitchDetailsFromStatus();  // 이제 정상 동작
-          }
-        });
-      } else {
-        // 혹시 이미 DOM 준비된 상태에서 들어오는 경우
-        const path = location.pathname || "";
-        if (path.endsWith("/web/oms-camera.html") || path.endsWith("oms-camera.html")) {
-          initSwitchDetailsFromStatus();
-        }
-      }
-    })();
+  document.addEventListener("DOMContentLoaded", () => {
+    // Always init switch + camera table
+    if (window.OMS?.Actions?.initSwitchDetailsFromStatus) {
+      window.OMS.Actions.initSwitchDetailsFromStatus();
+    }
+    if (window.OMS?.Actions?.initCameraDetailsFromStatus) {
+      window.OMS.Actions.initCameraDetailsFromStatus();
+    }
+  });
   </script>
   
   <!-- bootstrap 2 -->
@@ -158,7 +158,7 @@
       }
 
       if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initCameraPage);
+        document.addEventListener("DOMContentLoaded", initCameraPage);        
       } else {
         initCameraPage();
       }
@@ -177,62 +177,62 @@
       if (status === "on" && connected) {
         return '<span class="pill connected">CONNECTED</span>';
       }
-
       // 2) ON (전원은 켜져 있으나 연결 안 됨) → RUNNING 스타일과 동일한 ON
       if (status === "on") {
-        // 4d-common-style.css 에서 .pill.on 이 RUNNING 계열 스타일을 사용 :contentReference[oaicite:1]{index=1}
         return '<span class="pill on">ON</span>';
       }
-
-      // 3) 나머지는 전부 OFF → STOPPED 와 같은 디자인
-      //   (4d-common-style.css 의 .pill.off 이 STOPPED 계열 스타일을 사용) :contentReference[oaicite:2]{index=2}
+      // 3) 나머지는 전부 OFF → STOPPED 와 같은 디자인      
       return '<span class="pill off">OFF</span>';
     }
 
+    // previous camera condition
+    window._prevCameraCount = window._prevCameraCount ?? null;
     window.updateCameraUI = function updateCameraUI(state, status) {
       if (!state) return;
 
-      const baseList = Array.isArray(state.cameras) ? state.cameras : [];
-      // 항상 /oms/state 에 있는 info 기반으로 사용
-      let detailList = [];
-      if (state && Array.isArray(state.cameras)) {
-        detailList = state.cameras.map(c => {
-          const info = c.info || {};
-          return {
-            IP: c.IP,
-            FirmwareVersion: info.FirmwareVersion,
-            VideoFormatMain: info.VideoFormatMain,
-            Codec: info.Codec,
-            VideoGop: info.VideoGop,
-            VideoBitrateMain: info.VideoBitrateMain,
-            Aperture: info.Aperture,
-            ShutterSpeed: info.ShutterSpeed,
-            ISO: info.ISO,
-            WhiteBalance: info.WhiteBalance,
-          };
-        });
+      const cameras = Array.isArray(state.cameras) ? state.cameras : []; 
+      const count = cameras.length;           
+      // ★ 1) 카메라 수 변화 감지 → 테이블 전체 재빌드
+      if (window._prevCameraCount !== count) {
+        console.log("Camera list changed → rebuild table");
+        window._prevCameraCount = count;
+
+        if (window.OMS?.Actions?.initCameraDetailsFromStatus) {
+          window.OMS.Actions.initCameraDetailsFromStatus();  
+        }
       }
 
-      // 상단 summary 갱신
+      // ★ 2) 카메라 수 0 → UI 초기화 (no data)
+      if (count === 0) {
+        const tbody = document.getElementById("tblUnified");
+        tbody.innerHTML = '<tr><td class="muted">no data</td></tr>';
+        return;
+      }
+        
+      // ==== 1) Summary 갱신 ====
       const summary = state.summary || {};
       const statsSpan = document.getElementById("camStats");
       if (statsSpan) {
-        const camCount = summary.cameras ?? baseList.length;
-        const connCount = summary.connected ??
-          baseList.filter(c => c.connected === true || c.connected === 1 || c.connected === "true").length;
-        const onCount = summary.on ??
-          baseList.filter(c => String(c.status || "").toLowerCase() === "on").length;
-        const offCount = summary.off ?? (camCount - onCount);
+        const camCount = summary.cameras ?? cameras.length;
+        const connCount = summary.connected ?? 0;
+        const onCount   = summary.on ?? 0;
+        const offCount  = summary.off ?? 0;
 
         statsSpan.textContent =
           `cameras: ${camCount} ( connected: ${connCount} / on: ${onCount} / off: ${offCount} )`;
       }
 
+      // ==== 2) 상세 정보 맵 ====
+      // connect 이후 서버가 info 를 채워줄 경우 사용
       const detailByIp = {};
-      for (const c of detailList) {
-        if (c && c.IP) detailByIp[String(c.IP).trim()] = c;
+      for (const cam of cameras) {
+        const ip = String(cam.IP).trim();        
+        if (cam.info) {          
+          detailByIp[ip] = cam.info;
+        }
       }
-
+      
+      // ==== 3) Row 업데이트 ====
       const tbody = document.getElementById("tblUnified");
       if (!tbody) return;
 
@@ -241,10 +241,10 @@
         const ip = (row.getAttribute("data-ip") || "").trim();
         if (!ip) return;
 
-        const base   = baseList.find(x => String(x.IP).trim() === ip) || {};
-        const detail = detailByIp[ip];
+        const base = cameras.find(c => String(c.IP).trim() === ip);
+        if (!base) return;  // 기본 정보가 없으면 스킵
 
-        // Status 업데이트
+        // ---- 상태 업데이트 ----
         const statusCell =
           row.querySelector(".col-status") ||
           row.querySelector('[data-col="status"]');
@@ -252,11 +252,15 @@
           statusCell.innerHTML = renderStatusIcon(base);
         }
 
-        if (!detail) return;
+        // ---- 상세 정보는 info 가 있을 때만 반영 ----
+        const detail = detailByIp[ip];
+        if (!detail) 
+          return; // connect 전 → 정보 없음 → 그대로 유지
 
+        // helper
         const setText = (sel, val) => {
           const cell = row.querySelector(sel);
-          if (cell) cell.textContent = (val ?? "-");
+          if (cell) cell.textContent = val ?? "-";
         };
 
         setText(".col-fw",       detail.FirmwareVersion);
@@ -269,21 +273,30 @@
         setText(".col-iso",      detail.ISO);
         setText(".col-wb",       detail.WhiteBalance);
       });
-    }
-
+    };
     window.fetchCameraState = async function fetchCameraState() {
       try {
-        const [stateRes, statusRes] = await Promise.all([
-          fetch("/oms/state",  { cache: "no-store" }),
-          fetch("/oms/status", { cache: "no-store" })
+        const [stateCamera, stateSystem] = await Promise.all([
+          fetch("/oms/camera/state",  { cache: "no-store" }),
+          fetch("/oms/system/state",  { cache: "no-store" })
         ]);
 
-        const state  = await stateRes.json();
-        const status = await statusRes.json();
+        const stateCam = await stateCamera.json();
+        const stateSys = await stateSystem.json();
 
+        // 기존 UI 업데이트 (카메라 테이블 갱신)
         if (window.updateCameraUI) {
-          window.updateCameraUI(state, status);
+          window.updateCameraUI(stateCam, stateSys);
         }
+
+        // ★ 공통 함수 적용: Camera State + Message 칩 업데이트
+        applyStateAndMessage({
+          state: stateCam.state,
+          message: stateCam.message,
+          stateEl: document.getElementById("camStateChip"),
+          messageEl: document.getElementById("camMessageChip")
+        });
+
       } catch (err) {
         console.error("State update failed:", err);
       }
@@ -362,13 +375,19 @@
   (function(){
     function bind(){
       // Liveview 이동
+      const btnRec = document.getElementById("btnRecord");
+      if(btnRec){
+        btnRec.onclick = () => {
+          window.location.href = "/record";
+        };
+      }
+      // Liveview 이동
       const btnLive = document.getElementById("btnLiveview");
       if(btnLive){
         btnLive.onclick = () => {
           window.location.href = "/liveview";
         };
       }
-
       // Auto Focus 실행
       const btnAF = document.getElementById("btnAutoFocus");
       if (btnAF && window.OMS && OMS.Actions.autoFocus) {
@@ -383,5 +402,7 @@
     }
   })();
   </script>
+  
+  <script src="/web/oms-actions.js"></script>  
 </body>
 </html>

@@ -16,30 +16,24 @@
 </head>
 
 <body>
-  <!-- favicon 404 방지: 실제 위치에 맞춰 /web/images/... 도 함께 시도 -->
-  <button id="btnFullscreen" class="fullscreen-btn" type="button" title="Toggle fullscreen"
-    aria-label="Toggle fullscreen">
-    ⤢
-  </button>
-  <h1 class="page-title" id="pageTitle"> 
-  </h1>
-  <!-- 전체 타이틀 바로 아래 줄로 진행 메시지 칩 이동 -->
-  <div class="page-title-chip-row">
-    <span id="titleProgress" class="chip chip-title" role="status" aria-live="polite"></span>
-    <button class="btn-secondary" onclick="location.href='/user'">⚙️ User Config</button>
-  </div>
-
+  <h1 class="page-title-with-actions">
+    <span id="pageTitle"></span>
+    <div class="page-top-buttons">
+      <button class="btn-top" onclick="location.href='/user'">⚙️ User Config</button>
+      <button id="btnFullscreen" class="btn-top icon-only" title="Toggle fullscreen">⤢</button>
+    </div>
+  </h1> 
   <div class="grid">
     <!-- System card -->
     <section class="card-dashboard-card" id="sysCard">
       <h2>
-        <button id="btnSystemTitle" type="button" class="title-btn">
+        <button id="btnSystemTitle" class="title-btn btn-system">
           <span class="title-icon">⚙️</span><span class="title-text">System</span>
         </button>
         <span id="sysPoll" class="chip-poll">poll -</span>
       </h2>
-      <div class="ready" id="sysReady">Ready</div>
-
+      <div id="sysMessageChip" class="message-chip"></div>
+      <div class="ready" id="sysReady">Ready</div>      
       <div class="stats-wrapper">
         <div class="actions">
           <button id="btnSysRestart" class="btn-neo btn-green" title="Processes Restart">
@@ -47,7 +41,7 @@
             <span class="bottom">Restart</span>
           </button>
           <button id="btnSysConnect" class="btn-neo btn-blue" title="Processes Connect"
-            data-reconnect="/oms/sys-connect/sequence">
+            data-reconnect="/oms/system/connect/sequence">
             <span class="top">Processes</span>
             <span class="bottom">Connect</span>
           </button>
@@ -66,12 +60,13 @@
     <!-- Camera card -->
     <section class="card-dashboard-card" id="camCard">
       <h2>
-        <button id="btnCameraTitle" type="button" class="title-btn">
+        <button id="btnCameraTitle" type="button" class="title-btn btn-camera">
           <span class="title-icon">📸</span><span class="title-text">Camera</span>
         </button>
         <span id="camPoll" class="chip-poll">poll -</span>
       </h2>
-      <div class="ready" id="camReady">Ready</div>
+      <div id="camMessageChip" class="message-chip"></div>
+      <div class="ready" id="camReady">Ready</div>      
       <div class="stats-wrapper">
         <div class="actions">
           <button id="btnCamRestart" class="btn-neo btn-green" title="Cameras Restart">
@@ -94,1072 +89,7 @@
 
     </section>
   </div>
-  <script>
-
-    // ─────────────────────────────
-    // Progress 메시지 동기화(oms-system과 동일)
-    // ─────────────────────────────
-    const PROG_LS_KEY = "oms_ra_progress";   // :contentReference[oaicite:0]{index=0}
-    let __dashRestartSeenRunning = false;
-    let __dashRestartFinishedOnce = false;
-    window.__restart_done_once = false;  // 🔹 이번 리스타트에서 done/idle 처리했는지 여부
-
-    const $ = (id) => document.getElementById(id);
-    const getTitleChipEl = () => $('titleProgress');
-    const getProgressChipEl = () => $('progressChip');
-
-    window.__system_restart = false;  // System 전용 Restarting 락
-    window.__restart_sticky = false;
-    window.__restart_hold_until = 0; // 최소 유지시간용 (ms)
-    window.__ignore_done_until = 0;
-
-    async function httpJson(path, init = {}) {
-      const res = await fetch(path, { cache: "no-store", ...init });
-      const ct = res.headers.get("content-type") || "";
-      if (!res.ok) throw new Error(await res.text().catch(() => `HTTP ${res.status}`));
-      return ct.includes("application/json") ? res.json() : res.text();
-    }
-
-    function buildTaggedMsg(domainId, actionId, text) {
-      const domain = ({ 1: 'system', 2: 'camera' })[Number(domainId)] || 'system';
-      const action = ({ 1: 'restart', 2: 'connect' })[Number(actionId)] || 'connect';
-      const tail = (text == null ? '' : String(text)).trim();
-      return `[${domain}][${action}]${tail ? ' ' + tail : ''}`;
-    }
-
-    // 진행칩/타이틀칩 메시지 초기화 + 단기 무시 윈도우 설정
-    function clearProgressChip({ ignoreDoneMs = 1500 } = {}) {
-      try { localStorage.removeItem(PROG_LS_KEY); } catch { }
-      const titleEl = getTitleChipEl?.();
-      if (titleEl) {
-        titleEl.textContent = '';
-        titleEl.style.visibility = 'hidden';
-        titleEl.setAttribute('aria-hidden', 'true');
-      }
-      const progEl = getProgressChipEl?.();
-      if (progEl) {
-        progEl.textContent = '';
-        progEl.style.visibility = 'hidden';
-      }
-      // 직후에 튀어 들어오는 스테일 "Restart finished"는 잠깐 무시
-      window.__ignore_done_until = Date.now() + ignoreDoneMs;
-    }
-
-    const SYS_RESTART_TAG = "[System][Restart]";
-    const RX_TAG = /\[(?:system\]\s*\[restart|system\s+restart)\]/i;
-
-    function hasSysRestartTag(msg) {
-      return RX_TAG.test(String(msg || ""));
-    }
-    function isRestartDoneMsg(msg) {
-      const t = String(msg || "");
-      // finished/done/complete 가 들어오면 일단 "완료 후보"
-      const hasDone = /\b(finished|done|complete)\b/i.test(t);
-      if (!hasDone) return false;
-      // 1) 태그가 같이 있으면 무조건 완료
-      if (RX_TAG.test(t)) return true;
-      // 2) 태그는 없지만 현재 System 재시작 중이면 이것도 완료로 인정
-      if (window.__system_restart || window.__restart_sticky) return true;
-      // 3) 그 외에는 plain 메시지 쪽에서 처리
-      return false;
-    }
-    function isRestartingMsg(msg) {
-      const t = String(msg || "");
-      // 태그가 있고, finished류가 아니면 전부 진행중으로 간주
-      return RX_TAG.test(t) && !isRestartDoneMsg(t);
-    }
-
-    function releaseRestartLockAndRefresh(force = false) {
-      // 시스템 재시작 플래그나 스티키 플래그가 하나라도 켜져 있을 때만 동작
-      if (!force && !window.__system_restart && !window.__restart_sticky) return;
-      // 🔓 모든 재시작 관련 플래그 해제
-      window.__system_restart = false;
-      window.__restart_sticky = false;
-      window.__restart_hold_until = 0;
-      // 상태/숫자 즉시 반영
-      try {
-        if (typeof window.__dashRefreshSystem === 'function') {
-          window.__dashRefreshSystem();
-        }
-      } catch { }
-    }
-
-    function isPlainDoneMsg(msg) {
-      const t = String(msg || "");
-      if (hasSysRestartTag(t)) return false; // 태그 있으면 plain 아님
-      // 서버가 "Finished" / "Done" 같은 짧은 문구만 보내는 경우도 처리
-      return /\b(restart\s*finished|restart-all\s*done|all\s*processes\s*restarted|재시작\s*완료|finished|done|complete)\b/i.test(t);
-    }
-
-    function writeBoth(msg) {
-
-      // restart 시작 메시지인지 판별
-      if (isRestartingMsg(msg)) {
-        window.__system_restart = true;
-
-        try {
-          const sysReady = document.getElementById('sysReady');
-          if (sysReady) {
-            sysReady.classList.remove('status-ready');
-            sysReady.classList.add('status-warn');
-            sysReady.innerHTML = '<span class="main">Restarting…</span>';
-          }
-        } catch {}
-
-        return;
-      }
-
-      // restart 완료 메시지인지 판별
-      if (isRestartDoneMsg(msg)) {
-        releaseRestartLockAndRefresh();
-        return;
-      }
-
-      // 🔒 stale done message 무시 로직 (chip 관련 제거 후에도 그대로 유지 가능)
-      if ((window.__system_restart || window.__restart_sticky) &&
-          Date.now() < (window.__ignore_done_until || 0) &&
-          isPlainDoneMsg(msg)) {
-
-        const wait = (window.__ignore_done_until || Date.now()) - Date.now();
-        window.clearTimeout(window.__late_done_timer);
-
-        window.__late_done_timer = window.setTimeout(() => {
-          if (window.__system_restart || window.__restart_sticky) {
-            releaseRestartLockAndRefresh();
-          }
-        }, Math.max(0, wait + 50));
-
-        return;
-      }
-
-      // ❗ 이 아래는 chip 관련 로직이므로 전부 제거됨
-      // - conn/restart 비교
-      // - latest 처리
-      // - prev 처리
-      // - chipWrite(text)
-      // - title chip 업데이트
-      // - localStorage 저장
-      // 완전 제거됨
-    }
-
-    // chip update
-    setInterval(updateChipByLatestState, 1000);
-    async function updateChipByLatestState() {
-      const [conn, restart] = await Promise.all([
-        httpJson("/oms/sys-connect/state").catch(() => null),
-        httpJson("/oms/sys-restart/state").catch(() => null)
-      ]);
-
-      let latest = null;
-      if (conn?.updated_at) latest = { ts: conn.updated_at, msg: conn.message };
-      if (restart?.updated_at) {
-        if (!latest || restart.updated_at > latest.ts)
-          latest = { ts: restart.updated_at, msg: restart.message };
-      }
-      // prev는 fallback 용도로만 사용
-      const prev = localStorage.getItem("oms_ra_progress") || "";
-
-      // ❗ latest가 있으면 무조건 latest.msg 사용 (빈 문자열이어도 OK)
-      const finalText = latest ? latest.msg : prev;
-      console.log("updateChipByLatestState: ",finalText)
-
-      if (!finalText) 
-        return;
-
-      localStorage.setItem("oms_ra_progress", finalText);
-      const el = getTitleChipEl();
-      if (el) {
-        el.textContent = finalText;
-        el.style.visibility = "visible";
-      }
-    }
-
-    // 로컬스토리지 캐시로 즉시 동기화(새로고침 직후 끊김 방지)
-    (function syncFromLocalStorageOnce() {
-      try {
-        const cached = localStorage.getItem(PROG_LS_KEY);
-        if (cached && cached.trim()) {
-          const titleEl = getTitleChipEl();
-          if (titleEl) {
-            titleEl.textContent = cached.trim();
-            titleEl.style.visibility = 'visible';
-            titleEl.setAttribute('aria-hidden', 'false');
-          }
-          // 🔒 캐시에 "restart"가 있으면 스티키 즉시 세팅
-          if (isRestartingMsg(cached)) {
-            window.__restart_sticky = true;
-            window.__restart_hold_until = Date.now() + 2000;
-          }
-        }
-      } catch { }
-    })();
-
-    window.addEventListener("oms:summary", (ev) => {
-      const s = ev.detail || {};
-      const el = document.getElementById("sysSummary");
-      if (!el) return;
-      el.textContent =
-        `nodes ${s.nodes}, processes ${s.processes}, connected ${s.connected}`;
-    });
-
-    // 다른 탭/oms-system에서 갱신되는 메시지를 실시간 반영
-    window.addEventListener('storage', (e) => {
-      if (e.key === PROG_LS_KEY && typeof e.newValue === 'string') {
-        writeBoth(e.newValue);
-      }
-    });
-
-    (function () {
-      const PROXY_PREFIX = window.__PROXY_PREFIX__ || "";
-      const API = (p) => (p.startsWith("/") ? PROXY_PREFIX + p : p);
-      const wait = (ms) => new Promise(r => setTimeout(r, ms));
-      const el = {
-        sysNodes: document.getElementById('sysNodes'),
-        sysProcs: document.getElementById('sysProcs'),
-        sysConn: document.getElementById('sysConn'),
-        sysRun: document.getElementById('sysRun'),
-        sysStop: document.getElementById('sysStop'),
-        sysReady: document.getElementById('sysReady'),
-        sysPoll: document.getElementById('sysPoll'),
-        camTotal: document.getElementById('camTotal'),
-        camConn: document.getElementById('camConn'),
-        camOn: document.getElementById('camOn'),
-        camOff: document.getElementById('camOff'),
-        camReady: document.getElementById('camReady'),
-        camPoll: document.getElementById('camPoll'),
-        btnSysRestart: document.getElementById('btnSysRestart'),
-        btnSysConnect: document.getElementById('btnSysConnect'),
-        btnCamRestart: document.getElementById('btnCamRestart'),
-        btnCamConnect: document.getElementById('btnCamConnect'),
-      };
-
-      window.__dashEl = el;
-
-      // ── freshness & last-good state (SYSTEM only) ────────────────────────────
-      let lastSys = null;        // {nodes, processes, connected, running, stopped, ts}
-      let lastSysTs = 0;         // latest accepted timestamp (monotonic)
-      let preferLSUntil = 0;     // Date.now() 기준, 이 시각 이전까지는 LS(source=oms-system) 우선
-      let sysPollTimer = 0;
-      let sysPollMs = 3000;      // 기본 3s, /oms/status의 heartbeat로 조정
-      const pollLabel = () => `poll ${Math.round(sysPollMs / 1000)}s`;
-      const nowMs = () => Date.now();
-
-
-      // ---- helpers ----
-      function setStatus(elm, status) {
-        const s = String(status || '').toLowerCase();
-
-        // ✅ 모든 status-* 클래스 먼저 제거
-        elm.classList.remove('status-ready', 'status-warn', 'status-danger', 'status-init');
-        if (s === 'ready') {
-          elm.classList.add('status-ready');
-          elm.innerHTML = 'Ready';
-          return;
-        }
-        // ✅ 새 분기: Needs Check System
-        if (s.includes('check system')) {
-          elm.classList.add('status-init'); // 파란색 계열 유지
-          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Check System</span>';
-          return;
-        }
-        if (s.includes('restart')) {
-          // Needs Restart → 빨간색
-          elm.classList.add('status-danger');
-          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Restart</span>';
-        } else {
-          // Needs Connect → 파란색
-          elm.classList.add('status-warn');
-          elm.innerHTML = '<span class="prefix">Needs</span><span class="main">Connect</span>';
-        }
-      }
-
-
-      // 200/204만 true로, 나머지 얌전히 false 반환 (탐색용)
-      function isAbsoluteUrl(u) { try { return Boolean(new URL(u)); } catch { return false; } }
-      function isHostLike(u) { return /^https?:\/\/[^/]+\/?$/.test(u) || /^[a-z0-9.-]+\/?$/i.test(u); }
-      function joinPath(base, tail) {
-        const b = base.endsWith("/") ? base.slice(0, -1) : base;
-        const t = tail.startsWith("/") ? tail : ("/" + tail);
-        return b + t;
-      }
-      // ✅ 추가: progressChip 지연 조회
-      function getProgressChipEl() {
-        return document.getElementById('progressChip');
-      }
-
-      async function serverHas(path, method = "GET") {
-        try {
-          if (isAbsoluteUrl(path) || isHostLike(path)) return false;
-          const p = path.startsWith("/") ? path : ("/" + path);
-          const doFetch = (m) => fetch(API(p), { method: m, cache: "no-store" });
-
-          let res = await doFetch(method === "GET" ? "HEAD" : method);
-          if (!res.ok || [400, 405, 501].includes(res.status)) {
-            try {
-              res = await doFetch("GET");
-            } catch (e) {
-              console.warn("[serverHas] fallback GET failed", e);
-            }
-          }
-          return res.ok;
-        } catch (e) {
-          console.warn("[serverHas] failed", e);
-          return false;
-        }
-      }
-
-      // /oms/sys-restart/state 폴링(폴백): message 그대로 사용(포맷 X)  :contentReference[oaicite:1]{index=1}
-      let __dashRestartPollTimer = 0;
-      async function dashPollRestartState() {
-        try {
-          const st = await httpJson("/oms/sys-restart/state");
-
-          const state = (st && typeof st === 'object') ? (st.state || "") : "";
-          const msg = (st && typeof st === 'object') ? (st.message || "")
-            : (typeof st === 'string' ? st : "");
-
-          // 1) running 상태를 한 번이라도 보면 "이번 리스타트에서 실제로 돌기 시작했다" 표시
-          if (state === "running") {
-            __dashRestartSeenRunning = true;
-            window.__restart_done_once = false;  // ✅ running 뜨면 새 리스타트 사이클 시작
-          }
-
-          // 2) 새로 Restart 눌렀는데 아직 running 을 못 본 상태에서
-          //    state 가 done/idle 이면 → 지난 리스타트의 찌꺼기라고 보고 완전히 무시
-          if (!__dashRestartSeenRunning && (state === "done" || state === "idle")) {
-            return; // writeBoth 도, done 처리도 안 함
-          }
-
-          // 3) 메시지 종류에 따라 처리 분기
-          const done = isRestartDoneMsg(msg);
-          if (done) {
-            // ✅ Finished/done/complete 류 메시지는 "한 번만" 반영
-            if (!__dashRestartFinishedOnce) {
-              __dashRestartFinishedOnce = true;
-              if (msg) {
-                writeBoth(msg);
-                try { localStorage.setItem(PROG_LS_KEY, msg); } catch { }
-              }
-              // 완료 시에는 락 해제 + 상태 갱신
-              releaseRestartLockAndRefresh();
-            }
-          } else {
-            // 진행 중 메시지(preparing, step N/N 등)는 계속 업데이트
-            if (msg) {
-              writeBoth(msg);
-              try { localStorage.setItem(PROG_LS_KEY, msg); } catch { }
-            }
-          }
-
-          if (isRestartDoneMsg(msg)) releaseRestartLockAndRefresh();
-        } catch { }
-        finally {
-          __dashRestartPollTimer = window.setTimeout(dashPollRestartState, 700);
-        }
-      }
-      function ensureDashRestartPolling() {
-        if (__dashRestartPollTimer) return;
-        dashPollRestartState().catch(() => { });
-      }
-      // 액션 호출 보조: OMS.Actions 가 준비될 때까지 기다리거나, 폴백 REST 호출
-      async function callAction(kind) {
-        // 0) 버튼 data-*로 강제 경로 오버라이드 허용
-        const overrideReconnect =
-          document.getElementById('btnSysConnect')?.dataset?.reconnect?.trim() || "";
-
-        // 엔드포인트 탐색: /oms, /oms/sys-restart, /
-        const discoverReconnect = async () => {
-          // 1) 베이스 후보 중 "상태 엔드포인트가 실제로 열려있는" 것만 채택
-          const baseRoots = ["/oms", "/"];
-          const validBases = [];
-          for (const b of baseRoots) {
-            const statusPath = joinPath(b, "status");   // => "/oms/status" 또는 "/status"
-            const healthPath = joinPath(b, "health");   // => "/oms/health" 또는 "/health"
-            if (await serverHas(statusPath) || await serverHas(healthPath)) {
-              validBases.push(b);
-            }
-          }
-          // 아무 베이스도 없으면 즉시 빈 목록 반환 → 버튼 비활성화 트리거
-          if (validBases.length === 0) return [];
-          const found = new Set();
-          const push = (p) => { if (p && typeof p === "string") found.add(p); };
-          const scanText = (t) => {
-            // 경로처럼 보이는 토큰 중 connect/reconnect 포함만 수집
-            const rgx = /(\/[A-Za-z0-9_\-\/]+)/g;
-            let m; while ((m = rgx.exec(t))) {
-              const u = m[1];
-              if (/connect|reconnect/i.test(u)) push(u);
-            }
-          };
-          for (const b of validBases) {
-            try {
-              const raw = await httpJson(b, { method: "GET" });
-              if (typeof raw === "object" && raw) {
-                // JSON 탐색
-                const walk = (v) => {
-                  if (!v) return;
-                  if (typeof v === "string") { if (/connect|reconnect/i.test(v)) push(v); return; }
-                  if (Array.isArray(v)) v.forEach(walk);
-                  else if (typeof v === "object") Object.values(v).forEach(walk);
-                };
-                walk(raw);
-              } else if (typeof raw === "string") {
-                scanText(raw);
-              }
-            } catch { /* ignore */ }
-          }
-          const defaults = [];
-          for (const b of validBases) {
-            defaults.push(
-              joinPath(b, "sys-restart/connect"),
-              joinPath(b, "sys-restart/connect-all"),
-              joinPath(b, "sys-connect/sequence"),
-              joinPath(b, "sys-connect/all"),
-              joinPath(b, "sys-connect"),
-              joinPath(b, "mtd-query")
-            );
-          }
-          return [
-            ...found,
-            ...defaults
-          ];
-        };
-        // 1) actions 스크립트 로드 대기 (최대 3초)
-        try { await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve()); } catch { }
-        let tries = 6;
-        while (tries-- > 0 && !(window.OMS && (window.OMS.Actions || window.OMS.sysRestart))) {
-          await wait(250);
-        }
-        // 2) 준비되었으면 공용 액션 호출
-        try {
-          if (kind === "restart") {
-            ensureDashRestartPolling();  // 진행상황 실시간 반영 시작
-            if (window.OMS?.Actions?.sysRestart) return window.OMS.Actions.sysRestart();
-            if (window.OMS?.sysRestart) return window.OMS.sysRestart();
-          } else if (kind === "reconnect") {
-            ensureDashRestartPolling();
-            // JS 액션이 있으면 무조건 공용 액션만 사용
-            if (window.OMS?.Actions?.sysConnect) return window.OMS.Actions.sysConnect();
-            if (window.OMS?.sysConnect) return window.OMS.sysConnect();
-          }
-        } catch (e) {
-          // 공용 액션이 존재하지만 실패 → 폴백 시도
-          console.warn("[dash] action failed, fallback", e);
-        }
-        // 3) 최후 폴백: 서버 엔드포인트 직접 호출
-        if (kind === "restart") {
-          ensureDashRestartPolling();
-          await httpJson("/oms/sys-restart/all", { method: "POST" });
-          return;
-        }
-        if (kind === "reconnect") {
-          ensureDashRestartPolling();
-          await httpJson("/oms/sys-connect/sequence", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ return_partial: true })
-          });
-          return;
-        }
-      }
-
-      // ---- comment rules (unchanged logic)
-      function commentSystem({ proc, connected, running, stopped }) {
-        if (!proc || proc === 0) return 'Needs Check System';
-        if (proc === connected) return 'Ready';
-        if (stopped > 0) return 'Needs Restart';
-        return 'Needs Connect';
-      }
-      function commentCamera({ cams, connected, on, off }) {
-        if (!cams || cams === 0) return 'Needs Check System';
-        if (cams === connected) return 'Ready';
-        if (off > 0) return 'Needs Restart';
-        return 'Needs Connect';
-      }
-
-      // ---- System summary helpers (same logic as oms-system) ----
-      function ipFromHost(host) {
-        const m = String(host || "").match(/\b\d{1,3}(?:\.\d{1,3}){3}\b/);
-        return m ? m[0] : String(host || "");
-      }
-      function toProcList(status) {
-        if (!status) return [];
-        if (status.data && typeof status.data === "object") return Object.values(status.data);
-        if (Array.isArray(status.processes)) return status.processes;
-        if (Array.isArray(status.executables)) return status.executables;
-        return [];
-      }
-      function selectedProcListFromStatus(status) {
-        if (!status) return [];
-        const execs = Array.isArray(status.executables) ? status.executables : [];
-        const procs = Array.isArray(status.processes) ? status.processes : [];
-        const dataObjs = (status.data && typeof status.data === "object") ? Object.values(status.data) : [];
-
-        const stateMap = Object.create(null);
-        const ingest = (arr) => {
-          for (const x of (arr || [])) {
-            if (!x) continue;
-            const nm = x.name || x.proc || x.id;
-            if (!nm) continue;
-            stateMap[nm] = { ...(stateMap[nm] || {}), ...x, name: nm };
-          }
-        };
-        ingest(procs);
-        ingest(execs);
-        ingest(dataObjs);
-
-        const normRunning = (v) => {
-          if (typeof v === "boolean") return v;
-          const s = String(v || "").trim().toLowerCase();
-          return s === "running" || s === "started";
-        };
-
-        const base = execs.length ? execs : (procs.length ? procs : dataObjs);
-        return base
-          .filter(e => e && (e.select !== false))
-          .map(e => {
-            const nm = e.name || e.proc || e.id;
-            const ref = stateMap[nm] || {};
-            const running = normRunning(ref.running ?? ref.status ?? e.running ?? e.status);
-            return {
-              name: nm,
-              alias: e.alias || ref.alias || "",
-              select: e.select !== false,
-              running,
-              connection_state: ref.connection_state || e.connection_state || null,
-              version: ref.version || e.version,
-              version_date: ref.version_date || e.version_date,
-            };
-          });
-      }
-      function applyOverlaysForSummary(data) {
-        if (!data || !data.extra) return;
-        const extra      = data.extra || {};
-        const verMap     = extra.versions || {};
-        const presdVer   = extra.presd_versions || {};
-        const conn       = extra.connected_daemons || {};
-        const presdIps   = extra.presd_ips || [];
-        const nodes      = Array.isArray(data.nodes) ? data.nodes : [];
-
-        const listFromStatus = toProcList;
-
-        for (const n of nodes) {
-          const nodeIp = ipFromHost(n.host);
-          const procs = listFromStatus(n.status);
-          for (const p of procs) {
-            if (!p || !p.name) continue;
-
-            // 버전 오버레이 (oms-system과 동일)
-            if (p.name === "PreSd") {
-              const src =
-                presdVer[nodeIp] ||
-                (verMap.PreSd && (verMap.PreSd[nodeIp] || (verMap.PreSd.byIp && verMap.PreSd.byIp[nodeIp]))) ||
-                null;
-              if (src) {
-                p.version = src.version || "-";
-                p.version_date = src.date || "-";
-              } else if (verMap.PreSd && verMap.PreSd.version) {
-                p.version = verMap.PreSd.version || "-";
-                p.version_date = verMap.PreSd.date || "-";
-              }
-            } else if (verMap[p.name]) {
-              p.version = verMap[p.name].version || p.version || "-";
-              p.version_date = verMap[p.name].date || p.version_date || "-";
-            }
-
-            // CONNECTED 오버레이 (PCd / PreSd)
-            if (conn && conn[p.name] === true) {
-              if (p.name === "PreSd") {
-                const ipOk = !presdIps.length || presdIps.includes(nodeIp);
-                if (ipOk) p.connection_state = "CONNECTED";
-              } else {
-                p.connection_state = "CONNECTED";
-              }
-            }
-          }
-        }
-      }
-      function effectiveStateOfProc(procObj) {
-        if (!procObj) return "STOPPED";
-        const running = !!procObj.running;
-        const conn = String(procObj.connection_state || "").toUpperCase();
-        if (!running) return "STOPPED";
-        if (conn === "CONNECTED") return "CONNECTED";
-        return "RUNNING";
-      }
-      function normCamState(v) {
-        const s = String(v || '').toLowerCase();
-        if (s.includes('video ok') || s.includes('connected') || s.includes('info ok') || s === 'ok') return 'connected';
-        if (s === 'on' || s === 'running') return 'on';
-        if (s === 'off' || s === 'disconnected' || s === 'not connected' || s === 'failed') return 'off';
-        return 'unknown';
-      }
-
-      // ---- System stats (/oms/status)
-      // ---- System stats (single source of truth w/ freshness guard) ----------
-      function renderSystem(sum, label) {
-        el.sysNodes.textContent = String(sum.nodes ?? 0);
-        el.sysProcs.textContent = String(sum.processes ?? 0);
-        el.sysConn.textContent = String(sum.connected ?? 0);
-        el.sysRun.textContent = String(sum.running ?? 0);
-        el.sysStop.textContent = String(sum.stopped ?? 0);
-        const cmt = commentSystem({
-          proc: Number(sum.processes || 0),
-          connected: Number(sum.connected || 0),
-          running: Number(sum.running || 0),
-          stopped: Number(sum.stopped || 0),
-        });
-        // System 배너는 버튼-기반 락(__system_restart) 또는 메시지-기반 스티키 락을 모두 존중
-        const stick = window.__restart_sticky && (Date.now() < (window.__restart_hold_until || 0));
-        if (window.__system_restart || window.__restart_sticky || stick) {
-          el.sysReady.classList.remove('status-ready');
-          el.sysReady.classList.remove('status-warn');
-          el.sysReady.classList.add('status-init');
-          el.sysReady.innerHTML = '<span class="main">Restarting…</span>';
-        } else {
-          setStatus(el.sysReady, cmt);
-        }
-        if (label) el.sysPoll.textContent = label;
-      }
-
-      function isFresher(candidate) {
-        if (!candidate) return false;
-        const ts = Number(candidate.ts ?? candidate.seq ?? 0);
-        return Number.isFinite(ts) && ts > lastSysTs;
-      }
-
-      // =========================
-      // Common JSON Request Helpers
-      // =========================
-      async function GET_JSON(url, opts) {
-        const res = await fetch(url, opts || {});
-        return await res.json();
-      }
-      // dashboard 에서는 SSE 를 쓰지 않아도 되므로 no-op 으로 둔다.
-      function useSseIfNeeded(_resp) {
-        // intentionally empty
-      }
-
-      function acceptIfFresher(sum, label) {
-        if (!sum) return false;
-        const norm = {
-          nodes: Number(sum.nodes ?? 0),
-          processes: Number(sum.processes ?? 0),
-          connected: Number(sum.connected ?? 0),
-          running: Number(sum.running ?? 0),
-          stopped: Number(sum.stopped ?? 0),
-          ts: Number(sum.ts ?? sum.seq ?? nowMs()),
-        };
-        if (!isFresher(norm)) return false;
-        lastSys = norm;
-        lastSysTs = norm.ts;
-        renderSystem(norm, label);
-        return true;
-      }
-
-      async function refreshSystem() {
-        console.log("refreshSystem");
-        const label = pollLabel();
-        try {
-          const s = await GET_JSON("/oms/status", { timeoutMs: 800 });
-          if (s && s.summary && typeof s.summary === "object") {
-            const sum = s.summary;
-            acceptIfFresher({
-              nodes:     sum.nodes     ?? 0,
-              processes: sum.processes ?? 0,
-              connected: sum.connected ?? 0,
-              running:   sum.running   ?? 0,
-              stopped:   sum.stopped   ?? 0,
-              ts: nowMs(),
-            }, label);
-          } else {
-            console.log("refreshSystem - summary null");
-            const nodes = Array.isArray(s && s.nodes) ? s.nodes : [];
-            acceptIfFresher({
-              nodes: nodes.length,
-              processes: 0,
-              connected: 0,
-              running: 0,
-              stopped: 0,
-              ts: nowMs(),
-            }, label);
-          }
-          // SSE 는 서버 응답 객체 기준으로만
-          useSseIfNeeded(s);
-        } catch (e) {
-          console.warn("[dashboard] refreshSystem failed:", e);
-        }
-      }   
-
-      window.__dashRefreshSystem = refreshSystem;
-      // live update from storage/broadcast
-      try {
-        window.addEventListener("storage", (e) => {
-          if (e.key !== "oms_summary" || typeof e.newValue !== "string") return;
-          try {
-            const sum = JSON.parse(e.newValue);
-            if (sum && sum.source === "oms-system") {
-              if (acceptIfFresher(sum, pollLabel())) {
-                preferLSUntil = nowMs() + 5000;
-              }
-            }
-          } catch { /* ignore */ }
-        });
-        window.addEventListener("oms:summary", () => { refreshSystem().catch(() => { }); });
-      } catch { }
-
-      // ---- Camera stats (/oms/state or local snapshot)
-      async function refreshCamera() {
-        let raw = null; try { raw = localStorage.getItem("oms_camera_summary"); } catch { }        
-        let st = null;
-        try {
-          st = await GET_JSON("/oms/state");
-        } catch (e) {
-          console.warn("[dashboard] refreshCamera /oms/state failed:", e);
-        }
-
-        let cams = 0, connected = 0, on = 0, off = 0;
-        if (st && typeof st.summary === 'object') {
-          cams = Number(st.summary.cameras || 0);
-          connected = Number(st.summary.connected || 0);
-          on = Number(st.summary.on || 0);
-          off = Number(st.summary.off || 0);
-        } else {
-          const list = Array.isArray(st?.cameras) ? st.cameras : [];
-          cams = list.length;
-          if (Array.isArray(st?.connected_ips)) {
-            connected = st.connected_ips.length;
-          }
-          if (st?.camera_status && typeof st.camera_status === 'object') {
-            let c = 0, o = 0, f = 0;
-            for (const v of Object.values(st.camera_status)) {
-              const n = normCamState(v);
-              if (n === 'connected') c++;
-              else if (n === 'on') o++;
-              else if (n === 'off') f++;
-            }
-            if (!Array.isArray(st?.connected_ips)) connected = c;
-            on = o; off = f;
-          }
-        }
-        el.camTotal.textContent = String(cams || 0);
-        el.camConn.textContent = String(connected || 0);
-        el.camOn.textContent = String(on || 0);
-        el.camOff.textContent = String(off || 0);
-        const cc = commentCamera({ cams, connected, on, off });
-        setStatus(el.camReady, cc);
-        el.camPoll.textContent = "poll 3s";
-      }
-
-      try { window.addEventListener("storage", (e) => { if (e.key === "oms_camera_summary") { refreshCamera().catch(() => { }); } }); } catch { }
-      try { const camCh = new BroadcastChannel("oms_camera"); camCh.onmessage = (ev) => { const s = ev.data; if (s && s.source === "oms-camera") { refreshCamera().catch(() => { }); } };      } catch { }
-
-      ////////////////////////////////////////////////////////////////////////////
-      // System Actions (same API fallbacks)      
-      ////////////////////////////////////////////////////////////////////////////
-      el.btnSysRestart.onclick = async () => {
-        el.btnSysRestart.disabled = true;
-        try {
-          __dashRestartSeenRunning = false;
-          __dashRestartFinishedOnce = false;
-          clearProgressChip({ ignoreDoneMs: 2000 });
-
-          // ② 시스템 재시작 락/스티키 락 즉시 ON (메시지 오기 전에도 유지)
-          window.__system_restart = true;
-          window.__restart_sticky = true;
-          window.__restart_hold_until = Date.now() + 2000;
-
-          // ③ UI 즉시 표시
-          el.sysReady.innerHTML = '<span class="main">Restarting…</span>';
-          el.sysReady.classList.remove('status-warn', 'status-danger', 'status-ready');
-          el.sysReady.classList.add('status-init');
-          // ④ 이후 원래 로직 수행
-          await callAction("restart");
-        } catch (e) {
-          alert("Restart failed: " + (e?.message || e));
-        } finally {
-          el.btnSysRestart.disabled = false;
-        }
-      };
-      el.btnSysConnect.onclick = async () => {
-        el.btnSysConnect.disabled = true;
-        try {
-          // ✅ Restart와 동일하게, Connect 시작 전에 지난 진행 메시지/캐시 제거
-          clearProgressChip({ ignoreDoneMs: 1500 });
-          // actions 스크립트 로드 대기
-          try {
-            await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve());
-          } catch { }
-
-          if (window.OMS?.Actions?.mtdConnect) {
-            // oms-system 과 동일한 mtdConnect 공통 액션 사용
-            await window.OMS.Actions.mtdConnect();
-          } else if (window.OMS?.Actions?.sysConnect) {
-            await window.OMS.Actions.sysConnect();
-          } else if (window.OMS?.sysConnect) {
-            await window.OMS.sysConnect();
-          } else {
-            console.error("Connect action not available");
-            alert("Connect action is not available.");
-          }
-        } catch (e) {
-          console.error("Connect failed", e);
-          alert("Connect failed: " + (e?.message || e));
-        } finally {
-          // 버튼 너무 빨리 풀리는 것 방지용 소량 지연
-          setTimeout(() => {
-            el.btnSysConnect.disabled = false;
-          }, 1000);
-        }
-      };
-      
-      //////////////////////////////////////////////////////////////////////////
-      // Camera Actions (bind to actual OMS.Actions methods)
-      //////////////////////////////////////////////////////////////////////////
-      (function bindDashboardCameraButtons() {
-        // actions.js load 대기 (이미 로드돼 있으면 바로 지나감)
-        const wait = window.__OMS_ACTIONS_LOAD__ || Promise.resolve();
-        wait.then(() => {
-          if (!window.OMS || !OMS.Actions) return;
-
-          const A = OMS.Actions;
-          // Restart → cameraRebootAll
-          const btnCamRestart = document.getElementById("btnCamRestart");
-          if (btnCamRestart && typeof A.cameraRebootAll === "function") {
-            btnCamRestart.onclick = A.cameraRebootAll;
-          }
-
-          // Connect → cameraConnectAll
-          const btnCamConnect = document.getElementById("btnCamConnect");
-          if (btnCamConnect && typeof A.cameraConnectAll === "function") {
-            btnCamConnect.onclick = A.cameraConnectAll;
-          }          
-        });
-      })();
-
-      // initial + auto refresh
-      (async function boot() {
-        try { await refreshSystem(); } catch { }
-        try { await refreshCamera(); } catch { }
-        // SYSTEM: heartbeat 기반 주기(기본 3s). /oms/status 응답에서 조정됨.
-        if (!sysPollTimer) {
-          sysPollTimer = setInterval(() => { refreshSystem().catch(() => { }); }, sysPollMs);
-        }
-        setInterval(() => { refreshCamera().catch(() => { }); }, 1000);
-        // 진행칩: LS 동기화 + 서버 폴백 동시 활성화
-        ensureDashRestartPolling();
-      })();
-    })();
-  </script>
-
-  <!-- 전체화면 토글 스크립트 -->
-  <script>
-    (function () {
-      const btn = document.getElementById('btnFullscreen');
-      if (!btn) return;
-
-      function syncIcon() {
-        // ⤢ : 전체화면 진입 / ⤡ : 전체화면 해제 느낌
-        btn.textContent = document.fullscreenElement ? '⤡' : '⤢';
-      }
-
-      btn.addEventListener('click', () => {
-        if (!document.fullscreenElement) {
-          if (document.documentElement.requestFullscreen) {
-            document.documentElement.requestFullscreen().catch(() => { });
-          }
-        } else if (document.exitFullscreen) {
-          document.exitFullscreen().catch(() => { });
-        }
-      });
-
-      document.addEventListener('fullscreenchange', syncIcon);
-      syncIcon();
-    })();
-  </script>
-
-  <script>
-    // 기본 베이스 경로(필요 시 서버에 맞게 오버라이드 가능)
-    window.__omsConnectBase = window.__omsConnectBase || "/oms/sys-connect";
-    // proxy-safe prefix (상단 로더가 주입한 값 재사용)
-    const __PX = window.__PROXY_PREFIX__ || "";
-    // "/oms/connect"처럼 절대 경로면 프록시 프리픽스를 붙여주고, 절대가 아니면 그대로 사용
-    const CONNECT_BASE = window.__omsConnectBase;
-    const CONNECT_API = (p) => {
-      const tail = p.startsWith("/") ? p : ("/" + p);
-      if (CONNECT_BASE.startsWith("/")) return __PX + CONNECT_BASE + tail;
-      return CONNECT_BASE + tail;
-    };
-
-    let CONN_EVT_SRC = null, CONN_STATE_POLLER = null;
-
-    async function startConnectSSE() {
-      stopConnectSSE();
-      const bases = await discoverConnectBases();
-      if ("EventSource" in window) {
-        // stream 위치 후보: /stream, /connect/stream, /restart/stream 등
-        const tails = ["/stream", "/connect/stream", "/restart/stream"];
-        let es = null;
-        for (const b of bases) {
-          for (const t of tails) {
-            try {
-              es = new EventSource((b.startsWith("/") ? (__PX + b) : b) + t);
-              // 첫 에러 시 다음 후보로 넘어가도록 핸들러 설치
-              es.onerror = () => { try { es.close(); } catch { }; };
-              CONN_EVT_SRC = es;
-              break;
-            } catch { }
-          }
-          if (CONN_EVT_SRC) break;
-        }
-        if (!CONN_EVT_SRC) return startConnectStatePolling(); // SSE 실패 → 폴링
-        const handler = (e) => {
-          try {
-            const s = JSON.parse(e.data);
-            onConnectState(s);
-          } catch {
-            onConnectState(e.data);
-          }
-        };
-        CONN_EVT_SRC.addEventListener("progress", handler);
-        CONN_EVT_SRC.onmessage = handler;
-        // event 이름이 progress가 아니어도 수신되게 모두 바인딩
-        CONN_EVT_SRC.addEventListener("progress", handler);
-        CONN_EVT_SRC.addEventListener("connect", handler);
-        CONN_EVT_SRC.onmessage = handler;
-        CONN_EVT_SRC.onerror = () => { startConnectStatePolling(); };
-      } else {
-        startConnectStatePolling();
-      }
-    }
-    function stopConnectSSE() {
-      if (CONN_EVT_SRC) { CONN_EVT_SRC.close(); CONN_EVT_SRC = null; }
-    }
-
-    function startConnectStatePolling() {
-      stopConnectStatePolling();
-      CONN_STATE_POLLER = setInterval(async () => {
-        try {
-          const bases = await discoverConnectBases();
-          const tails = ["/state", "/connect/state", "/restart/state"];
-          let got = null;
-          for (const b of bases) {
-            for (const t of tails) {
-              try {
-                const res = await fetch((b.startsWith("/") ? (__PX + b) : b) + t, { cache: "no-store" });
-                if (!res.ok) continue;
-                try { got = await res.json(); } catch { try { got = await res.text(); } catch { } }
-                if (got) break;
-              } catch { }
-            }
-            if (got) break;
-          }
-          if (got) onConnectState(got);
-        } catch { }
-      }, 700);
-    }
-    function stopConnectStatePolling() {
-      if (CONN_STATE_POLLER) { clearInterval(CONN_STATE_POLLER); CONN_STATE_POLLER = null; }
-    }
-
-    // 대시보드용 진행 메시지 쓰기: 공통 chipWrite + 로컬스토리지 동기화
-    function raWrite(msg, holdSeconds) {
-      const text = (msg == null ? "" : String(msg));
-
-      // 공통 chipWrite 경로 (oms-actions.js)
-      try {
-        window.OMS?.Actions?.chipWrite?.(text);
-      } catch { }
-
-      // 진행 메시지를 LS에 직접 캐시해 두면 새로고침/다른 탭에서 바로 복원 가능
-      try {
-        const trimmed = text.trim();
-        if (trimmed) {
-          localStorage.setItem(PROG_LS_KEY, trimmed);
-        }
-      } catch { }
-    }
-
-    async function discoverConnectBases() {
-      // callAction의 discoverReconnect()와 동일 후보를 재사용
-      const bases = [];
-      const override = document.getElementById('btnSysConnect')?.dataset?.reconnect?.trim() || "";
-      const fromOverride = override ? [override] : [];
-      // 버튼 오버라이드가 절대경로면 거기서 베이스 추출
-      for (const u of fromOverride) {
-        const m = String(u).match(/^(.*)\/(connect|reconnect|connect-all|restart\/connect.*)$/i);
-        if (m) bases.push(m[1]);
-      }
-      // 기본 후보
-      bases.push("/oms/sys-connect", "/oms/sys-restart", "/oms");
-      // 중복 제거
-      return bases.filter((v, i, a) => a.indexOf(v) === i);
-    }
-
-    function onConnectState(evt) {
-      const msg = parseSseBody(evt);
-
-      if (msg?.type === "state") {
-        updateInfo("connect", msg?.connect ?? "-");
-        updateInfo("ip", msg?.ip ?? "-");
-        updateInfo("port", msg?.port ?? "-");
-        updateInfo("domain", msg?.domain ?? "-");
-        updateInfo("version", msg?.version ?? "-");
-      }
-    }
-
-    function parseSseBody(evt) {
-      try {
-        if (!evt?.data) return null;
-        return JSON.parse(evt.data);
-      } catch (e) {
-        console.error("parseSseBody failed", e, evt.data);
-        return null;
-      }
-    }
-
-    function finalizeConnectChip(s) {
-      stopConnectSSE();
-      stopConnectStatePolling();
-      if (s && s.message) updateInfo(s.message, 10);
-      // 필요하면 여기서 한번 상태 새로고침
-      // reloadNow && reloadNow({ silent: true });
-    }
-
-    // 로컬스토리지 이벤트(같은 오리진일 때만 동작)
-    window.addEventListener("storage", (e) => {
-      if (e.key === PROG_LS_KEY && typeof e.newValue === "string") {
-        const chip = document.getElementById("progressChip");
-        if (chip) {
-          chip.style.visibility = "visible";
-          chip.textContent = e.newValue;
-        }
-      }
-    });
-
-    // 부팅 시: restart 모니터와 함께 connect 모니터도 시작
-    (function bootstrapDashboard() {
-      // 기존 restart 모니터 시작 함수가 있다면 그대로 유지
-      // startRestartSSE();  // (이미 존재한다고 가정)
-
-      // Connect도 구독 시작
-      startConnectSSE();
-
-      // 캐시된 진행칩 복원(같은 오리진일 때)
-      try {
-        const cached = localStorage.getItem(PROG_LS_KEY);
-        if (cached) {
-          const el = document.getElementById('titleProgress');
-          if (el) {
-            el.textContent = cached.trim();
-            el.style.visibility = 'visible';
-            el.setAttribute('aria-hidden', 'false');
-          }
-        }
-      } catch { }
-    })();
-  </script>
-
+  <!-- Dashboard Style (not shared common style) -->
   <style>
     #dashProgress {
       /* grid의 별도 아이템으로서 2번째 컬럼(=Camera) 아래에 놓기 */
@@ -1174,7 +104,6 @@
       pointer-events: none;
       /* 칩 외 영역은 클릭 안 가로채게 */
     }
-
     /* 기본: 2열 고정 */
     .grid {
       display: grid;
@@ -1183,7 +112,89 @@
       gap: 20px;
       align-items: start;
     }
+    .ready {
+      background: none !important;  /* 배경만 없애기 */
+      box-shadow: none !important;  /* 그림자 제거 */
+      /* color 지움: status-ready / -warn / -danger 가 색을 결정하도록 */
+    }
+    .btn-system {
+      background:#2f3b4f!important;
+      color:white!important;
+    }
+    .btn-camera {
+      background:#2f3b4f!important;
+      color:white!important;
+    }
+    /* Dashboard message chip → 일반 텍스트로 바꾸기 */
+    .message-chip {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: var(--text-muted, #e1ddf5) !important;
+      font-size: 11px !important;
+      padding: 1px 0 !important;
+      margin: 0px 0 0px 0 !important;
+      cursor: default !important;
+      font-style: italic !important;
+    }
+    /* chip 색상 클래스가 기존에 붙어도 무시되도록 리셋 */
+    .message-chip.chip,
+    #sysMessageChip.chip,
+    #camMessageChip.chip {
+      background: none !important;
+      border: none !important;
+      box-shadow: none !important;
+      color: var(--text-muted, #ccc) !important;
+    }
+    .page-title-with-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+    }
+    .title-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    #btnFullscreen.btn-secondary {
+      padding: 6px 12px;
+      font-size: 16px;
+      line-height: 1;
+    }
+    /* 상단 우측 버튼 통합 스타일 */
+    .page-top-buttons {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    /* 두 버튼의 통일된 스타일 */
+    .btn-top {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
 
+      height: 30px;                /* ← 두 버튼 동일 높이 */
+      padding: 0 11px;             /* ← 가로 패딩 통일 */
+      border-radius: 10px;         /* ← 동일 라운드 */
+      font-size: 13px;             
+      font-weight: 500;
+      color: white;
+
+      background: #2f3b4f;         /* ← 동일 배경색 */
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-top:hover {
+      background: #3c4a61;
+    }
+    /* 아이콘 전용 버튼도 동일 높이 유지 */
+    .btn-top.icon-only {
+      width: 30px;                 /* ← 정사각형으로 */
+      padding: 0;                  /* ← 내부 텍스트 없으므로 패딩 제거 */
+      font-size: 18px;
+    }
     /* ✅ 1열 전환 임계값을 한 번에 강제 (원하는 값으로 조절) */
     @media (max-width: 740px) {
 
@@ -1204,7 +215,6 @@
         max-width: none;
       }
     }
-
     /* 카드 내부 버튼을 세로로 쌓기 (좁은 화면일 때) */
     @media (max-width: 660px) {
 
@@ -1218,8 +228,8 @@
         display: flex;
         flex-direction: column;
         align-items: stretch;
-        gap: 15px;
-        margin-top: 15px;  /* READY 바로 아래로 붙게 */
+        gap: 5px;
+        margin-top: 5px;  /* READY 바로 아래로 붙게 */
       }
 
       /* 버튼 컨테이너: 한 줄에 하나씩 */
@@ -1261,15 +271,292 @@
         padding-bottom: 25px;
         /* 버튼 2개 세로배치 높이에 맞춰 여유 */
       }
-
-      /* ✅ 화면 크기 상관없이, Needs Connect 색상을 CONNECT 버튼 톤으로 고정 */
-      #sysReady.status-warn,
-      #camReady.status-warn {
-        color: var(--board--accent-blue) !important;
-      }
-
     }
   </style>
+
+  <script>
+
+    // ─────────────────────────────
+    // Progress 메시지 동기화(oms-system과 동일)
+    // ─────────────────────────────
+    const $ = (id) => document.getElementById(id);    
+    
+    async function httpJson(path, init = {}) {
+      const res = await fetch(path, { cache: "no-store", ...init });
+      const ct = res.headers.get("content-type") || "";
+      if (!res.ok) throw new Error(await res.text().catch(() => `HTTP ${res.status}`));
+      return ct.includes("application/json") ? res.json() : res.text();
+    }
+    
+    window.addEventListener("oms:summary", (ev) => {
+      const s = ev.detail || {};
+      const el = document.getElementById("sysSummary");
+      if (!el) return;
+      el.textContent =
+        `nodes ${s.nodes}, processes ${s.processes}, connected ${s.connected}`;
+    });
+
+    (function () {
+      const PROXY_PREFIX = window.__PROXY_PREFIX__ || "";
+      const API = (p) => (p.startsWith("/") ? PROXY_PREFIX + p : p);
+      const wait = (ms) => new Promise(r => setTimeout(r, ms));
+      const el = {
+        sysNodes: document.getElementById('sysNodes'),
+        sysProcs: document.getElementById('sysProcs'),
+        sysConn: document.getElementById('sysConn'),
+        sysRun: document.getElementById('sysRun'),
+        sysStop: document.getElementById('sysStop'),
+        sysReady: document.getElementById('sysReady'),
+        sysPoll: document.getElementById('sysPoll'),
+        camTotal: document.getElementById('camTotal'),
+        camConn: document.getElementById('camConn'),
+        camOn: document.getElementById('camOn'),
+        camOff: document.getElementById('camOff'),
+        camReady: document.getElementById('camReady'),
+        camPoll: document.getElementById('camPoll'),
+        btnSysRestart: document.getElementById('btnSysRestart'),
+        btnSysConnect: document.getElementById('btnSysConnect'),
+        btnCamRestart: document.getElementById('btnCamRestart'),
+        btnCamConnect: document.getElementById('btnCamConnect'),
+      };
+
+      window.__dashEl = el;
+
+      // ── freshness & last-good state (SYSTEM only) ────────────────────────────
+      let lastSys = null;        // {nodes, processes, connected, running, stopped, ts}
+      let lastSysTs = 0;         // latest accepted timestamp (monotonic)
+      let preferLSUntil = 0;     // Date.now() 기준, 이 시각 이전까지는 LS(source=oms-system) 우선
+      let sysPollTimer = 0;
+      let sysPollMs = 3000;      // 기본 3s, /oms/proc-status의 heartbeat로 조정
+      const pollLabel = () => `poll ${Math.round(sysPollMs / 1000)}s`;
+      const nowMs = () => Date.now();
+
+
+      // 200/204만 true로, 나머지 얌전히 false 반환 (탐색용)
+      function isAbsoluteUrl(u) { try { return Boolean(new URL(u)); } catch { return false; } }
+      function isHostLike(u) { return /^https?:\/\/[^/]+\/?$/.test(u) || /^[a-z0-9.-]+\/?$/i.test(u); }
+      function joinPath(base, tail) {
+        const b = base.endsWith("/") ? base.slice(0, -1) : base;
+        const t = tail.startsWith("/") ? tail : ("/" + tail);
+        return b + t;
+      }
+
+      // =========================
+      // Common JSON Request Helpers
+      // =========================
+      async function GET_JSON(url, opts) {
+        const res = await fetch(url, opts || {});
+        return await res.json();
+      }
+      // dashboard 에서는 SSE 를 쓰지 않아도 되므로 no-op 으로 둔다.
+      function useSseIfNeeded(_resp) {
+        // intentionally empty
+      }
+
+      async function refreshSystem() {
+        let s = null;
+        try { s = await GET_JSON("/oms/system/state"); }
+        catch(e) { console.warn("system/state failed", e); return; }
+        
+        applyStateStyle($("sysReady"), s.state);
+        applyMessageOnly({message: s.message,messageEl: $("sysMessageChip")});
+        
+        // ★ summary
+        const sum = s.summary || {};
+        $("sysNodes").textContent = sum.node ?? 0;
+        $("sysProcs").textContent = sum.processes ?? 0;
+        $("sysConn").textContent = sum.connected ?? 0;
+        $("sysRun").textContent = sum.running ?? 0;
+        $("sysStop").textContent = sum.stopped ?? 0;
+        // poll label
+        $("sysPoll").textContent = "poll 3s";  
+      }
+
+      window.__dashRefreshSystem = refreshSystem;
+      window.applyMessageOnly = function ({ message, messageEl }) {
+        if (messageEl) messageEl.textContent = message || "";
+      };
+      
+      // ---- Camera stats (/oms/camera/state or local snapshot)
+      async function refreshCamera() {
+        let s = null;
+        try { s = await GET_JSON("/oms/camera/state"); }
+        catch(e) { console.warn("camera/state failed", e); return; }
+
+        applyStateStyle($("camReady"), s.state);
+        applyMessageOnly({message: s.message,messageEl: $("camMessageChip")});
+
+        // ★ Summary
+        const sum = s.summary || {};
+        $("camTotal").textContent = sum.cameras ?? 0;
+        $("camConn").textContent = sum.connected ?? 0;
+        $("camOn").textContent = sum.on ?? 0;
+        $("camOff").textContent = sum.off ?? 0;
+
+        $("camPoll").textContent = "poll 3s";        
+      }
+
+      try { window.addEventListener("storage", (e) => { if (e.key === "oms_camera_summary") { refreshCamera().catch(() => { }); } }); } catch { }
+      try { const camCh = new BroadcastChannel("oms_camera"); camCh.onmessage = (ev) => { const s = ev.data; if (s && s.source === "oms-camera") { refreshCamera().catch(() => { }); } };      } catch { }
+
+      ////////////////////////////////////////////////////////////////////////////
+      // System Actions (same API fallbacks)      
+      ////////////////////////////////////////////////////////////////////////////
+      el.btnSysRestart.onclick = async () => {
+        el.btnSysRestart.disabled = true;
+        try {
+          // 1) common action
+          await OMSActionsReady();
+          // 2) common restart function
+          await window.OMS.Actions.sysRestart();
+          // 3) update status
+          if (typeof window.__dashRefreshSystem === "function") {
+            await window.__dashRefreshSystem();
+          }
+        } catch (e) {
+          alert("Restart failed: " + (e?.message || e));
+        } finally {
+          el.btnSysRestart.disabled = false;
+        }
+      };
+
+
+      el.btnSysConnect.onclick = async () => {
+        el.btnSysConnect.disabled = true;
+        try {
+          // 1) common action
+          await OMSActionsReady();
+          // 3) common reconnect function
+          await window.OMS.Actions.sysConnect();
+          // 3) update state
+          if (typeof window.__dashRefreshSystem === "function") {
+            await window.__dashRefreshSystem();
+          }
+        } catch (e) {
+          alert("Connect failed: " + (e?.message || e));
+        } finally {
+          setTimeout(() => {
+            el.btnSysConnect.disabled = false;
+          }, 600);
+        }
+      };
+      
+      //////////////////////////////////////////////////////////////////////////
+      // Camera Actions (bind to actual OMS.Actions methods)
+      //////////////////////////////////////////////////////////////////////////
+      el.btnCamRestart.onclick = async () => {
+        el.btnCamRestart.disabled = true;
+        try {
+          // actions 로드 대기 (System Connect 로직 동일 적용)
+          try {
+            await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve());
+          } catch { }
+
+          // cameraRebootAll 실행 (System의 callAction 동일한 방식)
+          if (window.OMS?.Actions?.cameraRebootAll) {
+            await window.OMS.Actions.cameraRebootAll();
+          } else {
+            console.error("cameraRebootAll not found");
+            alert("cameraRebootAll is not available.");
+          }
+
+        } catch (e) {
+          console.error("Camera Restart failed", e);
+          alert("Camera Restart failed: " + (e?.message || e));
+        } finally {
+          el.btnCamRestart.disabled = false;
+        }
+      };
+      el.btnCamConnect.onclick = async () => {
+        el.btnCamConnect.disabled = true;
+        try {
+          // actions 로드 대기
+          try {
+            await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve());
+          } catch { }
+
+          // cameraConnectAll 실행
+          if (window.OMS?.Actions?.cameraConnectAll) {
+            await window.OMS.Actions.cameraConnectAll();
+          } else {
+            console.error("cameraConnectAll not found");
+            alert("cameraConnectAll is not available.");
+          }
+
+        } catch (e) {
+          console.error("Camera Connect failed", e);
+          alert("Camera Connect failed: " + (e?.message || e));
+        } finally {
+          setTimeout(() => {
+            el.btnCamConnect.disabled = false;
+          }, 1000);
+        }
+      };
+
+      // initial + auto refresh
+      (async function boot() {
+        try { await refreshSystem(); } catch { }
+        try { await refreshCamera(); } catch { }
+        // SYSTEM: heartbeat 기반 주기(기본 3s). /oms/system/state 응답에서 조정됨.
+        if (!sysPollTimer) {
+          sysPollTimer = setInterval(() => { refreshSystem().catch(() => { }); }, sysPollMs);
+        }
+        setInterval(() => { refreshCamera().catch(() => { }); }, 1000);
+      })();
+    })();
+  </script>
+
+  <!-- 전체화면 토글 스크립트 -->
+  <script>
+    (function () {
+      const btn = document.getElementById('btnFullscreen');
+      if (!btn) return;
+
+      function syncIcon() {
+        // ⤢ : 전체화면 진입 / ⤡ : 전체화면 해제 느낌
+        btn.textContent = document.fullscreenElement ? '⤡' : '⤢';
+      }
+
+      btn.addEventListener('click', () => {
+        if (!document.fullscreenElement) {
+          if (document.documentElement.requestFullscreen) {
+            document.documentElement.requestFullscreen().catch(() => { });
+          }
+        } else if (document.exitFullscreen) {
+          document.exitFullscreen().catch(() => { });
+        }
+      });
+
+      document.addEventListener('fullscreenchange', syncIcon);
+      syncIcon();
+    })();
+  </script>
+
+  <script>
+    // 기본 베이스 경로(필요 시 서버에 맞게 오버라이드 가능)
+    window.__omsConnectBase = window.__omsConnectBase || "/oms/system/connect";
+    // proxy-safe prefix (상단 로더가 주입한 값 재사용)
+    const __PX = window.__PROXY_PREFIX__ || "";
+    // "/oms/connect"처럼 절대 경로면 프록시 프리픽스를 붙여주고, 절대가 아니면 그대로 사용
+    const CONNECT_BASE = window.__omsConnectBase;
+    const CONNECT_API = (p) => {
+      const tail = p.startsWith("/") ? p : ("/" + p);
+      if (CONNECT_BASE.startsWith("/")) return __PX + CONNECT_BASE + tail;
+      return CONNECT_BASE + tail;
+    };
+
+    let CONN_EVT_SRC = null, CONN_STATE_POLLER = null;
+    function parseSseBody(evt) {
+      try {
+        if (!evt?.data) return null;
+        return JSON.parse(evt.data);
+      } catch (e) {
+        console.error("parseSseBody failed", e, evt.data);
+        return null;
+      }
+    }
+  </script>
+
 
   <!-- System / Camera 제목 → /system, /camera 로 이동 -->
   <script>

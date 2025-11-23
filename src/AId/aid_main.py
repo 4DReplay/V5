@@ -469,9 +469,7 @@ class AId:
                                 # persistent recv loop 시작 (TCPServer와 동일한 프로토콜)
                                 self._start_aic_recv_thread(sess, ip)
                                 self.aic_sessions[ip] = sess
-                                fd_log.info(f"[AId] Connected persistent session → AIc {name} ({ip})")
-                                # 🔥 recv loop 시작
-                                self._start_aic_recv_thread(sess, ip)
+                                fd_log.info(f"[AId] Connected persistent session → AIc {name} ({ip})")                                
                             except Exception as e:
                                 fd_log.error(f"[AId] AIc connect failed {ip}: {e}")
 

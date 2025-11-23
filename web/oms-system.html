@@ -30,9 +30,12 @@ BODY
     <span class="divider"></span>
     <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
     <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>    
-    <span id="progressChip" class="chip" role="status" aria-live="polite"></span>
     <span class="spacer"></span>
     <span class="chip" id="hb">poll -</span>
+  </div>
+  <div class="chip-row">
+      <span id="stateChip" class="chip"></span>
+      <span id="messageChip" class="chip" role="status" aria-live="polite"></span>
   </div>
   <div id="err">    
   </div>
@@ -56,26 +59,20 @@ BODY
     const TBody = document.querySelector("#grid tbody");
     const HB = document.getElementById("hb");
     const META = document.getElementById("meta");
-    const PROG = document.getElementById("progressChip");
     const ERR = document.getElementById("err");
+    const STATE = document.getElementById("stateChip");
+    const MESSAGE = document.getElementById("messageChip");
+    
     const BTN_DASHBOARD   = document.getElementById("btnDashboard");
     const BTN_CONFIG      = document.getElementById("btnSysConfig");
     const BTN_SYS_RESTART = document.getElementById("btnSysRestart");
     const BTN_SYS_CONNECT = document.getElementById("btnSysConnect");
-    const BTN_SYS_RELOAD  = document.getElementById("btnSysReload");    
-    const PROG_LS_KEY = "oms_ra_progress"; // dashboard와 동일 키
+    const BTN_SYS_RELOAD  = document.getElementById("btnSysReload");        
 
     /* ── 진행 메시지/캐시를 완전히 비우는 helper ── */
     function clearProgressChip() {
-      try {
-        localStorage.removeItem(PROG_LS_KEY);
-      } catch (e) {
-        console.warn("clearProgressChip localStorage error", e);
-      }
-      if (PROG) {
-        PROG.textContent = "";
-        PROG.style.visibility = "hidden";
-      }
+      MESSAGE.textContent = "";
+      MESSAGE.style.visibility = "hidden";
     }
 
     let lastData = null;
@@ -104,7 +101,6 @@ BODY
     function clearErr() { ERR.style.display = "none"; ERR.textContent = ""; }
 
     function setBusy(on) {
-      console.log("setBusy")
       BTN_SYS_RELOAD.disabled = !!on;
       BTN_CONFIG.disabled = !!on;
       BTN_SYS_RESTART.disabled = !!on;
@@ -263,13 +259,56 @@ BODY
             p.version_date = verMap[p.name].date || p.version_date || "-";
           }
 
-          // ── CONNECTED 오버레이
-          if (conn && conn[p.name] === true) {
+          // ── CONNECTED 오버레이 (멀티 인스턴스 지원)
+          if (conn) {
+            // PreSd: 기존 방식 제거하고 AIc 방식과 동일하게 처리
             if (p.name === "PreSd") {
-              const ipOk = !presdIps.length || presdIps.includes(nodeIp);
-              if (ipOk) p.connection_state = "CONNECTED";
-            } else {
-              p.connection_state = "CONNECTED";
+                const psConn = conn.PreSd;
+
+                // PreSd: ["10.82.104.210", "10.82.104.211"] 형태
+                if (Array.isArray(psConn)) {
+                    if (psConn.includes(nodeIp)) {
+                        p.connection_state = "CONNECTED";
+                    }
+                }
+                // 혹시 dictionary 형태 방어
+                else if (psConn && typeof psConn === "object") {
+                    if (psConn[nodeIp] === true) {
+                        p.connection_state = "CONNECTED";
+                    }
+                }
+            }
+
+            // AIc: 멀티 인스턴스 개별 IP 기반 CONNECTED 판정
+            else if (p.name === "AIc") {
+              const aiConn = conn.AIc;
+
+              // conn.AIc 가 ["ip1","ip2"] 형태면
+              if (Array.isArray(aiConn)) {
+                  if (aiConn.includes(nodeIp)) {
+                      p.connection_state = "CONNECTED";
+                  }
+              }
+              // 기존 dictionary 형태도 유지 (혹시라도)
+              else if (aiConn && typeof aiConn === "object") {
+                  if (aiConn[nodeIp] === true) {
+                      p.connection_state = "CONNECTED";
+                  }
+              }
+            }
+            else {
+                const entry = conn[p.name];
+
+                // Case 1: boolean true → 기존 로직 유지
+                if (entry === true) {
+                    p.connection_state = "CONNECTED";
+                }
+                // Case 2: ["10.82.104.210"] 이런 리스트면 nodeIp 검사
+                else if (Array.isArray(entry)) {
+                    if (entry.includes(nodeIp)) {
+                        p.connection_state = "CONNECTED";
+                    }
+                }             
             }
           }
         }
@@ -443,8 +482,17 @@ BODY
       try {
         if (!silent) setBusy(true);
         clearErr();
-        const data = await api("/oms/status");
+        const data = await api("/oms/system/state");
         render(data);
+
+        // state/message chip 업데이트 (공통 함수 호출)
+        applyStateAndMessage({
+          state: data.state,
+          message: data.message,
+          stateEl: STATE,
+          messageEl: MESSAGE
+        });
+
       } catch (e) {
         showErr(e.message || String(e));
       } finally {
@@ -468,66 +516,43 @@ BODY
     // ─ [Button] Reload ──────────────────────────────────────────────────────
     BTN_SYS_RELOAD.onclick = () => reloadNow({ silent: false });
     // ─ [Button] Restart ──────────────────────────────────────────────────────
-    BTN_SYS_RESTART.onclick = () => {
-        // ✅ Restart 시작 전에 지난 진행 메시지 완전히 삭제
-        console.log("BTN_SYS_RESTART.onclick")
-        clearProgressChip();
-
-        window.OMS = window.OMS || {};
-        window.OMS.Actions = window.OMS.Actions || {};
-        const Actions = window.OMS.Actions;
-    
-        // JS helper가 있으면 그걸 먼저 사용
-        if (Actions && typeof Actions.sysRestart === "function") {
-            Actions.sysRestart().catch(e => {
-                const msg = String(e?.message || e || "");
-                alert("Restart-All failed: " + msg);
-            });
-            return;
-        }
-      
-        // fallback: 직접 API 호출
-        api("/oms/sys-restart/all", { method: "POST" })
-            .catch(e => {
-                const msg = String(e?.message || e || "");
-                alert("Restart-All failed: " + msg);
-            });
-    };
-    // ─ [Button] Connect ──────────────────────────────────────────────────────
-    BTN_SYS_CONNECT.onclick = () => {
-      // ✅ Connect 시작 시에도 지난 메시지 clear
+    BTN_SYS_RESTART.onclick = async () => {
+      await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve());
       clearProgressChip();
 
-      try {
-        const Actions = window.OMS && window.OMS.Actions;
-        if (!Actions || typeof Actions.sysConnect !== "function") {
-          console.error("sysConnect not available");
+      const Actions = window.OMS?.Actions;
+      if (!Actions?.sysRestart) {
+          alert("System Restart-All not available");
           return;
-        }
-
-        const ret = Actions.sysConnect();
-        // sysConnect가 async 함수라면 여기서 Promise를 받을 수 있음
-        if (ret && typeof ret.then === "function") {
-          ret
-            .then(() => {
-              // Connect 작업 끝난 뒤 최신 상태로 한 번 강제 리로드
-              return reloadNow({ silent: false });
-            })
-            .catch((e) => {
-              console.error("sysConnect failed", e);
-              // 실패해도 한번 상태는 다시 읽어볼 수 있음
-              reloadNow({ silent: false }).catch(() => {});
-            });
-        } else {
-          // Promise를 안 리턴하는 구버전 구현이라면,
-          // 약간의 딜레이 후에 한 번 상태 재조회
-          setTimeout(() => {
-            reloadNow({ silent: false }).catch(() => {});
-          }, 2000);
-        }
+      } 
+      try {
+        await Actions.sysRestart();
       } catch (e) {
-        console.error(e);
+        alert("System Restart-All failed: " + (e?.message || e));
       }
+    };
+    // ─ [Button] Connect ──────────────────────────────────────────────────────
+    BTN_SYS_CONNECT.onclick = async () => {
+      // ✅ Connect 시작 시에도 지난 메시지 clear
+      await (window.__OMS_ACTIONS_LOAD__ || Promise.resolve());
+      clearProgressChip();      
+
+      try {
+        const Actions = window.OMS?.Actions;
+        if (!Actions?.sysConnect) {
+            alert("System Connect not available");
+            return;
+        } 
+        try {
+          await Actions.sysConnect();
+        } catch (e) {
+          alert("System Connect failed: " + (e?.message || e));
+        }
+        await reloadNow({ silent: false });
+      } catch (e) {
+        console.error("sysConnect failed", e);
+        await reloadNow({ silent: false }).catch(()=>{});
+      }    
     };
     // ─ [Button] Dashboard ────────────────────────────────────────────────────
     BTN_DASHBOARD.onclick = () => {
@@ -585,7 +610,6 @@ BODY
 
     // ─ Restart Lock 
     (function syncRestartLock() {
-      console.log("syncRestartLock")
       function applyLock(locked) {
         const on = !!locked;
         if (BTN_SYS_RESTART) BTN_SYS_RESTART.disabled = on;
@@ -607,64 +631,6 @@ BODY
           applyLock(!!e.data.locked);
         };
       } catch { }
-    })();
-
-    // ─────────── Unified Progress Poller & Chip Sync ───────────
-
-    function getTitleChipEl() {
-      // oms-system의 chip은 progressChip 이다
-      return document.getElementById("progressChip");
-    }
-
-    (function unifiedProgressManager() {
-      const KEY = PROG_LS_KEY;
-      const INTERVAL = 1000;
-
-      function applyLockFromMessage(msgRaw) {
-        // debug
-        console.log("applyLockFromMessage", msgRaw)
-
-        const msg = String(msgRaw || "").trim().toLowerCase();
-        if (!msg.startsWith("[system][restart]")) 
-          return;
-
-        BTN_SYS_RESTART.disabled = true;
-        BTN_SYS_CONNECT.disabled = true;
-        
-        if (
-          msg.includes("finished") ||
-          /\b(finished|done|complete)\b/.test(msg) ||
-          msg.includes("restart-all done") ||
-          msg.includes("restart-all failed")
-        ) {
-          BTN_SYS_RESTART.disabled = false;
-          BTN_SYS_CONNECT.disabled = false;
-        }
-      }
-
-      // 최초 캐시 UI 반영
-      try {
-        const cached = localStorage.getItem(KEY);
-        if (cached && PROG) {
-          const msg = cached.trim();
-
-          // debug
-          console.log("unifiedProgressManager",msg)
-
-          PROG.textContent = msg;
-          PROG.style.visibility = msg ? "visible" : "hidden";
-          applyLockFromMessage(msg);
-        }
-      } catch {}
-
-      // 다른 탭 sync
-      window.addEventListener("storage", (e) => {
-        if (e.key !== KEY || typeof e.newValue !== "string") return;
-        const msg = e.newValue.trim();
-        PROG.textContent = msg;
-        PROG.style.visibility = msg ? "visible" : "hidden";
-        applyLockFromMessage(msg);
-      });
     })();
   </script>
 </body>

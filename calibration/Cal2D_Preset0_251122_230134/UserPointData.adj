@@ -1,0 +1,203 @@
+{
+  "mode": 0,
+  "adjust_list": [
+    {
+      "dsc_id": "104011",
+      "flip": false,
+      "adjust": {
+        "AdjustX": 413.83709716796875,
+        "AdjustY": 23.921407063802008,
+        "Angle": -90.65806579589844,
+        "RotateX": 1587.6142578125,
+        "RotateY": 1301.38818359375,
+        "Scale": 1.0,
+        "normAdjustX": 0.1379916962880856,
+        "normAdjustY": 0.014196680750030865,
+        "normRotateX": 0.5293812130085028,
+        "normRotateY": 0.7723372009458457,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    },
+    {
+      "dsc_id": "104012",
+      "flip": false,
+      "adjust": {
+        "AdjustX": -167.95562592347312,
+        "AdjustY": -19.005879991082526,
+        "Angle": -89.90061950683594,
+        "RotateX": 2157.888916015625,
+        "RotateY": 1343.0120849609375,
+        "Scale": 0.9314219763405548,
+        "normAdjustX": -0.056003876600024385,
+        "normAdjustY": -0.01127945400064245,
+        "normRotateX": 0.7195361507221157,
+        "normRotateY": 0.7970398130331974,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    },
+    {
+      "dsc_id": "104013",
+      "flip": false,
+      "adjust": {
+        "AdjustX": -27.491378390300937,
+        "AdjustY": -22.283815331102495,
+        "Angle": -89.31147766113281,
+        "RotateX": 2026.2821044921875,
+        "RotateY": 1345.436767578125,
+        "Scale": 0.903219517013346,
+        "normAdjustX": -0.009166848412904613,
+        "normAdjustY": -0.01322481622023887,
+        "normRotateX": 0.6756525856926268,
+        "normRotateY": 0.7984787938149109,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    },
+    {
+      "dsc_id": "104014",
+      "flip": false,
+      "adjust": {
+        "AdjustX": -32.12248443137742,
+        "AdjustY": -28.529489012148314,
+        "Angle": -88.9081802368164,
+        "RotateX": 2030.2559814453125,
+        "RotateY": 1350.892333984375,
+        "Scale": 0.896712286572306,
+        "normAdjustX": -0.010711065165514313,
+        "normAdjustY": -0.01693144748495449,
+        "normRotateX": 0.6769776530327818,
+        "normRotateY": 0.801716518685089,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    },
+    {
+      "dsc_id": "104015",
+      "flip": false,
+      "adjust": {
+        "AdjustX": -290.005670338173,
+        "AdjustY": -4.889979030327341,
+        "Angle": -88.32980346679688,
+        "RotateX": 2268.41455078125,
+        "RotateY": 1329.81103515625,
+        "Scale": 0.9205447448302575,
+        "normAdjustX": -0.09670079037618305,
+        "normAdjustY": -0.0029020647064257215,
+        "normRotateX": 0.7563903136983161,
+        "normRotateY": 0.7892053621105342,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    },
+    {
+      "dsc_id": "104016",
+      "flip": false,
+      "adjust": {
+        "AdjustX": 63.19903564453125,
+        "AdjustY": 43.99245198567701,
+        "Angle": -90.1821517944336,
+        "RotateX": 1938.2523193359375,
+        "RotateY": 1281.317138671875,
+        "Scale": 1.0,
+        "normAdjustX": 0.021073369671400884,
+        "normAdjustY": 0.02610828011019407,
+        "normRotateX": 0.6462995396251876,
+        "normRotateY": 0.7604256015856825,
+        "RectMargin": {
+          "Location": {
+            "IsEmpty": false,
+            "X": 425.0,
+            "Y": 240.0
+          },
+          "Size": "2999, 1685",
+          "X": 425.0,
+          "Y": 240.0,
+          "Width": 2999.0,
+          "Height": 1685.0,
+          "Left": 425.0,
+          "Top": 240.0,
+          "Right": 3424.0,
+          "Bottom": 1925.0,
+          "IsEmpty": false
+        }
+      }
+    }
+  ]
+}

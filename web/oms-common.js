@@ -8,6 +8,102 @@
   window.OMS = window.OMS || {};
   OMS.config = null;
 
+  window.UI_STATE_TITLE = {
+    0 : "Check System",
+    1 : "Check Setting",
+    2 : "Needs Restart",
+    3 : "Restarting...",
+    4 : "Needs Connect",
+    5 : "Connecting...",
+    6 : "Ready"
+  };
+
+  window.UI_STATE_COLOR = {
+    0: "chip-orange",
+    1: "chip-orange",
+    2: "chip-yellow",
+    3: "chip-yellow",
+    4: "chip-blue",
+    5: "chip-blue",
+    6: "chip-green"
+  };
+
+  // === inside OMS.initAssets() === 
+  OMS.initAssets = function () {
+    const head = document.head;
+
+    const cssList = [
+      "/web/css/base.css",
+    ];
+
+    cssList.forEach(href => {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = href + "?v=" + (window.__CACHE_VERSION__ || "1");
+      head.appendChild(link);
+    });
+  };
+
+  window.applyStateAndMessage = function (opts) {
+    const { state, message, stateEl, messageEl } = opts;
+    if (!stateEl || !messageEl) return;
+
+    // state ship
+    const label = UI_STATE_TITLE[state] || "Unknown";
+    const color = UI_STATE_COLOR[state] || "chip-blue";
+
+    stateEl.className = "chip " + color;
+    stateEl.textContent = label;
+
+    // message chip
+    messageEl.textContent = message || "";
+    messageEl.style.visibility = message ? "visible" : "hidden";
+  };
+
+  window.applyStateStyle = function(el, state) {
+      if (!el) return;
+
+      // --- 상태 텍스트 기본 클래스 초기화 ---
+      el.classList.remove(
+          "status-ready",
+          "status-warn",
+          "status-init",
+          "status-danger",
+          "state-anim"
+      );
+
+      // --- 상태 텍스트 내용 적용 ---
+      el.textContent = window.UI_STATE_TITLE[state] || "Unknown";
+      const colorClass = window.UI_STATE_COLOR[state];
+
+      // 상태 색상 class 적용
+      if (colorClass === "chip-green")    el.classList.add("status-ready");
+      if (colorClass === "chip-blue")     el.classList.add("status-warn");
+      if (colorClass === "chip-yellow")   el.classList.add("status-init");
+      if (colorClass === "chip-orange")   el.classList.add("status-danger");
+
+      // --- 상태 텍스트 애니메이션 ---
+      if (state === 3 || state === 5) {
+          el.classList.add("state-anim");
+      }
+
+      // --- 메시지 칩 선택 ---
+      const msgEl =
+          (el.id === "sysReady") ? $("sysMessageChip") :
+          (el.id === "camReady") ? $("camMessageChip") :
+          null;
+
+      if (!msgEl) return;
+
+      // ----------------------------------------------------
+      //  메시지 칩은 state와 상관없이 항상 동일한 색 유지
+      //
+      //  → message-chip 관련 class 조작 제거 (추가/삭제 모두 X)
+      // ----------------------------------------------------
+
+      // 아무 것도 하지 않음. = 항상 기본 스타일 유지
+  };
+
   // -----------------------------------------
   // Helper: prefix for proxy-safe path
   // -----------------------------------------
@@ -89,8 +185,8 @@
     const PROXY = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
 
     const CSS_CANDIDATES = [
-      PROXY + "/web/4d-common-style.css",
-      "./4d-common-style.css",
+      PROXY + "/web/css/base.css",
+      "./base.css",
     ];
 
     const JS_CANDIDATES = [

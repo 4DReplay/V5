@@ -102,26 +102,25 @@
   <div class="toolbar" style="justify-content:flex-start">
     <button id="btnDashboard">📊 Dashboard</button>
     <span class="divider"></span>
-
-    <button id="btnRecordStart" class="btn-secondary">⏺ Record Start</button>
-    <button id="btnRecordStop"  class="btn-secondary">■ Record Stop</button>
-
-    <button id="btnMakingStart" class="btn-secondary">🛠 Making Start</button>
-    <button id="btnMakingStop"  class="btn-secondary">🛑 Making Stop</button>
-
+    <!-- Record Toggle button -->
+    <button id="btnRecordToggle" class="btn-secondary">⏺ Record Start</button>
     <span class="divider"></span>
     <button id="btnConfig" class="btn-secondary">⚙ Config Editor</button>
-
     <span class="spacer"></span>
   </div>
 
   <!-- Status Indicator -->
-  <div id="statusIndicator" class="indicator ind-ready">Ready</div>
+  <div id="statusIndicator" class="indicator ind-ready">Idle</div>
 
   <!-- Prefix Selector -->
   <div class="panel" style="margin-top:16px;">
     <h3 style="margin:0 0 10px;">Prefix Selection</h3>
     <select id="prefixSelect"></select>
+  </div>
+
+  <!-- Making Toggle button -->
+  <div class="toolbar" style="justify-content:flex-start"></div>
+    <button id="btnMakingToggle" class="btn-secondary" style="display:none;">⏺ Making Start</button>   
   </div>
 
   <!-- Recording Table -->
@@ -209,27 +208,28 @@
         el.textContent = "Making...";
       } else {
         el.classList.add("ind-ready");
-        el.textContent = "Ready";
+        el.textContent = "Idle";
       }
     }
 
     function load_prefix() {
-      console.log(load_prefix)
-      fetch("/oms/record/prefix_list")
-          .then(r => r.json())
-          .then(res => {
-              if (!res.ok) return;
-              const sel = document.getElementById("prefixSelect");
-              sel.innerHTML = "";
+      fetch("/web/config/user-config.json?ts=" + Date.now())
+        .then(r => r.json())
+        .then(cfg => {
+          if (!cfg || !cfg.prefix) return;
+          
+          const sel = document.getElementById("prefixSelect");
+          sel.innerHTML = "";
 
-              (res.prefix || []).forEach(p => {
-                  const opt = document.createElement("option");
-                  opt.value = p.name;
-                  opt.innerText = `${p.name} (${p.owner})`;
-                  sel.appendChild(opt);
-              });
-          })
-          .catch(err => console.error("prefix load error:", err));
+          // prefix 배열 읽어와서 select에 추가
+          cfg.prefix.forEach(p => {
+            const opt = document.createElement("option");
+            opt.value = p.name;
+            opt.innerText = `${p.name} (${p.comment})`;
+            sel.appendChild(opt);
+          });
+        })
+        .catch(err => console.error("prefix load error:", err));
     }
 
     function load_record_table() {
@@ -260,19 +260,48 @@
       const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
       const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
 
-      document.getElementById("btnDashboard").onclick = () =>
-        window.location.href = PROXY_PREFIX + "/dashboard";
+    document.getElementById("btnDashboard").onclick = () =>
+      window.location.href = PROXY_PREFIX + "/dashboard";
 
-      document.getElementById("btnConfig").onclick = () =>
-        window.location.href = PROXY_PREFIX + "/oms/config";
+    document.getElementById("btnConfig").onclick = () =>
+      window.location.href = PROXY_PREFIX + "/user";
 
-      document.getElementById("btnRecordStart").onclick = () => setIndicator("record");
-      document.getElementById("btnRecordStop").onclick  = () => setIndicator("ready");
-      document.getElementById("btnMakingStart").onclick = () => setIndicator("making");
-      document.getElementById("btnMakingStop").onclick  = () => setIndicator("record");
+    const makingBtn = document.getElementById("btnMakingToggle");
+    // Recording Toggle
+    let isRecording = false;
+    document.getElementById("btnRecordToggle").onclick = () => {
+      isRecording = !isRecording;
 
-      load_prefix();
-      load_record_table();
+      const btn = document.getElementById("btnRecordToggle");
+      const makingBtn = document.getElementById("btnMakingToggle");
+
+      if (isRecording) {
+        btn.textContent = "⏺ Recording...";
+        setIndicator("record");
+        makingBtn.style.display = "inline-block";   // ON → show
+      } else {
+        btn.textContent = "▶ Record Start";
+        setIndicator("ready");
+        makingBtn.style.display = "none";           // OFF → hide
+      }
+    };
+    let isMaking = false;
+    // Making Toggle
+    document.getElementById("btnMakingToggle").onclick = () => {
+      isMaking = !isMaking;
+      const btn = document.getElementById("btnMakingToggle");
+
+      if (isMaking) {
+        btn.textContent = "⏺ Making...";
+        setIndicator("making");
+      } else {
+        btn.textContent = "▶ Making Start";
+        setIndicator("record");
+      }
+    };
+
+    load_prefix();
+    load_record_table();
     });
   </script>
 

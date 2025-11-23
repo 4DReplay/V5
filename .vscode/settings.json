@@ -1,6 +1,6 @@
 {
     "git.ignoreLimitWarning": true,
-    "python.REPL.enableREPLSmartSend": true,
+    "python.REPL.enableREPLSmartSend": false,
     "files.associations": {
         "stdexcept": "cpp",
         "algorithm": "cpp",
