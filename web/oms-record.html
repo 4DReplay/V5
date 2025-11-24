@@ -101,17 +101,26 @@
   <!-- Toolbar -->
   <div class="toolbar" style="justify-content:flex-start">
     <button id="btnDashboard">📊 Dashboard</button>
+    <button id="btnCamera">📸 Camera</button>
     <span class="divider"></span>
     <!-- Record Toggle button -->
     <button id="btnRecordToggle" class="btn-secondary">⏺ Record Start</button>
     <span class="divider"></span>
-    <button id="btnConfig" class="btn-secondary">⚙ Config Editor</button>
+    <button id="btnConfig" class="btn-secondary">⚙ User Config</button>
     <span class="spacer"></span>
   </div>
 
-  <!-- Status Indicator -->
-  <div id="statusIndicator" class="indicator ind-ready">Idle</div>
-
+  <!-- Record Chip Row (same as Camera UI) -->
+  <div id="camChipRow" style="
+       margin-top:8px;
+       display:flex;
+       gap:10px;
+       align-items:center;
+       ">  
+      <span id="recStateChip" class="chip"></span>
+      <span id="recMessageChip" class="chip"></span>
+  </div>
+  
   <!-- Prefix Selector -->
   <div class="panel" style="margin-top:16px;">
     <h3 style="margin:0 0 10px;">Prefix Selection</h3>
@@ -119,190 +128,379 @@
   </div>
 
   <!-- Making Toggle button -->
-  <div class="toolbar" style="justify-content:flex-start"></div>
-    <button id="btnMakingToggle" class="btn-secondary" style="display:none;">⏺ Making Start</button>   
+  <div class="toolbar" style="justify-content:flex-start">
+    <button id="btnMakingToggle" class="btn-secondary" style="display:none;">⏺ Making Start</button>
   </div>
 
   <!-- Recording Table -->
-  <div class="panel" style="margin-top:16px;">
-    <h3 style="margin:0 0 10px;">Recording History</h3>
+  <div class="panel" style="margin-top:16px; position:relative;">
+    <h3 style="margin:0 0 10px;">
+      Recording History
+      <span style="float:right; display:flex; gap:10px; align-items:center;">
+        <select id="historyPrefixFilter"></select>
+        <input type="date" id="historyDatePicker">
+      </span>
+    </h3>
+
     <table id="recordTable">
       <thead>
         <tr>
-          <th style="width:60px;">Index</th>
-          <th style="width:200px;">Date</th>
-          <th style="width:140px;">Start</th>
-          <th style="width:140px;">End</th>
-          <th style="width:100px;">During</th>
-          <th>File</th>
+          <th data-sort="idx">Index</th>
+          <th data-sort="date">Date</th>
+          <th data-sort="prefix">Prefix</th>
+          <th data-sort="start">Start</th>
+          <th data-sort="end">End</th>
+          <th data-sort="during">During</th>
+          <th data-sort="file">File</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
   </div>
 
-  <!-- Common Title System -->
-  <script>
-    (function () {
-      function apply(cfg) {
-        if (!cfg) return;
-        const app = cfg.appName || "4DReplay";
-        const ver = cfg.version || "V5";
-        const pageCfg = (cfg.pages && cfg.pages.omsRecord) || {};
-
-        // Title
-        document.title = pageCfg.htmlTitle || (app + " " + ver + " - Record");
-
-        // H1 Title
-        const h1 = document.getElementById("pageTitle");
-        if (h1 && pageCfg.pageTitle) {
-          h1.textContent = pageCfg.pageTitle;
-
-          if (cfg.faviconHref && !h1.querySelector(".title-icon")) {
-            const img = document.createElement("img");
-            img.src = cfg.faviconHref;
-            img.className = "title-icon";
-            img.style.height = "1em";
-            img.style.marginRight = "8px";
-            h1.prepend(img);
-          }
-        }
-
-        // favicon
-        if (cfg.faviconHref) {
-          let link = document.querySelector('link[rel="icon"]');
-          if (!link) {
-            link = document.createElement("link");
-            link.rel = "icon";
-            link.type = "image/x-icon";
-            document.head.appendChild(link);
-          }
-          link.href = cfg.faviconHref;
-        }
-      }
-
-      function init() {
-        if (window.OmsCommonConfig) apply(window.OmsCommonConfig);
-        window.addEventListener("oms:config-ready", e =>
-          apply(e.detail || window.OmsCommonConfig)
-        );
-      }
-
-      document.readyState === "loading"
-        ? document.addEventListener("DOMContentLoaded", init)
-        : init();
-    })();
-  </script>
-
   <!-- Page Logic -->
   <script>
-    function setIndicator(mode) {
-      const el = document.getElementById("statusIndicator");
-      el.classList.remove("ind-ready","ind-record","ind-making");
+    // button bindings
+    document.addEventListener("DOMContentLoaded", () => {
+    // -------------------------------------------------------
+    // 🔥 prevState MUST be here (global inside DOMContentLoaded)
+    // -------------------------------------------------------
+    let prevState = null;
+    let sortColumn = "date";
+    let sortDir = "desc";
 
-      if (mode === "record") {
-        el.classList.add("ind-record");
-        el.textContent = "Recording...";
-      } else if (mode === "making") {
-        el.classList.add("ind-making");
-        el.textContent = "Making...";
-      } else {
-        el.classList.add("ind-ready");
-        el.textContent = "Idle";
+    const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+    const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+
+    // -------------------------------
+    // 2) Record 상태 UI (Camera state)
+    // -------------------------------
+
+    const recStateChip = document.getElementById("recStateChip");
+    const recMsgChip   = document.getElementById("recMessageChip");
+
+    async function refreshRecordState() {
+      try {
+        const r = await fetch("/oms/camera/state", { cache: "no-store" });
+        const cam = await r.json();
+
+        applyStateAndMessage({
+          state: cam.state,
+          message: cam.message,
+          stateEl: recStateChip,
+          messageEl: recMsgChip
+        });
+
+        updateRecordButtons(cam.state);
+
+        // -----------------------------------------------------------
+        // 🔥 STATE CHANGE DETECTION — works because prevState exists
+        // -----------------------------------------------------------
+        if (prevState !== null) {
+          // 녹화 시작: Ready(6) → Recording(7/8)
+          if (prevState === 6 && (cam.state === 7 || cam.state === 8)) {
+              console.log("Recording started → Reload table");
+              load_record_table();
+          }
+          // 녹화 종료: Recording(7/8) → Ready(6)
+          if ((prevState === 7 || prevState === 8) && cam.state === 6) {
+              console.log("Recording finished → Reload table");
+              load_record_table();
+          }
+        }
+
+        // update prevState at end
+        prevState = cam.state;
+
+      } catch (err) {
+        console.warn("record state load error", err);
       }
     }
 
+    // refresh loop
+    refreshRecordState();
+    setInterval(refreshRecordState, 1500);
+
+    // -----------------------------------------
+    // Record / Making 버튼 표시 규칙
+    // -----------------------------------------
+    function updateRecordButtons(state) {
+      const btnRecord = document.getElementById("btnRecordToggle");
+      const btnMaking = document.getElementById("btnMakingToggle");
+
+      if (!btnRecord || !btnMaking) return;
+
+      // 기본적으로 숨김
+      btnRecord.style.display = "none";
+      btnMaking.style.display = "none";
+
+      // Ready → Record Start
+      if (state === 6) {
+        btnRecord.style.display = "inline-block";
+        btnRecord.textContent = "⏺ Record Start";
+        return;
+      }
+
+      // Full Recording → Record Stop + Making Start
+      if (state === 7) {
+        btnRecord.style.display = "inline-block";
+        btnRecord.textContent = "■ Record Stop";
+
+        btnMaking.style.display = "inline-block";
+        btnMaking.textContent = "▶ Making Start";
+        return;
+      }
+
+      // Partial Recording → Record Stop
+      if (state === 8) {
+        btnRecord.style.display = "inline-block";
+        btnRecord.textContent = "■ Record Stop";
+        return;
+      }
+
+      // 나머지는 버튼 없음
+    }
+    function parseRecordName(name) {
+        const p = name.split("_");
+        return new Date(`${p[0]}-${p[1]}-${p[2]} ${p[3]}:${p[4]}:${p[5]}`);
+    }
+
+    // -------------------------------
+    // 3) Dashboard / Config 버튼
+    // -------------------------------
+    const btnDashboard = document.getElementById("btnDashboard");
+    if (btnDashboard) {
+      btnDashboard.onclick = () =>
+        (window.location.href = PROXY_PREFIX + "/dashboard");
+    }
+    const btnCamera = document.getElementById("btnCamera");
+    if (btnCamera) {
+      btnCamera.onclick = () =>
+        (window.location.href = PROXY_PREFIX + "/camera");
+    }
+
+    const btnConfig = document.getElementById("btnConfig");
+    if (btnConfig) {
+      btnConfig.onclick = () =>
+        (window.location.href = PROXY_PREFIX + "/user");
+    }
+
+    // -------------------------------
+    // 4) Prefix Loader
+    // -------------------------------
     function load_prefix() {
-      fetch("/web/config/user-config.json?ts=" + Date.now())
+      fetch("/web/config/user-config.json?ts=" + Date.now(), { cache: "no-store" })
         .then(r => r.json())
         .then(cfg => {
-          if (!cfg || !cfg.prefix) return;
-          
+          const prefixCfg = cfg.prefix || {};
+          const list = prefixCfg.list || [];
+          const selIndex = prefixCfg["select-item"] ?? 0;
+
           const sel = document.getElementById("prefixSelect");
           sel.innerHTML = "";
 
-          // prefix 배열 읽어와서 select에 추가
-          cfg.prefix.forEach(p => {
+          list.forEach((p, idx) => {
             const opt = document.createElement("option");
             opt.value = p.name;
             opt.innerText = `${p.name} (${p.comment})`;
+            if (idx === selIndex) opt.selected = true;
             sel.appendChild(opt);
           });
+
+          sel.onchange = () => save_selected_prefix(sel.selectedIndex);
         })
         .catch(err => console.error("prefix load error:", err));
     }
 
-    function load_record_table() {
-      const tbody = document.querySelector("#recordTable tbody");
-      tbody.innerHTML = "";
+    window.addEventListener("oms:config-ready", load_prefix);
 
-      const sample = [
-        { idx:1, date:"Sep 1st 2025", start:"21:55:32", end:"21:58:32", during:"03:00",
-          file:"/video/Team_A/250901_215532" }
-      ];
-
-      sample.forEach(r => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${r.idx}</td>
-          <td>${r.date}</td>
-          <td>${r.start}</td>
-          <td>${r.end}</td>
-          <td>${r.during}</td>
-          <td><a class="file-link" href="${r.file}">${r.file}</a></td>
-        `;
-        tbody.appendChild(tr);
-      });
+    document.getElementById("prefixSelect").onchange = (e) => {
+      save_selected_prefix(e.target.selectedIndex);
+    };
+    function save_selected_prefix(index) {
+      fetch("/oms/config/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ index })
+      })
+      .then(r => r.json())
+      .then(res => console.log("prefix update:", res))
+      .catch(err => console.error("prefix update error:", err));
     }
 
-    // button bindings
-    document.addEventListener("DOMContentLoaded", () => {
-      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
-      const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
+    function build_prefix_filter(items) {
+      const sel = document.getElementById("historyPrefixFilter");
 
-    document.getElementById("btnDashboard").onclick = () =>
-      window.location.href = PROXY_PREFIX + "/dashboard";
+      const prevValue = sel.value;   // ← 현재 선택 상태 저장
+      sel.innerHTML = "";
 
-    document.getElementById("btnConfig").onclick = () =>
-      window.location.href = PROXY_PREFIX + "/user";
+      const prefixes = [...new Set(items.map(x => x.prefix).filter(x => x))];
 
+      const optAll = document.createElement("option");
+      optAll.value = "";
+      optAll.textContent = "ALL";
+      sel.appendChild(optAll);
+
+      prefixes.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        sel.appendChild(opt);
+      });
+
+      // 이전 선택 복원
+      if (prefixes.includes(prevValue) || prevValue === "") {
+        sel.value = prevValue;
+      }
+
+      sel.onchange = () => load_record_table();
+    }
+
+    // -------------------------------
+    // 5) Record History (샘플)
+    // -------------------------------
+    function load_record_table() {
+      fetch("/web/record/record_history.json?ts=" + Date.now())
+        .then(r => r.json())
+        .then(json => {
+          const tbody = document.querySelector("#recordTable tbody");
+          tbody.innerHTML = "";
+
+          if (!json || !json.history) return;
+
+          // -----------------------------------------
+          // 1) Build array
+          // -----------------------------------------
+          let items = json.history.map(h => {
+            const key = Object.keys(h)[0];
+            const data = h[key];
+
+            return {
+              key,
+              prefix: data["prefix"] || "",
+              start: data["record-start-time"] || "",
+              end: data["record-end-time"] || "",
+              during: data["recording-time"] || "",
+              duringMs: data["recording-time-ms"] || 0,
+              file: data["file-location"] || ""
+            };
+          });
+
+          // -----------------------------------------
+          // 2-A) Build prefix filter selectbox
+          // -----------------------------------------
+          build_prefix_filter(items);
+    
+          // -----------------------------------------
+          // 2-C) Prefix filter
+          // -----------------------------------------
+          const pfilter = document.getElementById("historyPrefixFilter").value;
+          if (pfilter) {
+            items = items.filter(it => it.prefix === pfilter);
+          }
+
+          // -----------------------------------------
+          // 2-B) Date filter
+          // -----------------------------------------
+          const datePick = document.getElementById("historyDatePicker").value;
+          if (datePick) {
+            items = items.filter(it => it.start.startsWith(datePick));
+          }
+
+          // -----------------------------------------
+          // 3) Sorting
+          // -----------------------------------------
+          items.sort((a, b) => {
+            const mul = sortDir === "asc" ? 1 : -1;
+
+            if (sortColumn === "date") {
+              return mul * (parseRecordName(a.key) - parseRecordName(b.key));
+            }
+            if (sortColumn === "start") {
+              return mul * (new Date(a.start) - new Date(b.start));
+            }
+            if (sortColumn === "end") {
+              return mul * (new Date(a.end) - new Date(b.end));
+            }
+            if (sortColumn === "during") {
+              return mul * (a.duringMs - b.duringMs);
+            }
+            return 0;
+          });
+
+          // -----------------------------------------
+          // 4) Render
+          // -----------------------------------------
+          items.forEach((r, idx) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+              <td>${idx + 1}</td>
+              <td>${r.key}</td>
+              <td>${r.prefix}</td>
+              <td>${r.start}</td>
+              <td>${r.end}</td>
+              <td>${r.during}</td>
+              <td><a class="file-link" href="${r.file}">${r.file}</a></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        })
+        .catch(err => console.error("record table load error:", err));
+    }
+   
+    // -------------------------------
+    // 6) Record/Making 버튼
+    // -------------------------------
     const makingBtn = document.getElementById("btnMakingToggle");
-    // Recording Toggle
-    let isRecording = false;
+
+    document.getElementById("historyDatePicker").addEventListener("change", () => {
+      load_record_table();
+    });
+    document.getElementById("prefixSelect").addEventListener("change", (e) => {
+      save_selected_prefix(e.target.selectedIndex);
+    });
+    document.getElementById("historyPrefixFilter").onchange = () => {
+      load_record_table();
+    };
+    // 🔥 버튼 클릭 동작만 유지하고 상태값은 서버 state 기반으로만 제어
     document.getElementById("btnRecordToggle").onclick = () => {
-      isRecording = !isRecording;
-
-      const btn = document.getElementById("btnRecordToggle");
-      const makingBtn = document.getElementById("btnMakingToggle");
-
-      if (isRecording) {
-        btn.textContent = "⏺ Recording...";
-        setIndicator("record");
-        makingBtn.style.display = "inline-block";   // ON → show
-      } else {
-        btn.textContent = "▶ Record Start";
-        setIndicator("ready");
-        makingBtn.style.display = "none";           // OFF → hide
+      const text = document.getElementById("btnRecordToggle").textContent.trim();
+      // 🔥 Record Stop
+      if (text.includes("Record Stop")) {
+          fetch("/oms/camera/action/record/stop", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          })
+          .then(r => r.json())
+          .then(res => console.log("record stop:", res))
+          .catch(err => console.error("record stop error:", err));
+          return;
+      }
+      // 🔥 Record Start (state=6 일 때)
+      if (text.includes("Record Start")) {
+          const prefixVal = document.getElementById("prefixSelect").value;
+          fetch("/oms/camera/action/record/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prefix: prefixVal })
+          })
+          .then(r => r.json())
+          .then(res => console.log("record start:", res))
+          .catch(err => console.error("record start error:", err));
+          return;
       }
     };
-    let isMaking = false;
-    // Making Toggle
+
     document.getElementById("btnMakingToggle").onclick = () => {
-      isMaking = !isMaking;
-      const btn = document.getElementById("btnMakingToggle");
-
-      if (isMaking) {
-        btn.textContent = "⏺ Making...";
-        setIndicator("making");
-      } else {
-        btn.textContent = "▶ Making Start";
-        setIndicator("record");
-      }
+      console.log("Making toggle clicked");
     };
 
+    // -------------------------------
+    // 7) Initial load
+    // -------------------------------
     load_prefix();
     load_record_table();
-    });
+  });
   </script>
 
 </body>

@@ -11,18 +11,28 @@
     "gop": "30",
     "output_path": ""
   },
-  "prefix": [
-    {
-      "name": "Team_A",
-      "comment": "James"
-    },
-    {
-      "name": "Team_B",
-      "comment": "Steve"
-    },
-    {
-      "name": "Team_C",
-      "comment": "Austin"
-    }
-  ]
+  "prefix": {
+    "select-item": 0,
+    "list": [
+      {
+        "name": "Team_A",
+        "comment": "James"
+      },
+      {
+        "name": "Team_B",
+        "comment": "Steve"
+      },
+      {
+        "name": "Team_C",
+        "comment": "Austin"
+      }
+    ]
+  },
+  "RecordSetting": {
+    "CameraRecordWaitTime": 1500,
+    "CameraSyncWaitTime": 1500,
+    "CameraSyncLimit": 100,
+    "CameraSyncSkip": false,
+    "UseAudio": false
+  }
 }

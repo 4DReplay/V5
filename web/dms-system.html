@@ -31,6 +31,7 @@
     <span class="divider"></span>
     <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>
     <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
+    <button id="btnSysLogs" class="btn-secondary">📜 Logs</button>
     <small id="busyMsg"></small>
   </div>
 
@@ -225,6 +226,13 @@
       window.location.href = "/system";
     };
     document.getElementById("btnSysConfig").onclick = () => location.href = "dms-config.html";
+
+    document.getElementById("btnSysLogs").onclick = () => {
+      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+      const node = m ? decodeURIComponent(m[1]) : "";
+      const nodeQ = node ? `node=${encodeURIComponent(node)}&` : "";
+      window.open(`/_/../web/log-viewer.html?${nodeQ}name=DMS&tail=50000`, "_blank");
+    };
 
     document.getElementById("btnStartAll").onclick = async () => {
       if (IS_BUSY) return;

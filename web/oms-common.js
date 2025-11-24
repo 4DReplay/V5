@@ -9,13 +9,15 @@
   OMS.config = null;
 
   window.UI_STATE_TITLE = {
-    0 : "Check System",
-    1 : "Check Setting",
+    0 : "Ask Admin",
+    1 : "Check System",
     2 : "Needs Restart",
     3 : "Restarting...",
     4 : "Needs Connect",
     5 : "Connecting...",
-    6 : "Ready"
+    6 : "Ready",
+    7 : "Recording...",
+    8 : "Recording Error"
   };
 
   window.UI_STATE_COLOR = {
@@ -25,13 +27,14 @@
     3: "chip-yellow",
     4: "chip-blue",
     5: "chip-blue",
-    6: "chip-green"
+    6: "chip-green",
+    7: "chip-red",
+    8: "chip-red"
   };
 
   // === inside OMS.initAssets() === 
   OMS.initAssets = function () {
     const head = document.head;
-
     const cssList = [
       "/web/css/base.css",
     ];
@@ -69,6 +72,7 @@
           "status-warn",
           "status-init",
           "status-danger",
+          "status-work",
           "state-anim"
       );
 
@@ -81,6 +85,8 @@
       if (colorClass === "chip-blue")     el.classList.add("status-warn");
       if (colorClass === "chip-yellow")   el.classList.add("status-init");
       if (colorClass === "chip-orange")   el.classList.add("status-danger");
+      if (colorClass === "chip-red")      el.classList.add("status-work");
+      
 
       // --- 상태 텍스트 애니메이션 ---
       if (state === 3 || state === 5) {

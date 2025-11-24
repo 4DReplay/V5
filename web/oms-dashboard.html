@@ -19,6 +19,7 @@
   <h1 class="page-title-with-actions">
     <span id="pageTitle"></span>
     <div class="page-top-buttons">
+      <button id="btnLogs" class="btn-top">📜 Logs</button>
       <button class="btn-top" onclick="location.href='/user'">⚙️ User Config</button>
       <button id="btnFullscreen" class="btn-top icon-only" title="Toggle fullscreen">⤢</button>
     </div>
@@ -385,13 +386,26 @@
 
         applyStateStyle($("camReady"), s.state);
         applyMessageOnly({message: s.message,messageEl: $("camMessageChip")});
-
         // ★ Summary
         const sum = s.summary || {};
-        $("camTotal").textContent = sum.cameras ?? 0;
-        $("camConn").textContent = sum.connected ?? 0;
-        $("camOn").textContent = sum.on ?? 0;
-        $("camOff").textContent = sum.off ?? 0;
+        const camCount = sum.cameras ?? 0;
+        const recCount = sum.record ?? 0;
+        const connCount = sum.connected ?? 0;
+        const onCount   = sum.alive ?? 0;   // alive == on
+        const offCount  = sum.off ?? 0;
+
+        // 기존 span에도 값 넣기
+        $("camTotal").textContent = camCount;
+        $("camConn").textContent  = connCount;
+        $("camOn").textContent    = onCount;
+        $("camOff").textContent   = offCount;
+
+        // ★ Summary 라인 문구 교체
+        const summaryLine = document.querySelector("#camStats .stat-line:nth-child(2)");
+        if (summaryLine) {
+          summaryLine.textContent =
+            `record : ${recCount} / connect : ${connCount} / on : ${onCount} / off : ${offCount}`;
+        }
 
         $("camPoll").textContent = "poll 3s";        
       }
@@ -532,6 +546,26 @@
     })();
   </script>
 
+  <!-- 페이지 로드 후 0.1초 뒤 자동 전체화면 시도 -->
+  <!-- 정책상 자동 전체 화면은 불가
+  <script>
+    window.addEventListener("load", () => {
+      setTimeout(() => {
+        const btn = document.getElementById("btnFullscreen");
+        if (btn) {
+          // 버튼 자동 클릭 (브라우저가 실제 사용자 클릭으로 인식하기 쉬움)
+          btn.dispatchEvent(new MouseEvent("click", { bubbles: true, cancelable: true }));
+        }
+      
+        // 백업: 직접 전체화면 요청 시도
+        if (!document.fullscreenElement) {
+          document.documentElement.requestFullscreen?.().catch(() => {});
+        }
+      }, 100);   // 0.1초 후 실행
+    });
+  </script>
+-->
+
   <script>
     // 기본 베이스 경로(필요 시 서버에 맞게 오버라이드 가능)
     window.__omsConnectBase = window.__omsConnectBase || "/oms/system/connect";
@@ -656,6 +690,26 @@
         init();
       }
     })();
+  </script>
+  <script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const btnLogs = document.getElementById("btnLogs");
+    if (!btnLogs) return;
+
+    btnLogs.onclick = () => {
+      // 현재 URL이 proxy 모드인지 확인
+      const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
+      const node = m ? decodeURIComponent(m[1]) : "";
+      const nodeQ = node ? `node=${encodeURIComponent(node)}&` : "";
+
+      // OMS/log 디렉토리의 log-viewer.html 열기
+      // name=OMS 로 지정 (logs/OMS/log 디렉토리)
+      window.open(
+        `/_/../web/log-viewer.html?${nodeQ}name=OMS&tail=50000`,
+        "_blank"
+      );
+    };
+  });
   </script>
 
 </body>

@@ -21,6 +21,7 @@ BODY
     <small id="meta"></small>
   </h2>
   
+<!-- TOOLBAR -->
   <div class="toolbar">
     <button id="btnDashboard">📊 Dashboard</button>
     <span class="divider"></span>
@@ -30,9 +31,12 @@ BODY
     <span class="divider"></span>
     <button id="btnSysConfig" class="btn-secondary">📝 Config Editor</button>
     <button id="btnSysReload" class="btn-secondary">🔄 Reload</button>    
-    <span class="spacer"></span>
+    <span class="divider"></span>
+    <button id="btnSysLogs" class="btn-secondary">📜 Logs</button>
+    <span class="spacer"></span>    
     <span class="chip" id="hb">poll -</span>
   </div>
+<!-- MESSAGE CHIP -->
   <div class="chip-row">
       <span id="stateChip" class="chip"></span>
       <span id="messageChip" class="chip" role="status" aria-live="polite"></span>
@@ -67,7 +71,8 @@ BODY
     const BTN_CONFIG      = document.getElementById("btnSysConfig");
     const BTN_SYS_RESTART = document.getElementById("btnSysRestart");
     const BTN_SYS_CONNECT = document.getElementById("btnSysConnect");
-    const BTN_SYS_RELOAD  = document.getElementById("btnSysReload");        
+    const BTN_SYS_RELOAD  = document.getElementById("btnSysReload");      
+    const BTN_SYS_LOGS = document.getElementById("btnSysLogs");  
 
     /* ── 진행 메시지/캐시를 완전히 비우는 helper ── */
     function clearProgressChip() {
@@ -513,6 +518,13 @@ BODY
     // Button Action
     // ========================================================================
     
+    // ─ [Button] Reload ──────────────────────────────────────────────────────    
+    BTN_SYS_LOGS.onclick = () => {
+      const base = __PROXY_PREFIX__ || "";
+      // OMS 로그는 daemon/OMs/log 에 있음 → name=OMs
+      const url = base + "/web/log-viewer.html?name=OMs&tail=50000";
+      window.open(url, "_blank");
+    };
     // ─ [Button] Reload ──────────────────────────────────────────────────────
     BTN_SYS_RELOAD.onclick = () => reloadNow({ silent: false });
     // ─ [Button] Restart ──────────────────────────────────────────────────────

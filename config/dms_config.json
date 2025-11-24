@@ -1,7 +1,7 @@
 {
   "http_host": "0.0.0.0",
   "http_port": 19776,
-  "log_dir": "logs/DMS",
+  "log_dir": "daemon/DMS/log",
   "heartbeat_interval_sec": 3,
   "executables": [
     {
@@ -46,7 +46,7 @@
       "path": "daemon/PCd/PCd.exe",
       "args": [],
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true
     },
     {
@@ -55,7 +55,7 @@
       "path": "daemon/MMd/MMdServer.exe",
       "args": [],
       "select": true,
-      "auto_restart": false,
+      "auto_restart": true,
       "start_on_boot": true
     },
     {
@@ -106,60 +106,6 @@
       "auto_restart": true,
       "start_on_boot": true,
       "shell": false
-    },
-    {
-      "name": "MMc",
-      "alias": "Multimedia Maker Client [#n]",
-      "path": "daemon/MMc/MMdClient.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
-      "name": "GCd",
-      "alias": "Gimbal Control",
-      "path": "daemon/GCd/GCd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
-      "name": "CMd",
-      "alias": "Compute Multimedia",
-      "path": "daemon/CMd/CMd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
-      "name": "AMd",
-      "alias": "Audio Manager",
-      "path": "daemon/AMd/AMd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
-      "name": "PostSd",
-      "alias": "Post Storage [#n]",
-      "path": "daemon/PostSd/PostSd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
-    },
-    {
-      "name": "VPd",
-      "alias": "Vision Processor [#n]",
-      "path": "daemon/VPd/VPd.exe",
-      "args": [],
-      "select": false,
-      "auto_restart": true,
-      "start_on_boot": true
     }
   ]
 }

@@ -18,12 +18,18 @@ from pathlib import Path
 from typing import Dict, Optional, List
 import urllib.parse as _uparse
 
+
+def ensure_dir(p: Path) -> None:
+    p.mkdir(parents=True, exist_ok=True)
+
 # ── paths ────────────────────────────────────────────────────────────────────
 HERE = Path(__file__).resolve()
 ROOT = HERE.parents[2] if len(HERE.parts) >= 3 and HERE.parts[-3].lower() == "service" else HERE.parent
 DEFAULT_CONFIG = ROOT / "config" / "dms_config.json"
 
-LOG_DIR_DEFAULT = ROOT / "logs" / "DMS"
+# NEW: OMS style unified log folder
+LOG_DIR_DEFAULT = ROOT / "daemon" / "DMS" / "log"
+ensure_dir(LOG_DIR_DEFAULT)
 STATIC_ROOT = ROOT / "web"
 
 # ── json5-lite loader ───────────────────────────────────────────────────────
@@ -56,8 +62,6 @@ def load_config(path: Path) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Config not found: {path}")
     return _json5_load(path)
-def ensure_dir(p: Path) -> None:
-    p.mkdir(parents=True, exist_ok=True)
 def now_ms() -> int:
     return int(time.time() * 1000)
 
@@ -876,6 +880,53 @@ class DmsSupervisor:
                         self.send_response(302); self.send_header("Location", "/web/oms-system.html")
                         self.send_header("Cache-Control", "no-store"); self.send_header("Content-Length", "0"); self.end_headers(); return
 
+                    if parts and parts[0] == "daemon" and len(parts) >= 3 and parts[2] == "log":
+                        proc = parts[1]  # AId, SCd, PCd, OMs, DMS 모두 지원
+
+                        # ---- 각 프로세스별 로그 경로 ----
+                        log_dir = ROOT / "daemon" / proc / "log"
+                        ensure_dir(log_dir)
+
+                        # /daemon/<PROC>/log/list
+                        if len(parts) >= 4 and parts[3] == "list":
+                            dates = []
+                            for p in sorted(log_dir.glob("????-??-??.log")):
+                                dates.append(p.stem)
+                            return self._ok(200, {"ok": True, "dates": dates})
+
+                        # /daemon/<PROC>/log?date=YYYY-MM-DD&tail=50000
+                        qs = _uparse.parse_qs(_uparse.urlsplit(self.path).query or "")
+                        date = (qs.get("date") or [""])[0]
+                        tail = (qs.get("tail") or ["50000"])[0]
+
+                        try:
+                            tail_bytes = max(0, int(tail))
+                        except:
+                            tail_bytes = 50000
+
+                        if not date:
+                            date = time.strftime("%Y-%m-%d")
+
+                        fp = log_dir / f"{date}.log"
+                        if not fp.exists():
+                            return self._ok(200, {"ok": False, "error": "log file not found", "path": str(fp)})
+
+                        size = fp.stat().st_size
+                        with open(fp, "rb") as f:
+                            if size > tail_bytes:
+                                f.seek(size - tail_bytes)
+                                _ = f.readline()
+                            text = f.read().decode("utf-8", "ignore")
+
+                        return self._ok(200, {
+                            "ok": True,
+                            "path": str(fp),
+                            "date": date,
+                            "tail": tail_bytes,
+                            "size": size,
+                            "text": text
+                        })
+
                     # 로그 API
                     if parts and parts[0] == "logs":
                         if len(parts) == 3 and parts[1] == "list":
@@ -1106,8 +1157,10 @@ class DmsSupervisor:
 
     def _log(self, msg: str):
         ensure_dir(self.log_dir)
+        filename = time.strftime("%Y-%m-%d") + ".log"
+        fp = self.log_dir / filename
         line = time.strftime("%Y-%m-%d %H:%M:%S") + " " + msg + "\n"
-        (self.log_dir / "DMs.log").open("a", encoding="utf-8").write(line)
+        fp.open("a", encoding="utf-8").write(line)
 
 # ── entry ───────────────────────────────────────────────────────────────────
 def main():

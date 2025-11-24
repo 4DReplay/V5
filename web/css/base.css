@@ -327,6 +327,11 @@ tr.other td {
   color: #ff6b6b;
 }
 
+.chip-red {
+  background: #5b1a1a;
+  color: #ff6b6b;
+}
+
 .chip-yellow {
   background: #5b4a1a;
   color: #ffd86b;
@@ -376,6 +381,24 @@ tr.other td {
 .node {
   color: #93c5fd
 }
+
+/* CAMERA TABLE : RECORD STATUS */
+.pill.recording {
+  background: #dc2626;
+  color: #fff;
+  display: inline-block;
+  animation: dashPulseSoft 1.5s infinite cubic-bezier(.3,0,.6,1);
+
+}
+
+@keyframes pulse {
+  0%   { opacity: 1.0;  transform: scale(1.00); }
+  50%  { opacity: 0.85; transform: scale(1.03); }
+  100% { opacity: 1.0;  transform: scale(1.00); }
+}
+
+
+
 
 /* CONNECTED pill 강조: 흰색 + bold (RUNNING과 시각적으로 구분) */
 .pill.connected {
@@ -677,6 +700,14 @@ body {
 #sysReady.status-danger {
   color: #ff8c00;        /* System 배너에서도 같은 톤 유지 */
 }
+/* Needs Restart 전용 강한 경고 색 (Apple Red 톤) */
+.status-work {
+  color: #ff4c0a;        /* Apple system red */
+}
+#sysReady.status-work {
+  color: #ff4c0a;        /* System 배너에서도 같은 톤 유지 */
+}
+
 /* dashboard small title size */
 .ready .prefix {
   display: block;
@@ -1002,8 +1033,14 @@ body {
 
 #sysReady.status-danger.state-anim,
 #camReady.status-danger.state-anim {
+  color: #ff8a30 !important;
+}
+
+#sysReady.status-work.state-anim,
+#camReady.status-work.state-anim {
   color: #ff3b30 !important;
 }
+
 
 /* message-chip 애니메이션 금지 */
 .message-chip.state-anim {

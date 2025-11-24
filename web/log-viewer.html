@@ -83,15 +83,25 @@
       color: #cbd5e1
     }
 
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;       /* ← 브라우저 자체 스크롤 제거 */
+    }
+
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      flex: 0 0 auto;         /* 고정 높이 */
+    }
+
     #log {
-      height: calc(100vh - 76px);
-      overflow: auto;
-      background: #0b1220;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      padding: 10px;
-      white-space: pre-wrap;
-      margin: 0
+      flex: 1 1 auto;         /* 남은 공간 모두 차지 */
+      overflow-y: auto;       /* 내부 스크롤 */
     }
 
     a.link {
@@ -180,6 +190,7 @@
       tbName.value = NAME0;
 
       function setTitle() {
+        const title = document.getElementById("pageTitle");  // ← 수정!
         const nm = tbName.value.trim() || "(unknown)";
         const bullet = "\u2022";
         title.textContent = EFFECTIVE_NODE
@@ -205,7 +216,6 @@
         return `/daemon/${encodeURIComponent(proc)}/log`;
       }
 
-      /* â”€â”€â”€â”€â”€â”€â”€â”€â”€ Dates load â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
       async function loadDates() {
         selDate.innerHTML = "";
         const name = tbName.value.trim();
@@ -218,6 +228,10 @@
         try {
           const r = await jget(`${baseFor(name)}/list`);
           const dates = Array.isArray(r?.dates) ? r.dates : (Array.isArray(r) ? r : []);
+
+          // ✅ 날짜 최신순 정렬
+          dates.sort((a, b) => new Date(b) - new Date(a));
+
           if (dates.length === 0) {
             const opt = document.createElement("option");
             opt.value = ""; opt.textContent = "(no logs)";
@@ -225,16 +239,16 @@
           } else {
             dates.forEach(d => {
               const opt = document.createElement("option");
-              opt.value = d; opt.textContent = d;
+              opt.value = d; 
+              opt.textContent = d;
               selDate.appendChild(opt);
             });
 
-            // ✅ 쿼리스트링에 date가 있으면 그대로 사용
-            //    없으면 가장 최근(마지막) 날짜를 기본 선택
+            // 쿼리스트링에 날짜가 있으면 선택, 없으면 가장 최신 날짜 선택
             if (DATE0 && dates.includes(DATE0)) {
               selDate.value = DATE0;
             } else {
-              selDate.value = dates[dates.length - 1];
+              selDate.value = dates[0];   // 🔥 최신 날짜
             }
           }
         } catch (e) {

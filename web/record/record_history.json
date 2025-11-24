@@ -1,0 +1,76 @@
+{
+  "history": [
+    {
+      "2025_11_24_21_53_24": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_53_24.json",
+        "prefix": "Team_A",
+        "record-start-time": "2025-11-24 21:53:26",
+        "record-end-time": "2025-11-24 21:53:35",
+        "recording-time": "00:00:08.895"
+      }
+    },
+    {
+      "2025_11_24_21_53_38": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_53_38.json",
+        "prefix": "Team_A",
+        "record-start-time": "2025-11-24 21:53:40",
+        "record-end-time": "2025-11-24 21:53:59",
+        "recording-time": "00:00:18.447"
+      }
+    },
+    {
+      "2025_11_24_21_54_02": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_54_02.json",
+        "prefix": "Team_A",
+        "record-start-time": "2025-11-24 21:54:04",
+        "record-end-time": "2025-11-24 21:54:19",
+        "recording-time": "00:00:14.839"
+      }
+    },
+    {
+      "2025_11_24_21_54_31": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_54_31.json",
+        "prefix": "Team_A",
+        "record-start-time": "2025-11-24 21:54:33",
+        "record-end-time": "2025-11-24 21:54:52",
+        "recording-time": "00:00:18.739"
+      }
+    },
+    {
+      "2025_11_24_21_55_19": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_55_19.json",
+        "prefix": "Team_B",
+        "record-start-time": "2025-11-24 21:55:21",
+        "record-end-time": "2025-11-24 21:55:33",
+        "recording-time": "00:00:12.519"
+      }
+    },
+    {
+      "2025_11_24_21_55_40": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_55_40.json",
+        "prefix": "Team_C",
+        "record-start-time": "2025-11-24 21:55:41",
+        "record-end-time": "2025-11-24 21:55:51",
+        "recording-time": "00:00:09.938"
+      }
+    },
+    {
+      "2025_11_24_21_56_26": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_56_26.json",
+        "prefix": "Team_C",
+        "record-start-time": "2025-11-24 21:56:28",
+        "record-end-time": "2025-11-24 21:56:37",
+        "recording-time": "00:00:08.716"
+      }
+    },
+    {
+      "2025_11_24_21_56_44": {
+        "file-location": "/web/record/history/recorded/2025_11_24_21_56_44.json",
+        "prefix": "Team_C",
+        "record-start-time": "2025-11-24 21:56:45",
+        "record-end-time": "2025-11-24 21:56:54",
+        "recording-time": "00:00:08.119"
+      }
+    }
+  ]
+}

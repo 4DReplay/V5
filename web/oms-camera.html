@@ -168,20 +168,33 @@
   <!-- Polling -->
   <script>
     function renderStatusIcon(cam) {
-      const status = (cam.status || "").toString().toLowerCase();
+      // 🔥 status 를 alive 기반으로 재생성
+      const status = cam.alive ? "on" : "off";
+
       const connected = cam.connected === true ||
                         cam.connected === 1 ||
                         cam.connected === "true";
 
-      // 1) ON + CONNECTED  → CONNECTED pill (oms-system 과 동일 계열)
-      if (status === "on" && connected) {
+      const recording = cam.record === true ||
+                        cam.record === 1 ||
+                        cam.record === "true";
+
+      // 1) RECORDING 최우선
+      if (recording) {
+        return '<span class="pill recording">RECORDING</span>';
+      }
+
+      // 2) CONNECTED (CCD OK)
+      if (connected) {
         return '<span class="pill connected">CONNECTED</span>';
       }
-      // 2) ON (전원은 켜져 있으나 연결 안 됨) → RUNNING 스타일과 동일한 ON
+
+      // 3) ON (ping alive)
       if (status === "on") {
         return '<span class="pill on">ON</span>';
       }
-      // 3) 나머지는 전부 OFF → STOPPED 와 같은 디자인      
+
+      // 4) OFF
       return '<span class="pill off">OFF</span>';
     }
 
@@ -214,12 +227,14 @@
       const statsSpan = document.getElementById("camStats");
       if (statsSpan) {
         const camCount = summary.cameras ?? cameras.length;
+        const recCount = summary.record ?? 0;
         const connCount = summary.connected ?? 0;
-        const onCount   = summary.on ?? 0;
+        const onCount   = summary.alive ?? 0;  // alive = ping on
         const offCount  = summary.off ?? 0;
 
+        // 🔥 요청한 최종 출력 형태
         statsSpan.textContent =
-          `cameras: ${camCount} ( connected: ${connCount} / on: ${onCount} / off: ${offCount} )`;
+          `cameras: ${camCount} ( record: ${recCount} / connect: ${connCount} / on: ${onCount} / off: ${offCount} )`;
       }
 
       // ==== 2) 상세 정보 맵 ====
@@ -295,7 +310,7 @@
           message: stateCam.message,
           stateEl: document.getElementById("camStateChip"),
           messageEl: document.getElementById("camMessageChip")
-        });
+        });        
 
       } catch (err) {
         console.error("State update failed:", err);

@@ -154,11 +154,11 @@
 </head>
 
 <body>
-
+  <!-- TITLE -->
   <h2 class="page-title">
     <span id="pageTitle"></span>
   </h2>
-
+  <!-- TOOLBAR -->
   <div class="toolbar">
     <button class="btn" onclick="location.href='/dashboard'">📊 Dashboard</button>
     <button class="btn" onclick="location.href='/record'">🎥 record</button>
@@ -167,8 +167,7 @@
     <button id="btnSave">Save</button>
     <span id="saveState" class="pill">Idle</span>
   </div>
-
-  <!-- Title Section -->
+  <!-- TITLE SECTION -->
   <div class="section">
     <h3>📝Title</h3>
     <label>Name</label>
@@ -180,8 +179,7 @@
       <button id="btnBrowseIcon" class="btn-secondary file-btn">📁Browse...</button>
     </div>
   </div>
-
-  <!-- Output Section -->
+  <!-- OUTPUT SECTION -->  
   <div class="section">
     <h3>🎬Output</h3>
 
@@ -216,11 +214,38 @@
     <label style="margin-top:6px;">Output Path</label>
     <input id="outPath" type="text">
   </div>
+  <!-- RECORD SET SECTION -->  
+  <div class="section">
+    <h3>🎥 Camera Record Settings</h3>
 
-  <!-- Prefix Section -->
+    <label>Camera Record Wait Time</label>
+    <div class="rowflex">
+      <input id="recWaitTime" type="text" style="width:120px"> <span>ms</span>
+    </div>
+
+    <label style="margin-top:8px;">Camera Sync Wait Time</label>
+    <div class="rowflex">
+      <input id="recSyncWait" type="text" style="width:120px"> <span>ms</span>
+    </div>
+
+    <label style="margin-top:8px;">Camera Sync Limit</label>
+    <div class="rowflex">
+      <input id="recSyncLimit" type="text" style="width:120px"> <span>us</span>
+      <span class="muted">(10 us ~ 500 us)</span>
+    </div>
+
+    <label style="margin-top:8px;" class="rowflex">
+      <input id="recSyncSkip" type="checkbox" style="width:auto"> Camera Sync Skip
+    </label>
+
+    <label class="rowflex">
+      <input id="recUseAudio" type="checkbox" style="width:auto"> Use Audio
+    </label>
+  </div>
+
+  <!-- PREFIX SECTION -->  
   <div class="section">
     <h3>🏷️Prefix List</h3>
-
     <button id="btnAddPrefix" class="btn-ghost">Add Prefix</button>
 
     <table>
@@ -262,10 +287,11 @@
     };
 
     /* ---------- API ---------- */
+    // LOAD CONFIG
     async function getConfig() {
       return await fetch("/web/config/user-config.json?ts=" + Date.now()).then(r => r.text());
     }
-
+    // SAVE CONFIG
     async function saveConfigFile(text) {
       const r = await fetch("/web/config/user-config.json", {
         method: "POST",
@@ -292,7 +318,6 @@
         alert("Load failed: " + e);
       }
     }
-
     /* ---------- JSON → UI ---------- */
     function fillUI() {
       document.getElementById("titleName").value = CONFIG.title?.Name || "";
@@ -304,9 +329,18 @@
 
       document.getElementById("outBitrate").value = CONFIG.output?.bitrate || "";
       document.getElementById("outGop").value = CONFIG.output?.gop || "";
+      document.getElementById("outPath").value = CONFIG.output?.output_path || "";
+
+      // --- Record Settings ---
+      const RS = CONFIG.RecordSetting || {};
+      document.getElementById("recWaitTime").value = RS.CameraRecordWaitTime ?? 2000;
+      document.getElementById("recSyncWait").value = RS.CameraSyncWaitTime ?? 2000;
+      document.getElementById("recSyncLimit").value = RS.CameraSyncLimit ?? 100;
+      document.getElementById("recSyncSkip").checked = RS.CameraSyncSkip ?? false;
+      document.getElementById("recUseAudio").checked = RS.UseAudio ?? false;
+
       renderPrefix();
     }
-
     /* ---------- UI → JSON ---------- */
     function readUI() {
       CONFIG.title = {
@@ -320,19 +354,35 @@
         fps: document.getElementById("outFPS").value,
         bitrate: document.getElementById("outBitrate").value,
         gop: document.getElementById("outGop").value,
-        output_path: document.getElementById("outPath").value,
+        output_path: document.getElementById("outPath").value
       };
 
-      CONFIG.prefix = [...T_PREFIX.children].map(tr => ({
+      const list = [...T_PREFIX.children].map(tr => ({
         name: tr.querySelector("[data-k='name']").value,
         comment: tr.querySelector("[data-k='comment']").value
       }));
+      // 기존 select-item 유지
+      const sel = CONFIG.prefix?.["select-item"] ?? 0;
+      CONFIG.prefix = {
+        "select-item": sel,
+        "list": list
+      };
+
+      // --- Record Settings 저장 ---
+      CONFIG.RecordSetting = {
+        CameraRecordWaitTime: Number(document.getElementById("recWaitTime").value),
+        CameraSyncWaitTime: Number(document.getElementById("recSyncWait").value),
+        CameraSyncLimit: Number(document.getElementById("recSyncLimit").value),
+        CameraSyncSkip: document.getElementById("recSyncSkip").checked,
+        UseAudio: document.getElementById("recUseAudio").checked
+      };
     }
 
     /* ---------- Prefix List ---------- */
     function renderPrefix() {
       T_PREFIX.innerHTML = "";
-      (CONFIG.prefix || []).forEach(p => addPrefixRow(p.name, p.comment));
+      const list = (CONFIG.prefix && CONFIG.prefix.list) || [];
+      list.forEach(p => addPrefixRow(p.name, p.comment));
     }
 
     function addPrefixRow(name = "", comment = "") {
