@@ -1,1 +1,31 @@
-{"title":{"Name":"4Dist [KR-#1]","icon":"/web/images/4dist.ico"},"output":{"resolution":"FHD","codec":"H.264","fps":"30","bitrate":"15","gop":"30","output_path":""},"prefix":{"select-item":1,"list":[{"name":"Team_A","comment":"James"},{"name":"Team_B","comment":"Steve"},{"name":"Team_C","comment":"Austin"}]},"RecordSetting":{"CameraRecordWaitTime":1500,"CameraSyncWaitTime":1500,"CameraSyncLimit":100,"CameraSyncSkip":false,"UseAudio":false}}
+{
+  "http_host": "0.0.0.0",
+  "http_port": 19777,
+  "mtd_host": "10.82.104.210",
+  "mtd_port": 19765,
+  "heartbeat_interval_sec": 3,
+  "restart_ready_timeout_sec": 45,
+  "restart_poll_interval_sec": 0.25,
+  "restart_post_timeout_sec": 10,
+  "status_fetch_timeout_sec": 10,
+  "nodes": [
+    {
+      "name": "DMS-1",
+      "alias": "DMS PC #1",
+      "host": "10.82.104.210",
+      "port": 19776
+    },
+    {
+      "name": "DMS-2",
+      "alias": "DMS PC #2",
+      "host": "10.82.104.211",
+      "port": 19776
+    },
+    {
+      "name": "DMS-3",
+      "alias": "DMS PC #3",
+      "host": "10.82.104.212",
+      "port": 19776
+    }
+  ]
+}

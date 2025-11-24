@@ -641,12 +641,11 @@ class Orchestrator:
                 pass
     def _get_process_list(self):
         try:
-            status = self._sys_status_core()
+            status = self._sys_status_core()            
             nodes = status.get("nodes", [])
         except Exception:
             return []
         proc_map = {} # pname → set(ip)
-
         for node in nodes:
             host_ip = node.get("host")
             st = node.get("status", {})
@@ -1874,6 +1873,7 @@ class Orchestrator:
                 "heartbeat_interval_sec": self.heartbeat,
                 "nodes": nodes,
             }
+
             # ---------------------------------------------------------
             # 2) extra (SYS_STATE 최신 스냅샷)
             # ---------------------------------------------------------
@@ -3666,10 +3666,10 @@ class Orchestrator:
                     # 🧩 POST : /oms/config
                     # ──────────────────────────────────────────────────────                      
                     if parts==["oms", "config"]:
-                        CFG.parent.mkdir(parents=True, exist_ok=True)
-                        txt=body.decode("utf-8","ignore"); CFG.write_text(txt, encoding="utf-8")
-                        fd_log.info(f"oms/config -> {txt}")
-                        return self._write(200, json.dumps({"ok":True,"path":str(CFG),"bytes":len(txt)}).encode())
+                        if not CFG.exists():
+                            return self._write(404, json.dumps({"ok":False,"error":"config not found"}).encode())
+                        data = CFG.read_bytes()
+                        return self._write(200, data, "text/plain; charset=utf-8")                    
                     # ──────────────────────────────────────────────────────
                     # 🧩 POST : /oms/config/update
                     # ──────────────────────────────────────────────────────                      

@@ -129,7 +129,7 @@
         }
       },
       "record": false,
-      "temperature": 57,
+      "temperature": 56,
       "alive": true
     },
     {
@@ -261,7 +261,7 @@
         }
       },
       "record": false,
-      "temperature": 56,
+      "temperature": 55,
       "alive": true
     },
     {
@@ -420,7 +420,7 @@
     "10.82.104.15",
     "10.82.104.16"
   ],
-  "updated_at": 1763989419.6889417,
+  "updated_at": 1763990600.7189376,
   "summary": {
     "cameras": 6,
     "connected": 6,
