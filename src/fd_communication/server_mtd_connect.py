@@ -4,8 +4,6 @@ import json, struct, time, copy, socket, os
 from pathlib import Path
 from typing import Tuple
 
-TRACE_DIR = Path(__file__).resolve().parents[3] / "logs" / "OMS"
-TRACE_DIR.mkdir(parents=True, exist_ok=True)
 
 class MtdTraceError(Exception):
     def __init__(self, msg: str, trace_tag: str):
@@ -30,10 +28,6 @@ def _send_once(host: str, port: int, js: bytes, sep_byte: bytes, timeout: float,
     header = struct.pack("<I", len(js)) + sep_byte
     packet = header + js
 
-    # ── 로깅: 실제 보낸 헤더 5바이트 저장
-    (TRACE_DIR / f"mtd_{tag}_tx_hdr.bin").write_bytes(header)
-    (TRACE_DIR / f"mtd_{tag}_tx_sep.txt").write_text(repr(sep_byte), encoding="utf-8")
-
     hdr = b""; body = b""
     with socket.create_connection((host, int(port)), timeout=timeout) as s:
         s.settimeout(timeout)
@@ -50,8 +44,6 @@ def _send_once(host: str, port: int, js: bytes, sep_byte: bytes, timeout: float,
         if len(hdr) < 5:
             raise MtdTraceError("empty response or short header", tag)
 
-        (TRACE_DIR / f"mtd_{tag}_rx_hdr.bin").write_bytes(hdr)
-
         size = struct.unpack("<I", hdr[:4])[0]
         typ  = hdr[4]  # 0,1 or ord('|')
 
@@ -62,9 +54,6 @@ def _send_once(host: str, port: int, js: bytes, sep_byte: bytes, timeout: float,
             chunk = s.recv(size - len(body))
             if not chunk: break
             body += chunk
-
-    # ── 로깅: 수신 본문
-    (TRACE_DIR / f"mtd_{tag}_rx_len.txt").write_text(f"{size}", encoding="utf-8")
 
     # 수신 해석(신/구 호환)
     if typ in (0, ord('|')):  # JSON
@@ -127,9 +116,6 @@ def tcp_json_roundtrip(host: str, port: int, message: dict, timeout: float = 10.
                 body += chunk
 
     except Exception as e:
-        (TRACE_DIR / f"mtd_{tag}_error.txt").write_text(
-            f"{repr(e)}\nrecv_hdr={len(hdr)}B, recv_body={len(body)}B\n", encoding="utf-8"
-        )
         raise MtdTraceError(str(e), tag)
 
     # typ==0(JSON) / typ==1(JSON+binary)

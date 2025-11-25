@@ -9,7 +9,7 @@
   OMS.config = null;
 
   window.UI_STATE_TITLE = {
-    0 : "Ask Admin",
+    0 : "Unknown",
     1 : "Check System",
     2 : "Needs Restart",
     3 : "Restarting...",

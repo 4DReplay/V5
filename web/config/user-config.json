@@ -1,6 +1,6 @@
 {
   "title": {
-    "Name": "4Dist [KR-#1]",
+    "Name": "4Dist [KR-Test#1]",
     "icon": "/web/images/4dist.ico"
   },
   "output": {
@@ -12,7 +12,7 @@
     "output_path": ""
   },
   "prefix": {
-    "select-item": 0,
+    "select-item": 1,
     "list": [
       {
         "name": "Team_A",
@@ -25,6 +25,10 @@
       {
         "name": "Team_C",
         "comment": "Austin"
+      },
+      {
+        "name": "Team_D",
+        "comment": "Hongsu"
       }
     ]
   },

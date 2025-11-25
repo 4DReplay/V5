@@ -7,7 +7,7 @@
       "PreSdIP": "10.82.104.210",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.11",
         "SubnetMask": "255.255.0.0",
@@ -63,7 +63,7 @@
         }
       },
       "record": false,
-      "temperature": 54,
+      "temperature": 57,
       "alive": true
     },
     {
@@ -73,7 +73,7 @@
       "PreSdIP": "10.82.104.210",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.12",
         "SubnetMask": "255.255.0.0",
@@ -139,7 +139,7 @@
       "PreSdIP": "10.82.104.211",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.13",
         "SubnetMask": "255.255.0.0",
@@ -195,7 +195,7 @@
         }
       },
       "record": false,
-      "temperature": 60,
+      "temperature": 56,
       "alive": true
     },
     {
@@ -205,7 +205,7 @@
       "PreSdIP": "10.82.104.211",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.14",
         "SubnetMask": "255.255.0.0",
@@ -213,7 +213,7 @@
         "ModelName": "BGH1",
         "UUID": "BGH1-EE426B",
         "FirmwareVersion": "2.51",
-        "ManualFocusPosition": 315,
+        "ManualFocusPosition": 385,
         "ZoomPosition": 14,
         "FocusMode": "Manual",
         "AutoFocusPoint": "1-Area",
@@ -261,7 +261,7 @@
         }
       },
       "record": false,
-      "temperature": 55,
+      "temperature": 53,
       "alive": true
     },
     {
@@ -271,7 +271,7 @@
       "PreSdIP": "10.82.104.212",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.15",
         "SubnetMask": "255.255.0.0",
@@ -337,7 +337,7 @@
       "PreSdIP": "10.82.104.212",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": true,
+      "connected": false,
       "info": {
         "IPAddress": "10.82.104.16",
         "SubnetMask": "255.255.0.0",
@@ -393,7 +393,7 @@
         }
       },
       "record": false,
-      "temperature": 51,
+      "temperature": 52,
       "alive": true
     }
   ],
@@ -401,32 +401,10 @@
     {
       "IP": "10.82.104.232",
       "Brand": "NETGEAR",
-      "Model": "GS110TUP"
+      "Model": "GS110TUP\r"
     }
   ],
-  "camera_status": {
-    "10.82.104.11": "on",
-    "10.82.104.12": "on",
-    "10.82.104.13": "on",
-    "10.82.104.14": "on",
-    "10.82.104.15": "on",
-    "10.82.104.16": "on"
-  },
-  "connected_ips": [
-    "10.82.104.11",
-    "10.82.104.12",
-    "10.82.104.13",
-    "10.82.104.14",
-    "10.82.104.15",
-    "10.82.104.16"
-  ],
-  "updated_at": 1763990600.7189376,
-  "summary": {
-    "cameras": 6,
-    "connected": 6,
-    "on": 0,
-    "off": 0
-  },
+  "updated_at": 1764086510.9930391,
   "camera_alive": {
     "10.82.104.11": true,
     "10.82.104.12": true,
@@ -436,12 +414,12 @@
     "10.82.104.16": true
   },
   "camera_connected": {
-    "10.82.104.11": true,
-    "10.82.104.12": true,
-    "10.82.104.13": true,
-    "10.82.104.14": true,
-    "10.82.104.15": true,
-    "10.82.104.16": true
+    "10.82.104.11": false,
+    "10.82.104.12": false,
+    "10.82.104.13": false,
+    "10.82.104.14": false,
+    "10.82.104.15": false,
+    "10.82.104.16": false
   },
   "camera_record": {
     "10.82.104.11": false,
@@ -450,5 +428,20 @@
     "10.82.104.14": false,
     "10.82.104.15": false,
     "10.82.104.16": false
+  },
+  "connected_ips": [],
+  "camera_status": {
+    "10.82.104.11": "on",
+    "10.82.104.12": "on",
+    "10.82.104.13": "on",
+    "10.82.104.14": "on",
+    "10.82.104.15": "on",
+    "10.82.104.16": "on"
+  },
+  "summary": {
+    "cameras": 6,
+    "connected": 6,
+    "on": 0,
+    "off": 0
   }
 }
