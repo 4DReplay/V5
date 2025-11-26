@@ -245,26 +245,28 @@
 
   <!-- PREFIX SECTION -->  
   <div class="section">
-    <h3>🏷️Prefix List</h3>
-    <button id="btnAddPrefix" class="btn-ghost">Add Prefix</button>
+    <h3>🏷️Production Target</h3>
+    <button id="btnAddGroup" class="btn-ghost">Add Group</button>
+    <button id="btnAddItem"  class="btn-ghost">Add Item</button>
 
     <table>
       <thead>
         <tr>
+          <th style="width:150px">Group</th>
           <th style="width:150px">Name</th>
-          <th>Owner/Note</th>
+          <th>Comment</th>
           <th style="width:120px">Order</th>
           <th style="width:80px">Actions</th>
         </tr>
       </thead>
-      <tbody id="prefixTable"></tbody>
+      <tbody id="prodTable"></tbody>
     </table>
   </div>
 
   <script>
     let CONFIG = {};
     const SaveTag = document.getElementById("saveState");
-    const T_PREFIX = document.getElementById("prefixTable");
+    const PROD_TBL = document.getElementById("prodTable");
 
     // ─────────────────────────────────────────────
     // 로컬 PC 파일 선택 후 서버 경로로 자동 변환
@@ -339,7 +341,7 @@
       document.getElementById("recSyncSkip").checked = RS.CameraSyncSkip ?? false;
       document.getElementById("recUseAudio").checked = RS.UseAudio ?? false;
 
-      renderPrefix();
+      renderProdTarget();
     }
     /* ---------- UI → JSON ---------- */
     function readUI() {
@@ -357,15 +359,26 @@
         output_path: document.getElementById("outPath").value
       };
 
-      const list = [...T_PREFIX.children].map(tr => ({
-        name: tr.querySelector("[data-k='name']").value,
-        comment: tr.querySelector("[data-k='comment']").value
+      // Save Production Target
+      const groups = {};
+      const rows = [...PROD_TBL.children];
+      rows.forEach(tr => {
+        const g = tr.querySelector("[data-k='group']").value;
+        const name = tr.querySelector("[data-k='name']").value;
+        const comment = tr.querySelector("[data-k='comment']").value;
+        if (!groups[g]) groups[g] = [];
+        groups[g].push({ name, comment });
+      });
+      const groupArr = Object.keys(groups).map(g => ({
+        "group-name": g,
+        "list": groups[g]
       }));
-      // 기존 select-item 유지
-      const sel = CONFIG.prefix?.["select-item"] ?? 0;
-      CONFIG.prefix = {
-        "select-item": sel,
-        "list": list
+      const selG = CONFIG["production-target"]?.["select-group"] ?? 0;
+      const selI = CONFIG["production-target"]?.["select-item"] ?? 0;
+      CONFIG["production-target"] = {
+        "select-group": selG,
+        "select-item": selI,
+        "groups": groupArr
       };
 
       // --- Record Settings 저장 ---
@@ -379,16 +392,24 @@
     }
 
     /* ---------- Prefix List ---------- */
-    function renderPrefix() {
-      T_PREFIX.innerHTML = "";
-      const list = (CONFIG.prefix && CONFIG.prefix.list) || [];
-      list.forEach(p => addPrefixRow(p.name, p.comment));
+    function renderProdTarget() {
+      PROD_TBL.innerHTML = "";
+    
+      const PT = CONFIG["production-target"];
+      if (!PT || !PT.groups) return;
+    
+      PT.groups.forEach(g => {
+        g.list.forEach(item => {
+          addProdRow(g["group-name"], item.name, item.comment);
+        });
+      });
     }
 
-    function addPrefixRow(name = "", comment = "") {
+    function addProdRow(group = "", name = "", comment = "") {
       const tr = document.createElement("tr");
 
       tr.innerHTML = `
+        <td><input type="text" data-k="group" value="${group}"></td>
         <td><input type="text" data-k="name" value="${name}"></td>
         <td><input type="text" data-k="comment" value="${comment}"></td>
         <td>
@@ -408,10 +429,11 @@
         if (next) T_PREFIX.insertBefore(next, tr);
       };
 
-      T_PREFIX.appendChild(tr);
+      PROD_TBL.appendChild(tr);
     }
 
-    document.getElementById("btnAddPrefix").onclick = () => addPrefixRow();
+    document.getElementById("btnAddGroup").onclick = () => addProdRow("New Group", "", "");
+    document.getElementById("btnAddItem").onclick = () => addProdRow("", "", "");
 
     /* ---------- Save / Reload / Format ---------- */
     async function saveConfig() {

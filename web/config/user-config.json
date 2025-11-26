@@ -11,24 +11,55 @@
     "gop": "30",
     "output_path": ""
   },
-  "prefix": {
-    "select-item": 1,
-    "list": [
+  "production-target": {
+    "select-group": 0,
+    "select-item": 2,
+    "groups": [
       {
-        "name": "Team_A",
-        "comment": "James"
+        "group-name": "23XI Racing",
+        "list": [
+          {
+            "name": "Team_23",
+            "comment": "William Wallace"
+          },
+          {
+            "name": "Team_35",
+            "comment": "Riley Herbst"
+          },
+          {
+            "name": "Team_45",
+            "comment": "Tyler Reddick"
+          },
+          {
+            "name": "Team_67",
+            "comment": "Corey Heim"
+          }
+        ]
       },
       {
-        "name": "Team_B",
-        "comment": "Steve"
-      },
-      {
-        "name": "Team_C",
-        "comment": "Austin"
-      },
-      {
-        "name": "Team_D",
-        "comment": "Hongsu"
+        "group-name": "Guest",
+        "list": [
+          {
+            "name": "Team_5",
+            "comment": "Kyle Larson"
+          },
+          {
+            "name": "Team_11",
+            "comment": "Denny Hamlin"
+          },
+          {
+            "name": "Team_9",
+            "comment": "Chase Elliott"
+          },
+          {
+            "name": "Team_24",
+            "comment": "William Byron"
+          },
+          {
+            "name": "Team_20",
+            "comment": "Christopher Bell"
+          }
+        ]
       }
     ]
   },

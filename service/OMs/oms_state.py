@@ -145,7 +145,7 @@ def fd_cam_state_upsert(payload: dict):
 def fd_cam_latest_state():
     global CAM_STATE
     return CAM_STATE
-def fd_cam_clear_connect_state() -> bool:
+def fd_cam_clear_connect_state(alive_reset = False) -> bool:
     global CAM_STATE
     try:
         # NOTE: Lock 은 바깥에서 잡아줘야 한다 (self 없음)
@@ -155,14 +155,18 @@ def fd_cam_clear_connect_state() -> bool:
                 if not isinstance(cam, dict):
                     continue
                 # unified clear of "connected" flags
+                cam["alive"] = False
                 cam["connected"] = False
                 if isinstance(cam.get("state"), dict):
                     cam["state"].pop("connected", None)
                 cam.pop("connected_state", None)
 
+            
         # clear summary / aggregation fields
         CAM_STATE["camera_connected"] = {}
         CAM_STATE["camera_record"] = []
+        if alive_reset == True:
+            CAM_STATE["camera_alive"] = []        
         CAM_STATE.pop("connected_summary", None)
         CAM_STATE.pop("connected_map", None)
 

@@ -275,6 +275,67 @@ def fd_update_prefix_item(index: int):
         return False, "save failed"
     fd_log.info(f"[prefix] Updated select-item -> {index}")
     return True, ""
+def fd_handle_config_update(data: dict):
+    """
+    Handle /oms/config/update requests.
+    Supports:
+      - {"production-target": {"select-group": g, "select-item": i}}
+      - {"index": n}   # legacy target selector
+    Returns:
+      (ok:bool, response:dict, error:str|None)
+    """
+    try:
+        # 1) Production Target
+        if "production-target" in data:
+            pt = data["production-target"] or {}
+            g = int(pt.get("select-group", 0))
+            i = int(pt.get("select-item", 0))
+
+            ok, err = fd_update_production_target(g, i)
+            if not ok:
+                return False, None, err
+
+            return True, {
+                "ok": True,
+                "production-target": {
+                    "select-group": g,
+                    "select-item": i
+                }
+            }, None
+
+        # 2) Legacy prefix
+        if "index" in data:
+            idx = int(data.get("index", 0))
+
+            ok, err = fd_update_prefix_item(idx)
+            if not ok:
+                return False, None, err
+
+            return True, {
+                "ok": True,
+                "select-item": idx
+            }, None
+
+        # 3) 올바르지 않은 요청
+        return False, None, "INVALID_UPDATE_PAYLOAD"
+
+    except Exception as e:
+        return False, None, str(e)
+def fd_update_production_target(select_group: int, select_item: int):
+    # production-target update
+    cfg = fd_load_user_config()
+    if "production-target" not in cfg:
+        cfg["production-target"] = {}
+
+    cfg["production-target"]["select-group"] = int(select_group)
+    cfg["production-target"]["select-item"] = int(select_item)
+
+    ok = fd_save_user_config(cfg)
+    if not ok:
+        return False, "save failed"
+
+    fd_log.info(f"[production-target] Updated group={select_group}, item={select_item}")
+    return True, ""
 
 # ─────────────────────────────────────────────────────────────
 # 🛠️ UTILITY
@@ -507,8 +568,8 @@ def fd_http_fetch(host:str, port:int, method:str, path:str, body:bytes|None, hea
 # EXPORTS
 # ────────────────────────────────────────────────────────────
 __all__ = [
-    "fd_load_json_file","fd_save_json_file","fd_update_prefix_item",
-    "fd_format_hms_verbose","fd_format_datetime", 
+    "fd_load_json_file","fd_save_json_file","fd_update_prefix_item","fd_handle_config_update","fd_update_production_target",    # config
+    "fd_format_hms_verbose","fd_format_datetime", "fd_format_hms_ms",
     "fd_load_adjust_info","fd_find_adjustinfo_file",
     "fd_append_mtd_debug","fd_daemon_name_for_inside",
     "fd_make_token",

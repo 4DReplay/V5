@@ -151,7 +151,7 @@ class Orchestrator:
         fd_cam_state_load()
 
         self.cam_state_lock  = threading.RLock() # for state change
-
+        self.camera_poll_locked_until = 0
         # ────────────────────────────────────────
         # record
         # ────────────────────────────────────────
@@ -408,7 +408,8 @@ class Orchestrator:
                 fd_log.info("[SYS] reset connection info")
 
                 # CAM_STATE 초기화
-                fd_cam_clear_connect_state()
+                with self.cam_state_lock:
+                    fd_cam_clear_connect_state()
                 fd_log.info("[CAM] reset connection info")
 
             # --- Gather nodes safely
@@ -1556,7 +1557,7 @@ class Orchestrator:
     # 🔁 CAMERA RESTART
     # ────────────────────────────────────────────
     def _cam_restart_get(self):
-        with self._cam_connect_lock:
+        with self._cam_restart_lock:
             return deepcopy(self._cam_restart)
     def _cam_restart_set(self, **kw):
         start_time = kw.get('started_at') or self._cam_restart.get("started_at")
@@ -1570,171 +1571,118 @@ class Orchestrator:
             self._cam_restart.update(kw)
             self._cam_restart["updated_at"] = time.time()
             self._cam_restart["started_at"] = start_time 
+    def _camera_force_off(self):
+        with self.cam_state_lock:
+            st = CAM_STATE
+
+            cams = st.get("cameras", [])
+            # --- 모든 카메라 강제 OFF ---
+            for cam in cams:
+                if not isinstance(cam, dict):
+                    continue
+
+                # 네트워크 연결 상태 (daemon 통신)
+                cam["connected"] = False
+                # 전원 상태 (UI 표시 기준)
+                cam["alive"] = False
+                # record 등도 정리
+                cam["record"] = False
+
+            # --- 집계 필드 초기화 ---
+            st["camera_connected"] = {}
+            st["camera_record"] = {}
+            st["camera_alive"] = {cam.get("IP"): False for cam in cams}
+            st["updated_at"] = time.time()
+
+            fd_cam_state_save()
+
+            fd_log.info("[CAM] FORCE OFF: all cameras set offline")
     def _camera_action_switch(self, type=1):
-        # MTD 작업 구간 보호 (polling 중단 신호 역할)
+
         with _mtd_lock:
-            try:
-                # 1) CAM_STATE 잠그고 연결 상태 초기화
-                with self.cam_state_lock:
-                    fd_cam_clear_connect_state()
+            # 10초 polling 금지
+            self.camera_poll_locked_until = time.time() + 5
+            fd_log.info("[CAM] polling locked for 10 seconds after switch action")
+            # 초기화
+            with self.cam_state_lock:
+                fd_cam_clear_connect_state(alive_reset=True)
+            # command opt
+            if type == 1:
+                command_opt = "Reboot"
+                self._cam_restart_set(state=1, message="All Cameras Reboot",started_at=time.time())
+            elif type == 2:
+                command_opt = "On"
+                self._cam_restart_set(state=1, message="All Camera Trun On",started_at=time.time())
+            elif type == 3:
+                command_opt = "Off"
+                self._cam_restart_set(state=1, message="All Camera Trun Off",started_at=time.time())
+            else:
+                return {"ok": False, "error": "INVALID_COMMAND_TYPE"}
 
-                # 2) 명령 타입 결정
-                if type == 1:
-                    command_opt = "Reboot"
-                elif type == 2:
-                    command_opt = "On"
-                elif type == 3:
-                    command_opt = "Off"
-                else:
-                    return {"ok": False, "error": "INVALID_COMMAND_TYPE"}
+            self._cam_restart_set(state=1, message=f"Camera {command_opt} via switch")
 
-                msg = f"Camera {command_opt} via switch"
-                self._cam_restart_set(state=1, message=msg, started_at=time.time())
-                fd_log.info(f"switch command = {command_opt}")
+            # switch 조회
+            sw_state = self._cam_status_core()
+            switches = sw_state.get("switches") or []
 
-                # 3) switch 목록 로드
-                try:
-                    sw_state = self._cam_status_core()
-                    fd_log.info(f"sw_state = {sw_state}")
-                    switches = sw_state.get("switches") or []
-                except Exception as e:
-                    self._cam_restart_set(state=2, message="Camera switch exception")
-                    fd_log.error("self._cam_status_core() failed")
-                    return {"ok": False, "error": f"SWITCH_LOAD_FAIL: {e}"}
-
+            if not switches:
+                sw_state = self._sys_status_core()
+                switches = sw_state.get("switches") or []
                 if not switches:
-                    sw_state = self._sys_status_core()
-                    fd_log.info(f"sw_state = {sw_state}")
-                    switches = sw_state.get("switches") or []
-                    if not switches:
-                        msg = "not switches information, connect system"
-                        self._cam_restart_set(state=3, message=msg)
-                        fd_log.error(f"error switches: {switches}")
-                        return {"ok": False, "error": "NO_SWITCHES"}
+                    return {"ok": False, "error": "NO_SWITCHES"}
 
-                fd_log.info(f"switches: {switches}")
+            switch_list = [sw.get("IP") or sw.get("IPAddress") for sw in switches if sw.get("IP") or sw.get("IPAddress")]
 
-                switch_list = []
-                for sw in switches:
-                    ip = sw.get("IP") or sw.get("IPAddress")
-                    if ip:
-                        switch_list.append(ip)
+            if not switch_list:
+                return {"ok": False, "error": "NO_VALID_SWITCH_IP"}
 
-                fd_log.info(f"switch list = {switch_list}")
-                if not switch_list:
-                    self._cam_restart_set(state=2, message="no valid switch ip")
-                    return {"ok": False, "error": "NO_VALID_SWITCH_IP"}
+            # DMPDIP
+            oms_ip = self.mtd_ip
 
-                self._cam_restart_set(state=1, message=f"get switch list {switch_list}")
+            # payload
+            req = {
+                "Switches": [{"ip": ip} for ip in switch_list],
+                "Section1": "Switch",
+                "Section2": "Operation",
+                "Section3": command_opt,
+                "SendState": "request",
+                "From": "4DOMS",
+                "To": "SCd",
+                "Action": "run",
+                "Token": fd_make_token(),
+                "DMPDIP": oms_ip,
+            }
 
-                # 4) DMPDIP
-                oms_ip = self.mtd_ip
-                if not oms_ip:
-                    return {"ok": False, "error": "NO_DMPDIP"}
+            # switch command 전송
+            res = tcp_json_roundtrip(oms_ip, self.mtd_port, req, timeout=10)[0]
 
-                fd_log.info(f"self.mtd_ip = {oms_ip}")
 
-                # 5) Switch Operation payload
-                req = {
-                    "Switches": [{"ip": ip} for ip in switch_list],
-                    "Section1": "Switch",
-                    "Section2": "Operation",
-                    "Section3": command_opt,
-                    "SendState": "request",
-                    "From": "4DOMS",
-                    "To": "SCd",
-                    "Action": "run",
-                    "Token": fd_make_token(),
-                    "DMPDIP": oms_ip,
-                }
+        with self.cam_state_lock:
+            fd_cam_clear_connect_state(alive_reset=True)
 
-                fd_log.info(f"Switch Request Payload = {req}")
+        # Unlocked        
+        # — 30초 카메라 부팅 대기 —
+        if type in (1, 2):
+            self._cam_restart_set(state=1, message="waiting until camera boot on...")
+            start_ts = time.time()
+            TIMEOUT = 30
+            while True:
+                if time.time() - start_ts > TIMEOUT:
+                    return {"ok": False, "error": "CAMERA_BOOT_TIMEOUT"}
+                w_state = self._cam_status_core()
+                summary = w_state.get("summary", {})
+                cameras = summary.get("cameras", 0)
+                cam_alive = summary.get("alive", 0)
 
-                def _send_scd(msg, timeout=10.0, retry=3, wait_after=0.8):
-                    last_err = None
-                    for attempt in range(1, retry + 1):
-                        try:
-                            resp, tag = tcp_json_roundtrip(
-                                oms_ip, self.mtd_port, msg, timeout=timeout
-                            )
-                            time.sleep(wait_after)
-                            return resp
-                        except Exception as e:
-                            self._cam_restart_set(state=3, message="tcp_json_roundtrip")
-                            last_err = e
-                            time.sleep(0.5)
-                    raise last_err
+                if cameras > 0 and cameras == cam_alive:
+                    break
+                result_msg = f"waiting until camera boot on...{cam_alive}/{cameras}"
+                self._cam_restart_set(state=1, message=result_msg)
+                time.sleep(1)
 
-                self._cam_restart_set(state=1, message=f"send message to switch : {command_opt}")
-                res = _send_scd(req)
-                fd_log.info(f"Switch Response: {res}")
+        self._cam_restart_set(state=2, message=f"Finish Cameras {command_opt}")
+        return {"ok": True, "response": res}
 
-                # 6) 결과 집계
-                ok_list = []
-                fail_list = []
-
-                for sw in res.get("Switches", []):
-                    ip = sw.get("IPAddress") or sw.get("IP")
-                    status = sw.get("errorMsg") or ""
-                    if status == "SUCCESS":
-                        ok_list.append(ip)
-                    else:
-                        fail_list.append({"ip": ip, "error": status})
-                    self._cam_restart_set(state=1, message=f"response from switch[{ip}]:{status}")
-
-                detail = {
-                    "ok": ok_list,
-                    "fail": fail_list,
-                    "command": command_opt,
-                }
-
-                self._cam_restart_set(
-                    state=1,
-                    message=f"response from switch {switches}:{detail}",
-                )
-
-                # 7) Reboot / On 일 때 카메라 부팅 대기
-                if type in (1, 2):
-                    self._cam_restart_set(state=1, message="waiting until camera boot on...")
-                    start_ts = time.time()
-                    TIMEOUT = 60
-
-                    time.sleep(20)  # 모든 카메라 내려갈 시간
-
-                    while True:
-                        if time.time() - start_ts > TIMEOUT:
-                            fd_log.error("camera boot timeout: exceeded 60s")
-                            self._cam_restart_set(
-                                state=3,
-                                message="error: camera boot timeout (60s exceeded)"
-                            )
-                            return {"ok": False, "error": "CAMERA_BOOT_TIMEOUT"}
-
-                        w_state = self._cam_status_core()
-                        summary = w_state.get("summary", {})
-                        cameras = summary.get("cameras", 0)
-                        cam_alive = summary.get("alive", 0)
-
-                        if cameras > 0 and cameras == cam_alive:
-                            break
-
-                        self._cam_restart_set(
-                            state=1,
-                            message=f"waiting until camera boot on... {cam_alive}/{cameras}",
-                        )
-                        time.sleep(1)
-
-                self._cam_restart_set(state=2, message=f"Finish Cameras {command_opt}")
-                return {
-                    "ok": len(fail_list) == 0,
-                    "detail": detail,
-                    "response": res,
-                }
-
-            except Exception as e:
-                self._cam_restart_set(state=3, message="send switch command error")
-                fd_log.exception("[CAM] switch command error")
-                return {"ok": False, "error": str(e)}
     
     # ────────────────────────────────────────────
     # 🔗 CAMERA CONNECT
@@ -2087,6 +2035,23 @@ class Orchestrator:
                 return
 
             # ---------------------------------------------------------
+            # 3) ping 보정 (CCD NG 는 무시)
+            # ---------------------------------------------------------
+            with ThreadPoolExecutor(max_workers=min(8, len(ips))) as ex:
+                ping_results = {
+                    ip: ex.submit(fd_ping_check, ip, method="auto", port=554, timeout_sec=timeout_sec)
+                    for ip in ips
+                }
+
+            for ip, fut in ping_results.items():
+                try:
+                    alive, _ = fut.result()
+                except Exception:
+                    alive = None
+                cam = ip_map[ip]
+                cam["alive"] = bool(alive)
+
+            # ---------------------------------------------------------
             # 1) CCD Status Query (state >= 6)
             # ---------------------------------------------------------
             ccd_map = {}
@@ -2146,21 +2111,11 @@ class Orchestrator:
                     cam["temperature"] = info["temperature"]
 
             # ---------------------------------------------------------
-            # 3) ping 보정 (CCD NG 는 무시)
+            # 2.5) alive=False 이면 connected=False 강제
             # ---------------------------------------------------------
-            with ThreadPoolExecutor(max_workers=min(8, len(ips))) as ex:
-                ping_results = {
-                    ip: ex.submit(fd_ping_check, ip, method="auto", port=554, timeout_sec=timeout_sec)
-                    for ip in ips
-                }
-
-            for ip, fut in ping_results.items():
-                try:
-                    alive, _ = fut.result()
-                except Exception:
-                    alive = None
-                cam = ip_map[ip]
-                cam["alive"] = bool(alive)
+            for ip, cam in ip_map.items():
+                if not cam.get("alive"):
+                    cam["connected"] = False
 
             # ---------------------------------------------------------
             # 4) CAM_STATE 저장 (record 포함)
@@ -2181,8 +2136,6 @@ class Orchestrator:
                 ip for ip, cam in ip_map.items() if cam.get("connected")
             ]
             CAM_STATE["updated_at"] = time.time()
-
-            # debug
             fd_cam_state_save()
     # 🎯 /oms/cameara/state
     def _cam_status_core(self):
@@ -2501,22 +2454,31 @@ class Orchestrator:
 
         detail_path = f"/record/history/recorded/{self.recording_name}.json"
 
-        # ① prefix 읽기
+        # ① Load Target
         config = fd_load_json_file("/config/user-config.json")
-        pref = config.get("prefix", {})
-        sel = pref.get("select-item", 0)
-        items = pref.get("list", [])
-        selected_prefix = ""
-        if 0 <= sel < len(items):
-            selected_prefix = items[sel]["name"]
+        pt = config.get("production-target", {})
+        groups = pt.get("groups", [])
+        g = pt.get("select-group", 0)
+        i = pt.get("select-item", 0)
+
+        selected_prod_target = ""
+
+        if 0 <= g < len(groups):
+            group = groups[g]
+            if group and "group-name" in group:
+                group_name = group["group-name"]
+                lst = group.get("list", [])
+                if 0 <= i < len(lst):
+                    item = lst[i]
+                    selected_prod_target = f"{group_name} - {item['name']}"
 
         # --- NEW: start time is stored at record START ---
         record_start_hms = fd_format_datetime(self.record_start_time)
         history["history"].append({
             self.recording_name: {
                 "file-location": f"/web/record/history/recorded/{self.recording_name}.json",
-                "prefix": selected_prefix,              # ← 추가됨
-                "record-start-time": record_start_hms,   # ← 추가됨
+                "production-target": selected_prod_target,         # ← 추가됨
+                "record-start-time": record_start_hms,  # ← 추가됨
                 "record-end-time": "",
                 "recording-time": ""
             }
@@ -2554,7 +2516,7 @@ class Orchestrator:
         detail = {
             "cameras": camera_ips,
             "record-set": {
-                "prefix": selected_prefix,                         # ← 추가
+                "production-target": selected_prod_target,
                 "record-start-time-ms": send_ts,
                 "record-response-time-ms": recv_ts,
                 "record-sync-diff-ms": diff_ms
@@ -2647,8 +2609,15 @@ class Orchestrator:
             updated = False
             for item in history["history"]:
                 if rn in item:
-                    # update existing fields
-                    item[rn].update(update_fields)
+                    entry = item[rn]
+
+                    # 만약 기존이 prefix 라면 production-target으로 키 변경
+                    if "prefix" in entry:
+                        entry["production-target"] = entry["prefix"]
+                        entry.pop("prefix", None)
+
+                    # 업데이트 결합
+                    entry.update(update_fields)
                     updated = True
                     break
 
@@ -2870,6 +2839,12 @@ class Orchestrator:
                 self._stop.wait(0.2)
                 continue
 
+            # (2) 카메라 강제 OFF 상태 유지 시간이 남아있으면 polling skip
+            if time.time() < getattr(self, "camera_poll_locked_until", 0):
+                self._stop.wait(0.2)
+                continue
+            
+            # (3) 정상 polling
             with self.cam_state_lock:
                 st = fd_cam_latest_state() or {}
                 cameras = st.get("cameras", [])
@@ -2881,7 +2856,8 @@ class Orchestrator:
                         self._camera_state_update(timeout_sec=1)
                     except Exception:
                         fd_log.exception("[OMS] camera ping loop error")
-
+                        continue
+                    
             self._stop.wait(1.0)
     # ────────────────────────────────────────────
     # ⭐ MAIN FUNTIONS
@@ -3240,22 +3216,12 @@ class Orchestrator:
                     if parts==["oms", "config", "update"]:
                         try:
                             data = json.loads(body.decode("utf-8", "ignore"))
-                            new_index = int(data.get("index", 0))                            
-                            ok, err = fd_update_prefix_item(new_index)
+                            ok, resp, err = fd_handle_config_update(data)
                             if not ok:
-                                return self._write(400, json.dumps({
-                                    "ok": False,
-                                    "error": err
-                                }).encode())
-                            return self._write(200, json.dumps({
-                                "ok": True,
-                                "select-item": new_index
-                            }).encode())
+                                return self._write(400,json.dumps({"ok": False, "error": err}).encode())
+                            return self._write(200, json.dumps(resp).encode())
                         except Exception as e:
-                            return self._write(500, json.dumps({
-                                "ok": False,
-                                "error": str(e)
-                            }).encode())
+                            return self._write(500,json.dumps({"ok": False, "error": str(e)}).encode())
                     # ──────────────────────────────────────────────────────
                     # 🧩 POST : /oms/config/apply
                     # ──────────────────────────────────────────────────────                      

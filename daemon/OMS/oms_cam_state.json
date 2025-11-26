@@ -7,7 +7,7 @@
       "PreSdIP": "10.82.104.210",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.11",
         "SubnetMask": "255.255.0.0",
@@ -62,9 +62,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 57,
-      "alive": true
+      "temperature": 63
     },
     {
       "Index": 2,
@@ -73,7 +73,7 @@
       "PreSdIP": "10.82.104.210",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.12",
         "SubnetMask": "255.255.0.0",
@@ -128,9 +128,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 56,
-      "alive": true
+      "temperature": 61
     },
     {
       "Index": 3,
@@ -139,7 +139,7 @@
       "PreSdIP": "10.82.104.211",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.13",
         "SubnetMask": "255.255.0.0",
@@ -194,9 +194,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 56,
-      "alive": true
+      "temperature": 61
     },
     {
       "Index": 4,
@@ -205,7 +205,7 @@
       "PreSdIP": "10.82.104.211",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.14",
         "SubnetMask": "255.255.0.0",
@@ -260,9 +260,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 53,
-      "alive": true
+      "temperature": 57
     },
     {
       "Index": 5,
@@ -271,7 +271,7 @@
       "PreSdIP": "10.82.104.212",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.15",
         "SubnetMask": "255.255.0.0",
@@ -326,9 +326,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 54,
-      "alive": true
+      "temperature": 55
     },
     {
       "Index": 6,
@@ -337,7 +337,7 @@
       "PreSdIP": "10.82.104.212",
       "SCdIP": "10.82.104.232",
       "status": null,
-      "connected": false,
+      "connected": true,
       "info": {
         "IPAddress": "10.82.104.16",
         "SubnetMask": "255.255.0.0",
@@ -392,9 +392,9 @@
           "step": 1
         }
       },
+      "alive": true,
       "record": false,
-      "temperature": 52,
-      "alive": true
+      "temperature": 53
     }
   ],
   "switches": [
@@ -404,7 +404,7 @@
       "Model": "GS110TUP\r"
     }
   ],
-  "updated_at": 1764086510.9930391,
+  "updated_at": 1764126858.033416,
   "camera_alive": {
     "10.82.104.11": true,
     "10.82.104.12": true,
@@ -414,12 +414,12 @@
     "10.82.104.16": true
   },
   "camera_connected": {
-    "10.82.104.11": false,
-    "10.82.104.12": false,
-    "10.82.104.13": false,
-    "10.82.104.14": false,
-    "10.82.104.15": false,
-    "10.82.104.16": false
+    "10.82.104.11": true,
+    "10.82.104.12": true,
+    "10.82.104.13": true,
+    "10.82.104.14": true,
+    "10.82.104.15": true,
+    "10.82.104.16": true
   },
   "camera_record": {
     "10.82.104.11": false,
@@ -429,7 +429,14 @@
     "10.82.104.15": false,
     "10.82.104.16": false
   },
-  "connected_ips": [],
+  "connected_ips": [
+    "10.82.104.11",
+    "10.82.104.12",
+    "10.82.104.13",
+    "10.82.104.14",
+    "10.82.104.15",
+    "10.82.104.16"
+  ],
   "camera_status": {
     "10.82.104.11": "on",
     "10.82.104.12": "on",

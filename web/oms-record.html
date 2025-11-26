@@ -25,7 +25,7 @@
       function applyCommonConfig(cfg) {
         if (!cfg || typeof cfg !== "object") return;
 
-        // 공통 prefix (원하면 사용)
+        // common title
         var appName = cfg.appName || "4DReplay";
         var version = cfg.version || "V5";
         var pageCfg = (cfg.pages && cfg.pages.omsDashboard) || {};
@@ -104,7 +104,7 @@
     <button id="btnCamera">📸 Camera</button>
     <span class="divider"></span>
     <!-- Record Toggle button -->
-    <button id="btnRecordToggle" class="btn-secondary">⏺ Record Start</button>
+    <button id="btnRecordToggle" class="btn-secondary">🟢 Record Start</button>
     <span class="divider"></span>
     <button id="btnConfig" class="btn-secondary">⚙ User Config</button>
     <span class="spacer"></span>
@@ -121,10 +121,13 @@
       <span id="recMessageChip" class="chip"></span>
   </div>
   
-  <!-- Prefix Selector -->
+  <!-- Target Selector -->
   <div class="panel" style="margin-top:16px;">
-    <h3 style="margin:0 0 10px;">Prefix Selection</h3>
-    <select id="prefixSelect"></select>
+    <h3 style="margin:0 0 10px;">Production Target</h3>
+    <!-- Group Selector -->
+    <select id="prodGroupSelect" style="margin-bottom:6px;"></select>
+    <!-- Item Selector -->
+    <select id="prodItemSelect"></select>
   </div>
 
   <!-- Making Toggle button -->
@@ -132,10 +135,12 @@
     <button id="btnMakingToggle" class="btn-secondary" style="display:none;">⏺ Making Start</button>
   </div>
 
-  <!-- Recording Table -->
+
+  <!-- Produced Videos Sources -->
+  <!--
   <div class="panel" style="margin-top:16px; position:relative;">
     <h3 style="margin:0 0 10px;">
-      Recording History
+      Produced Video
       <span style="float:right; display:flex; gap:10px; align-items:center;">
         <select id="historyPrefixFilter"></select>
         <input type="date" id="historyDatePicker">
@@ -147,7 +152,34 @@
         <tr>
           <th data-sort="idx">Index</th>
           <th data-sort="date">Date</th>
-          <th data-sort="prefix">Prefix</th>
+          <th data-sort="target">Target</th>
+          <th data-sort="start">Start</th>
+          <th data-sort="during">During</th>
+          <th data-sort="file">File</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  -->
+
+  <!-- Original Video Sources -->
+  <div class="panel" style="margin-top:16px; position:relative;">
+    <h3 style="margin:0 0 10px;">
+      Original Footage
+      <span style="float:right; display:flex; gap:10px; align-items:center;">
+        <select id="historyTargetFilter"></select>
+        <input type="date" id="historyDatePicker">
+      </span>
+    </h3>
+
+    <!--
+    <table id="recordTable">
+      <thead>
+        <tr>
+          <th data-sort="idx">Index</th>
+          <th data-sort="date">Date</th>
+          <th data-sort="target">Target</th>
           <th data-sort="start">Start</th>
           <th data-sort="end">End</th>
           <th data-sort="during">During</th>
@@ -156,6 +188,19 @@
       </thead>
       <tbody></tbody>
     </table>
+    -->
+    <table id="recordTable">
+      <thead>
+        <tr>
+          <th data-sort="idx">Index</th>
+          <th data-sort="target">Target</th>
+          <th data-sort="start">Start</th>
+          <th data-sort="during">During</th>
+          <th data-sort="file">File</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>    
   </div>
 
   <!-- Page Logic -->
@@ -237,24 +282,24 @@
       // Ready → Record Start
       if (state === 6) {
         btnRecord.style.display = "inline-block";
-        btnRecord.textContent = "⏺ Record Start";
+        btnRecord.textContent = "🟢 Record Start";
         return;
       }
 
       // Full Recording → Record Stop + Making Start
       if (state === 7) {
         btnRecord.style.display = "inline-block";
-        btnRecord.textContent = "■ Record Stop";
+        btnRecord.textContent = "🟥 Record Stop";
 
         btnMaking.style.display = "inline-block";
-        btnMaking.textContent = "▶ Making Start";
+        btnMaking.textContent = "▶️ Making Start";
         return;
       }
 
       // Partial Recording → Record Stop
       if (state === 8) {
         btnRecord.style.display = "inline-block";
-        btnRecord.textContent = "■ Record Stop";
+        btnRecord.textContent = "🟥 Record Stop";
         return;
       }
 
@@ -286,55 +331,87 @@
     }
 
     // -------------------------------
-    // 4) Prefix Loader
+    // 4) Procution Target Loader
     // -------------------------------
-    function load_prefix() {
+    function load_production_target() {
       fetch("/web/config/user-config.json?ts=" + Date.now(), { cache: "no-store" })
         .then(r => r.json())
         .then(cfg => {
-          const prefixCfg = cfg.prefix || {};
-          const list = prefixCfg.list || [];
-          const selIndex = prefixCfg["select-item"] ?? 0;
 
-          const sel = document.getElementById("prefixSelect");
-          sel.innerHTML = "";
+          const pt = cfg["production-target"];
+          const groups = pt.groups || [];
+          const selGroup = pt["select-group"] ?? 0;
+          const selItem = pt["select-item"] ?? 0;
 
-          list.forEach((p, idx) => {
+          const groupSel = document.getElementById("prodGroupSelect");
+          const itemSel  = document.getElementById("prodItemSelect");
+          // 전역 저장
+          window.loadedProductionTarget = pt;
+
+          // GROUP SELECT
+          groupSel.innerHTML = "";
+          groups.forEach((g, idx) => {
             const opt = document.createElement("option");
-            opt.value = p.name;
-            opt.innerText = `${p.name} (${p.comment})`;
-            if (idx === selIndex) opt.selected = true;
-            sel.appendChild(opt);
+            opt.value = idx;
+            opt.textContent = g["group-name"];
+            if (idx === selGroup) opt.selected = true;
+            groupSel.appendChild(opt);
           });
 
-          sel.onchange = () => save_selected_prefix(sel.selectedIndex);
-        })
-        .catch(err => console.error("prefix load error:", err));
+          // ITEM SELECT
+          function rebuildItemSelect() {
+            const groupIdx = groupSel.selectedIndex;
+            const list = groups[groupIdx].list;
+
+            itemSel.innerHTML = "";
+            list.forEach((it, idx) => {
+              const opt = document.createElement("option");
+              opt.value = idx;
+              opt.textContent = `${it.name} (${it.comment})`;
+              if (idx === selItem) opt.selected = true;
+              itemSel.appendChild(opt);
+            });
+          }
+
+          rebuildItemSelect();
+
+          // 이벤트 바인딩
+          groupSel.onchange = () => {
+            save_production_target(groupSel.selectedIndex, 0);
+            rebuildItemSelect();
+          };
+
+          itemSel.onchange = () => {
+            save_production_target(groupSel.selectedIndex, itemSel.selectedIndex);
+          };
+        });
     }
+    window.addEventListener("oms:config-ready", load_production_target);
 
-    window.addEventListener("oms:config-ready", load_prefix);
+    function save_production_target(groupIdx, itemIdx) {
+      const payload = {
+        "production-target": {
+          "select-group": Number(groupIdx),
+          "select-item": Number(itemIdx)
+        }
+      };
 
-    document.getElementById("prefixSelect").onchange = (e) => {
-      save_selected_prefix(e.target.selectedIndex);
-    };
-    function save_selected_prefix(index) {
       fetch("/oms/config/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ index })
+        body: JSON.stringify(payload)
       })
-      .then(r => r.json())
-      .then(res => console.log("prefix update:", res))
-      .catch(err => console.error("prefix update error:", err));
+        .then(r => r.json())
+        .then(res => console.log("production-target updated:", payload, res))
+        .catch(err => console.error("production-target update error:", err));
     }
 
-    function build_prefix_filter(items) {
-      const sel = document.getElementById("historyPrefixFilter");
-
+    function build_target_filter(items) {
+      const sel = document.getElementById("historyTargetFilter");
       const prevValue = sel.value;   // ← 현재 선택 상태 저장
       sel.innerHTML = "";
 
-      const prefixes = [...new Set(items.map(x => x.prefix).filter(x => x))];
+      const prefixes = [...new Set(items.map(x => x.production).filter(x => x))];
 
       const optAll = document.createElement("option");
       optAll.value = "";
@@ -377,7 +454,14 @@
 
             return {
               key,
-              prefix: data["prefix"] || "",
+              // production-target 파싱
+              production: (() => {
+                const pt = data["production-target"];
+                if (!pt) return "";
+                if (typeof pt === "string") return pt;          // "23XI Racing - Team_35"
+                if (typeof pt === "object") return pt.name || ""; // {name:"23XI Racing - Team_35"}
+                return "";
+              })(),
               start: data["record-start-time"] || "",
               end: data["record-end-time"] || "",
               during: data["recording-time"] || "",
@@ -387,16 +471,16 @@
           });
 
           // -----------------------------------------
-          // 2-A) Build prefix filter selectbox
+          // 2-A) Build target filter selectbox
           // -----------------------------------------
-          build_prefix_filter(items);
+          build_target_filter(items);
     
           // -----------------------------------------
-          // 2-C) Prefix filter
+          // 2-C) Target filter
           // -----------------------------------------
-          const pfilter = document.getElementById("historyPrefixFilter").value;
+          const pfilter = document.getElementById("historyTargetFilter").value;
           if (pfilter) {
-            items = items.filter(it => it.prefix === pfilter);
+            items = items.filter(it => it.production  === pfilter);
           }
 
           // -----------------------------------------
@@ -431,18 +515,30 @@
           // -----------------------------------------
           // 4) Render
           // -----------------------------------------
+          /*
           items.forEach((r, idx) => {
-            const tr = document.createElement("tr");
+            const tr = document.createElement("tr");            
             tr.innerHTML = `
               <td>${idx + 1}</td>
               <td>${r.key}</td>
-              <td>${r.prefix}</td>
+              <td>${r.production}</td>
               <td>${r.start}</td>
               <td>${r.end}</td>
               <td>${r.during}</td>
               <td><a class="file-link" href="${r.file}">${r.file}</a></td>
             `;
             tbody.appendChild(tr);
+          */
+          items.forEach((r, idx) => {
+            const tr = document.createElement("tr");            
+            tr.innerHTML = `
+              <td>${idx + 1}</td>
+              <td>${r.production}</td>
+              <td>${r.start}</td>
+              <td>${r.during}</td>
+              <td><a class="file-link" href="${r.file}">${r.file}</a></td>
+            `;
+            tbody.appendChild(tr);            
           });
         })
         .catch(err => console.error("record table load error:", err));
@@ -456,49 +552,60 @@
     document.getElementById("historyDatePicker").addEventListener("change", () => {
       load_record_table();
     });
-    document.getElementById("prefixSelect").addEventListener("change", (e) => {
-      save_selected_prefix(e.target.selectedIndex);
-    });
-    document.getElementById("historyPrefixFilter").onchange = () => {
+    const ps = document.getElementById("targetSelect");
+    if (ps) {
+      ps.addEventListener("change", (e) => {
+        save_selected_target(e.target.selectedIndex);
+      });
+    }
+    document.getElementById("historyTargetFilter").onchange = () => {
       load_record_table();
     };
     // 🔥 버튼 클릭 동작만 유지하고 상태값은 서버 state 기반으로만 제어
     document.getElementById("btnRecordToggle").onclick = () => {
       const text = document.getElementById("btnRecordToggle").textContent.trim();
-      // 🔥 Record Stop
+
+      // Record Stop
       if (text.includes("Record Stop")) {
-          fetch("/oms/camera/action/record/stop", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" }
-          })
-          .then(r => r.json())
-          .then(res => console.log("record stop:", res))
-          .catch(err => console.error("record stop error:", err));
-          return;
+        fetch("/oms/camera/action/record/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        return;
       }
-      // 🔥 Record Start (state=6 일 때)
+
       if (text.includes("Record Start")) {
-          const prefixVal = document.getElementById("prefixSelect").value;
-          fetch("/oms/camera/action/record/start", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ prefix: prefixVal })
+        const gSel = document.getElementById("prodGroupSelect").selectedIndex;
+        const iSel = document.getElementById("prodItemSelect").selectedIndex;
+
+        const pt = window.loadedProductionTarget;
+        const prodName = getSelectedTarget(pt.groups, gSel, iSel);
+
+        fetch("/oms/camera/action/record/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            "production-target": {
+              "name": prodName
+            }
           })
-          .then(r => r.json())
-          .then(res => console.log("record start:", res))
-          .catch(err => console.error("record start error:", err));
-          return;
+        });
+        return;
       }
     };
+
+    function getSelectedTarget(groups, gIdx, iIdx) {
+      const group = groups[gIdx];
+      const item = group.list[iIdx];
+      return `${group["group-name"]} - ${item.name}`;
+    }
 
     document.getElementById("btnMakingToggle").onclick = () => {
       console.log("Making toggle clicked");
     };
 
-    // -------------------------------
     // 7) Initial load
-    // -------------------------------
-    load_prefix();
+    load_production_target();
     load_record_table();
   });
   </script>
