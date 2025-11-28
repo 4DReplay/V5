@@ -2,6 +2,8 @@
 # aid_main.py
 # - 2025/10/17 (revised)
 # - Hongsu Jung
+# --- how to read log >>> Powershell
+# >> Get-Content "C:\4DReplay\V5\daemon\AId\log\2025-11-20.log" -Wait -Tail 20
 # ─────────────────────────────────────────────────────────────────────────────#
 
 import os
@@ -18,16 +20,11 @@ import socket
 from threading import Semaphore
 from datetime import datetime
 
-# ── service/env ──────────────────────────────────────────────────────────────
-def _is_service_env():
-    try:
-        return not hasattr(sys, "stdin") or (sys.stdin is None) or (not sys.stdin.isatty())
-    except Exception:
-        return True
-SERVICE_MODE = (os.getenv("FD_SERVICE", "0") == "1") or _is_service_env()
+# ─────────────────────────────────────────────────────────────
+# shared codes/functions
+# ─────────────────────────────────────────────────────────────
+from service_common import *
 
-os.environ.setdefault("PYTHONUNBUFFERED", "1")
-os.environ.setdefault("PYTHONIOENCODING", "utf-8")
 os.environ["AID_DAEMON_NAME"] = r"AId"
 os.environ.setdefault("FD_LOG_DIR", r"C:\4DReplay\V5\daemon\AId\log")
 
@@ -37,34 +34,35 @@ common_path = os.path.abspath(os.path.join(cur_path, '..'))
 sys.path.insert(0, common_path)
 
 # ── imports (project) ────────────────────────────────────────────────────────
-from fd_common.msg               import FDMsg
-from fd_common.tcp_server        import TCPServer   # communication with MTd
-from fd_common.tcp_client        import TCPClient   # communication with AIc
+from fd_common.msg                  import FDMsg
+from fd_common.tcp_server           import TCPServer   # communication with MTd
+from fd_common.tcp_client           import TCPClient   # communication with AIc
+from fd_common.utils                import get_duration
 
-from fd_utils.fd_config_manager  import setup, conf, get
-from fd_utils.fd_logging         import fd_log
-from fd_utils.fd_file_edit       import fd_clean_up
+from fd_utils.fd_config_manager     import setup, conf, get
+from fd_utils.fd_logging            import fd_log
+from fd_utils.fd_file_edit          import fd_clean_up
 
-from fd_aid                      import fd_create_analysis_file
-from fd_aid                      import fd_multi_channel_video
-from fd_aid                      import fd_multi_calibration_video
+from fd_aid                         import fd_create_analysis_file
+from fd_aid                         import fd_multi_channel_video
+from fd_aid                         import fd_multi_calibration_video
 
-from fd_stream.fd_stream_rtsp    import StreamViewer
-from fd_stabil.fd_stabil         import PostStabil
-from fd_utils.fd_calibration     import Calibration
-# 외부 유틸 함수들(기존 코드에서 사용): get_team_code_by_index, fd_pause_live_detect,
-# fd_resume_live_detect, fd_live_buffering_thread, fd_rtsp_server_stop 등은
-# 기존 모듈에 존재한다고 가정.
+from fd_utils.fd_calibration        import Calibration
+from fd_manager.fd_create_clip      import play_and_create_multi_clips
 
-fd_log.propagate = False
+# ── imports (projectproduct) ────────────────────────────────────────────────────────
+from fd_product.fd_product_clip     import fd_convert_AIc_info, fd_create_payload_for_preparing_to_AIc
+from fd_product.fd_product_clip     import fd_create_payload_for_product_to_AIc
 
-# ── config path ──────────────────────────────────────────────────────────────
-AID_CONFIG_PRIVATE = "./config/aid_config_private.json5"
-AID_CONFIG_PUBLIC  = "./config/aid_config_public.json5"
-
-
+# ─────────────────────────────────────────────────────────────────────────
+# 🎯AId Class (Artificial Intelligence Daemon)
+# ─────────────────────────────────────────────────────────────────────────
 class AId:
     name = 'AId'
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ✅MAIN FUNCTIONS
+    # ─────────────────────────────────────────────────────────────────────────
 
     def __init__(self):
         self.name = "AId"
@@ -74,7 +72,7 @@ class AId:
         self.end = False
         self.host = None        
         self.msg_queue = queue.Queue()
-        self.lock = threading.Lock()
+        self._lock = threading.Lock()
         self._stopped = False
 
         self.conf = conf  # conf 객체를 직접 할당
@@ -91,9 +89,11 @@ class AId:
         self.aic_sessions = {}        # { ip: TCPClient }
         self.aic_version_cache = {}   # { ip: {"name":..,"ip":..,"version":..,"date":..} }
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # 시스템 초기화(로그 폴더 등). 실패시 False
-    # ─────────────────────────────────────────────────────────────────────────
+        # production variables
+        self.camera_fps = 0
+        self.prod_camera_env = {}
+        self.prod_adjust_info = {}
+    # System initialization (e.g., log folder). Returns False on failure.    
     def init_sys(self) -> bool:
         current_path = os.path.dirname(os.path.abspath(__file__))
         log_path = os.path.join(current_path, "log")
@@ -109,10 +109,7 @@ class AId:
         if os.getenv("PYTHONBREAKPOINT") is None:
             os.environ["PYTHONBREAKPOINT"] = "0"
         return True
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 설정 로딩 및 TCP 리스너 오픈
-    # ─────────────────────────────────────────────────────────────────────────
+    # Load configuration and open TCP listener
     def prepare(self, config_private_path: str = AID_CONFIG_PRIVATE,
                 config_public_path: str = AID_CONFIG_PUBLIC) -> bool:
         setup(
@@ -144,68 +141,12 @@ class AId:
         except Exception as e:
             fd_log.error(f"[{self.name}] TCP server start failed on {port}: {e}")
             return False
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # AIc 연결 상태 체크 (단순 TCP connect 기반)
-    # ─────────────────────────────────────────────────────────────────────────
-    def check_aic_connectivity(self, ip: str, timeout: float = 1.0) -> bool:
-        """Check connectivity to an AIc daemon by trying a TCP connect.
-
-        Returns True if connection succeeds, False otherwise.
-        """
-        port = getattr(conf, "_aic_daemon_port", None)
-        if not port:
-            fd_log.error("[AId] _aic_daemon_port is not configured.")
-            return False
-
-        sock = None
-        try:
-            fd_log.info(f"[AId] checking AIc connectivity: {ip}:{port}")
-            sock = socket.create_connection((ip, port), timeout=timeout)
-            return True
-        except Exception as e:
-            fd_log.warning(f"[AId] AIc connectivity check failed for {ip}:{port} - {e}")
-            return False
-        finally:
-            if sock is not None:
-                try:
-                    sock.close()
-                except Exception:
-                    pass
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 구(舊) 속성 로더(호환 유지)
-    # ─────────────────────────────────────────────────────────────────────────
-    def load_property(self, file):
-        try:
-            with open(file, 'r', encoding='utf-8') as f:
-                self.property_data = json.load(f)
-        except Exception as e:
-            fd_log.error(f"exception while load_property(): {e}")
-            return False
-        return True
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 메시지 큐 입력
-    # ─────────────────────────────────────────────────────────────────────────
-    def put_data(self, data):
-        with self.lock:
-            self.msg_queue.put(data)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # def on_msg
-    # ─────────────────────────────────────────────────────────────────────────
-    def on_msg(self, text: str):
-        try:
-            data = json.loads(text)
-        except Exception as e:
-            fd_log.error(f"[{self.name}] on_msg JSON parse error: {e}; text={text[:256]}")
-            return
-        self.put_data(data)  # 큐에 넣고 worker가 처리
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 안전한 종료(멱등)
-    # ─────────────────────────────────────────────────────────────────────────
+    # AId Service Start
+    def run(self):
+        fd_log.info("🟢 [AId] run() begin..")
+        self.th = threading.Thread(target=self.status_task, daemon=True)
+        self.th.start()
+    # stop the AId service
     def stop(self):
         fd_log.info("[AId] stop() begin..")
 
@@ -257,34 +198,131 @@ class AId:
 
         fd_log.info("[AId] stop() end..")
 
+
     # ─────────────────────────────────────────────────────────────────────────
-    # 워커 스레드 루프
-    # ─────────────────────────────────────────────────────────────────────────
+    # COMMON FUNCTIONS
+    # ─────────────────────────────────────────────────────────────────────────    
+    # Check AIc connectivity (simple TCP connect)
+    def check_aic_connectivity(self, ip: str, timeout: float = 1.0) -> bool:
+        """Check connectivity to an AIc daemon by trying a TCP connect.
+
+        Returns True if connection succeeds, False otherwise.
+        """
+        port = getattr(conf, "_aic_daemon_port", None)
+        if not port:
+            fd_log.error("[AId] _aic_daemon_port is not configured.")
+            return False
+
+        sock = None
+        try:
+            fd_log.info(f"[AId] checking AIc connectivity: {ip}:{port}")
+            sock = socket.create_connection((ip, port), timeout=timeout)
+            return True
+        except Exception as e:
+            fd_log.warning(f"[AId] AIc connectivity check failed for {ip}:{port} - {e}")
+            return False
+        finally:
+            if sock is not None:
+                try:
+                    sock.close()
+                except Exception:
+                    pass
+    # Legacy property loader (for backward compatibility)
+    def load_property(self, file):
+        try:
+            with open(file, 'r', encoding='utf-8') as f:
+                self.property_data = json.load(f)
+        except Exception as e:
+            fd_log.error(f"exception while load_property(): {e}")
+            return False
+        return True
+    # MTd → AId : after get message, message received and put into queue
+    def put_data(self, data):
+        try:
+            fd_log.info(f"[AId] << Incoming request (from MTd/4DOMS): {data}")
+        except:
+            pass
+        with self._lock:
+            self.msg_queue.put(data)
+    # Message processing worker
     def status_task(self):
         fd_log.info("🟢 [AId] Message Receive Start")
         while not self.end:
             msg = None
-            with self.lock:
+            with self._lock:
                 if not self.msg_queue.empty():
                     msg = self.msg_queue.get(block=False)
             if msg is not None:
                 self.classify_msg(msg)
             time.sleep(0.01)
         fd_log.info("🔴 [AId] Message Receive End")
+        # 정확히 size 만큼 수신하는 함수
+    # read exact size from socket
+    def _recv_exact(self, sock, size):
+        buf = b''
+        while len(buf) < size:
+            chunk = sock.recv(size - len(buf))
+            if not chunk:
+                return None
+            buf += chunk
+        return buf
+    # AIc recv loop
+    def _aic_recv_loop(self, sess, ip):
+        sock = sess.sock
+        try:
+            while not self.end:
+                # --- 정확하게 5바이트 읽기 ---
+                header = b""
+                while len(header) < 5:
+                    chunk = sock.recv(5 - len(header))
+                    if not chunk:
+                        time.sleep(0.01)
+                        break
+                    header += chunk
+                if len(header) < 5:
+                    continue
+                body_len, flag = struct.unpack("<IB", header)
+                # --- 정확하게 body_len 만큼 읽기 ---
+                body = b""
+                while len(body) < body_len:
+                    chunk = sock.recv(body_len - len(body))
+                    if not chunk:
+                        time.sleep(0.01)
+                        break
+                    body += chunk
+                if len(body) < body_len:
+                    continue
+                text = body.decode("utf-8", errors="ignore")
+                self.on_aic_msg(text, ip)
+        except Exception as e:
+            fd_log.error(f"[AId] AIC recv loop error for {ip}: {e}")
+        fd_log.warning(f"[AId] AIC connection closed for {ip}")
+        if ip in self.aic_sessions:
+            del self.aic_sessions[ip]
 
-    # ------------------------------------------------------------
-    # AIc → AId : persistent TCPClient 콜백
-    # ------------------------------------------------------------
+    # ─────────────────────────────────────────────────────────────────────────
+    # AIc Utility Functions
+    # ─────────────────────────────────────────────────────────────────────────
+    # AIc message callback
     def on_aic_msg(self, text: str, src_ip: str) -> None:
         """
         TCPClient(message_callback)에 연결되는 콜백.
         AIc 에서 들어오는 Version 응답 등을 수집한다.
         """
+        # 안정화: 빈 패킷/노이즈 패킷 무시
+        if not text or not text.strip():
+            fd_log.warning(f"[AId] empty/blank packet from {src_ip}")
+            return
+        # 안정화: JSON 파싱 실패하더라도 세션을 죽이지 않고 skip
         try:
             data = json.loads(text)
         except Exception as e:
-            fd_log.warning(f"[AId] on_aic_msg JSON parse error from {src_ip}: {e}")
+            fd_log.warning(
+                f"[AId] JSON parse error from {src_ip}: {e}; raw={text!r}"
+            )
             return
+        
+        fd_log.info(f"[AId] << From AIc({src_ip}) request: {text}")
 
         sec1 = data.get("Section1")
         sec2 = data.get("Section2")
@@ -296,7 +334,8 @@ class AId:
             aic_info = ver_map.get("AIc", {})
 
             name = self.aic_ip_name_map.get(src_ip, src_ip)
-            self.aic_version_cache[src_ip] = {
+            key_ip = src_ip
+            self.aic_version_cache[key_ip] = {
                 "name": name,
                 "ip": src_ip,
                 "version": aic_info.get("version", ""),
@@ -306,137 +345,106 @@ class AId:
         else:
             # 현재는 Version 응답만 수집. 필요하면 여기서 추가 분기 가능.
             fd_log.debug(f"[AId] on_aic_msg: ignore msg from {src_ip} : {data}")
-
-    ###########################################################################
-    # 추가: AId → AIc persistent recv loop (TCPServer와 동일한 프로토콜 적용)
-    ###########################################################################
-    def _start_aic_recv_thread(self, sess, ip):
-        th = threading.Thread(
-            target=self._aic_recv_loop,
-            args=(sess, ip),
-            daemon=True
-        )
-        th.start()
-
-    def _aic_recv_loop(self, sess, ip):
-        sock = sess.sock
+    # Get list of currently connected AIc IPs
+    def _get_target_aic_list(self):
+        """현재 연결된 AIc IP 목록 반환"""
         try:
-            while not self.end:
-                header = sock.recv(5)
-                if not header or len(header) < 5:
-                    break
-                
-                body_len, flag = struct.unpack("<IB", header)
-                body = sock.recv(body_len).decode("utf-8", errors="ignore")
-                self.on_aic_msg(body, ip)
+            ips = list(self.aic_sessions.keys())
+            fd_log.info(f"[AId] _get_target_aic_list → {ips}")
+            return ips
+        except Exception as e:
+            fd_log.error(f"[AId] _get_target_aic_list failed: {e}")
+            return []
+    # Send message to a specific AIc
+    def _send_to_aic(self, ip: str, packet: dict) -> bool:
+        """AIc 하나에게 안전하게 메시지 전송"""
+        try:
+            sess = self.aic_sessions.get(ip)
+            if not sess:
+                fd_log.error(f"[AId] No AIc session for {ip}")
+                return False
+
+            text = json.dumps(packet)
+            fd_log.info(f"[AId] >> To AIc({ip}) {text}")
+            sess.send_msg(text)
+            return True
 
         except Exception as e:
-            fd_log.error(f"[AId] AIC recv loop error for {ip}: {e}")
-
-        fd_log.warning(f"[AId] AIC connection closed for {ip}")
+            fd_log.error(f"[AId] send_to_aic({ip}) failed: {e}")
+            return False
+    # Ensure AIc TCPClient session
+    def _ensure_aic_session(self, ip: str):
+        """Ensure there is a TCPClient session for the given AIc IP."""
+        ip = str(ip)
         if ip in self.aic_sessions:
-            del self.aic_sessions[ip]
+            return self.aic_sessions[ip]
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # AId 서비스 시작
-    # ─────────────────────────────────────────────────────────────────────────
-    def run(self):
-        fd_log.info("🟢 [AId] run() begin..")
-        self.th = threading.Thread(target=self.status_task, daemon=True)
-        self.th.start()
+        try:
+            sess = TCPClient(name=f"AId→AIc:{ip}")
+            ok = sess.connect(
+                ip,
+                conf._aic_daemon_port,
+                callback=lambda text, _ip=ip: self.on_aic_msg(text, _ip)
+            )
+            if ok:
+                self.aic_sessions[ip] = sess
+                
+            fd_log.info(f"[AId] Connected persistent session → AIc ({ip})")
+            return sess
+        except Exception as e:
+            fd_log.error(f"[AId] failed to connect {ip}: {e}")
+            return None
+    # Broadcast message to multiple AIcs
+    def _broadcast_to_aic(self, packet: dict, only_ips=None):
+        if only_ips is None:
+            only_ips = list(self.aic_sessions.keys())
 
-    def find_aic_name(self, ip: str) -> str:
-        return self.aic_ip_name_map.get(ip, ip)
-
-    # ------------------------------------------------------------
-    # AId → AIc : Version 요청 후 응답 수집
-    # ------------------------------------------------------------
-    def request_aic_versions(self, expect_ips, dmpdip, token, wait_sec: int = 5):
-        """
-        AId → AIc persistent TCP 세션을 사용하여 version 요청을 보내고
-        응답을 수집하여 리스트로 반환한다.
-        """
-        results = []
-        if not expect_ips:
-            fd_log.warning("[AId] request_aic_versions: expect_ips is empty")
-            return results
-
-        # 응답 수집용
-        pending = {ip: None for ip in expect_ips}
-
-        # 요청 패킷
-        def build_packet():
-            return {
-                "Section1": "AIc",
-                "Section2": "Information",
-                "Section3": "Version",
-                "SendState": "request",
-                "From": "AId",
-                "To": "AIc",
-                "Token": token,
-                "Action": "get",
-                "DMPDIP": dmpdip,
-            }
-
-        # 1) 요청 보내기
-        time.sleep(0.3)
-        for ip, sess in self.aic_sessions.items():
-            if ip in pending:
-                try:
-                    sess.send_msg(json.dumps(build_packet()))
-                    fd_log.info(f"[AId] → AIc({ip}) Version request sent")
-                except Exception as e:
-                    fd_log.error(f"[AId] Version request send failed to {ip}: {e}")
-
-        # 2) 응답 기다리기 (최대 wait_sec)
-        deadline = time.time() + wait_sec
-
-        while time.time() < deadline:
-            for ip in expect_ips:
-                if pending[ip] is not None:
+        for ip in only_ips:
+            try:
+                text = json.dumps(packet)
+                sess = self.aic_sessions.get(ip)
+                if not sess:
                     continue
-                if ip in self.aic_version_cache:
-                    pending[ip] = self.aic_version_cache[ip]
-            if all(pending[ip] is not None for ip in expect_ips):
-                break
-            time.sleep(0.05)
-
-        # 3) 결과 구성
-        for ip, ver_info in pending.items():
-            if ver_info is None:
-                fd_log.warning(f"[AId] No Version response from AIc({ip})")
-                continue
-
-            # AIc는 version/date 포함한 dict로 응답
-            results.append({
-                "name": self.aic_ip_name_map.get(ip, ip),
-                "ip": ip,
-                "version": ver_info.get("version"),
-                "date": ver_info.get("date"),
-            })
-
-        return results
+                sess.send_msg(text)
+            except Exception as e:
+                fd_log.error(f"[AId] send to {ip} failed: {e}")
+    
     # ─────────────────────────────────────────────────────────────────────────
-    # 메시지 라우팅
+    # 📦 Message Routing
     # ─────────────────────────────────────────────────────────────────────────
+    # Message handler
+    def on_msg(self, text: str):
+        try:
+            data = json.loads(text)
+        except Exception as e:
+            fd_log.error(f"[{self.name}] on_msg JSON parse error: {e}; text={text[:256]}")
+            return
+        self.put_data(data)  # 큐에 넣고 worker가 처리
+    # 🎯 command processing
     def classify_msg(self, msg: dict) -> None:
+        try:
+            fd_log.info(f"[AId] << classify_msg REQ: {msg}")
+        except:
+            pass
         _4dmsg = FDMsg()
         _4dmsg.assign(msg)
-        #_4dmsg.data.update(msg)  
-        #_4dmsg.assign(json.dumps(msg))
-
+        
         # From 필드 보정
         if len(_4dmsg.data.get('From', '').strip()) == 0:
             _4dmsg.data.update(From='4DOMS')
-        result_code, err_msg = 1000, ''
+        
         if _4dmsg.is_valid():
+            result_code, err_msg = 1000, ''
             conf._result_code = 0
             if (state := _4dmsg.get('SendState').lower()) == FDMsg.REQUEST:
                 sec1, sec2, sec3 = _4dmsg.get('Section1'), _4dmsg.get('Section2'), _4dmsg.get('Section3')
+                action = _4dmsg.get('Action', '').lower()            
                 match sec1, sec2, sec3:
-                                        
+                    # ──────────────────────────────────────────────────────
+                    # 📦 V5 : [AIc], [connect]
+                    # ──────────────────────────────────────────────────────                    
                     case 'AIc', 'connect', _:
-                        # MTd → AId: AIc 연결 상태 점검 요청
+                    # AIc Connect Request
                         aic_list = _4dmsg.get('AIcList', {})
                         if not isinstance(aic_list, dict):
                             fd_log.warning(f"[AId] invalid AIcList type: {type(aic_list)}")
@@ -457,7 +465,6 @@ class AId:
                         self.aic_name_ip_map = dict(aic_list)
                         self.aic_ip_name_map = {str(ip): str(name) for name, ip in aic_list.items()}
                         fd_log.info(f"[AId] Save AIc list: {self.aic_name_ip_map}")
-
                         # 각 AIc 와 persistent 연결 생성 (포트 19738)
                         for name, ip in aic_list.items():
                             ip = str(ip)
@@ -466,14 +473,14 @@ class AId:
                             try:
                                 sess = TCPClient()
                                 sess.connect(ip, conf._aic_daemon_port)
-                                # persistent recv loop 시작 (TCPServer와 동일한 프로토콜)
-                                self._start_aic_recv_thread(sess, ip)
+                                sess.set_callback(lambda text, _ip=ip: self.on_aic_msg(text, _ip))
+                                sess.start_recv()   # ★★★ 반드시 필요 ★★★
                                 self.aic_sessions[ip] = sess
-                                fd_log.info(f"[AId] Connected persistent session → AIc {name} ({ip})")                                
+                                fd_log.info(f"[AId] Connected persistent session → AIc {name} ({ip})")
                             except Exception as e:
                                 fd_log.error(f"[AId] AIc connect failed {ip}: {e}")
 
-                        # 응답 형식:
+                        # request type:
                         # "AIcList": {
                         #   "AI Client [#1]": {"IP": "...", "Status": "OK"},
                         #   ...
@@ -483,52 +490,47 @@ class AId:
                         # 모든 AIc가 OK일 때만 성공 코드 유지, 아니면 에러 코드로 교체
                         if not all_ok:
                             result_code = 1100                    
-
+                    # ──────────────────────────────────────────────────────
+                    # 📦 V5 : [Daemon], [Information], [Version]
+                    # ──────────────────────────────────────────────────────                    
                     case 'Daemon', 'Information', 'Version':
-                        # MTd → AId : Version 요청
-                        # FDMsg 경로 대신, 직접 handle_version_request 에서 응답 송신.
-                        self.handle_version_request(_4dmsg.data)
-                        return  # 여기서 종료 (아래 공통 응답 처리 X)
-
+                    # Version Request
+                        with self._lock:
+                            self.mtd_version_request(_4dmsg.data)
+                        return
+                    # ──────────────────────────────────────────────────────
+                    # 📦 V5 : [Daemon], [Operation], [Prepare]
+                    # ──────────────────────────────────────────────────────                    
+                    case 'Daemon', 'Operation', 'Prepare':
+                    # Production Preparing
+                        with self._lock:
+                            self.production_preparing(_4dmsg.data)
+                        return
+                    # ──────────────────────────────────────────────────────
+                    # 📦 V5 : [Daemon], [Operation], [Production], / action:[start/stop]
+                    # ──────────────────────────────────────────────────────                    
+                    case 'Daemon', 'Operation', 'Production':
+                    # Production Start/Stop
+                        with self._lock:
+                            if action == 'start':
+                                self.production_start(_4dmsg.data)   
+                            elif action == 'stop':
+                                self.production_stop(_4dmsg.data)
+                        return
+                    # ──────────────────────────────────────────────────────
+                    # 📦 V4 : [Daemon], [Operation], [Calibration]
+                    # ──────────────────────────────────────────────────────                    
                     case 'AI', 'Operation', 'Calibration':
-                        conf._processing = True
-                        cal = Calibration.from_file(_4dmsg.get('cal_path'))
-                        _ = cal.to_dict()
+                        with self._lock:
+                            cal = Calibration.from_file(_4dmsg.get('cal_path'))
+                            _ = cal.to_dict()
                         fd_log.info("set calibration")
-                        conf._processing = False
-
-                    case 'AI', 'Operation', 'LiveEncoding':
-                        conf._processing = True
-                        fd_log.info("Start LiveEncoding")
-                        conf._processing = False
-
-                    case 'AI', 'Operation', 'PostStabil':
-                        conf._processing = True
-                        swipeperiod = _4dmsg.get('swipeperiod', [])
-                        output_file = self.create_ai_poststabil(
-                            _4dmsg.get('input'),
-                            _4dmsg.get('output'),
-                            _4dmsg.get('logo'),
-                            _4dmsg.get('logopath'),
-                            swipeperiod
-                        )
-                        conf._processing = False
-                        self.on_stabil_done_event(output_file)
-
-                    case 'AI', 'Operation', 'StartVideo':
-                        fd_log.info("[Start Video Clip]")
-                        playlist = _4dmsg.get('PlayList', [])
-                        if playlist and isinstance(playlist, list):
-                            item = playlist[0]
-                            self.start_video(item.get('path'), item.get('name'))
-                        else:
-                            fd_log.error("No valid PlayList data found.")
-
+                        
                     case 'AI', 'Process', 'Multi':
                         fd_log.info("Start Calibration Multi-ch video")
-                        conf._processing = True
-                        conf._type_target = conf._type_process_calibration_each
-                        _ = self.create_ai_calibration_multi(
+                        with self._lock:
+                            conf._type_target = conf._type_process_calibration_each
+                            _ = self.create_ai_calibration_multi(
                             _4dmsg.get("Cameras", []),
                             _4dmsg.get("Markers", []),
                             _4dmsg.get("AdjustData", []),
@@ -542,219 +544,20 @@ class AId:
                             _4dmsg.get('gop'),
                             _4dmsg.get('output_mode'),
                         )
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'LiveDetect':
-                        conf._processing = True
-                        type_target = _4dmsg.get('type')
-                        fd_log.info(f"[Streaming][0x{type_target:x}] Streaming Start")
-
-                        match type_target:
-                            case conf._type_live_batter_RH | conf._type_live_batter_LH | conf._type_live_pitcher | conf._type_live_hit:
-                                result, output_file = self.create_ai_file(
-                                    _4dmsg.get('type'),
-                                    _4dmsg.get('input_path'),
-                                    _4dmsg.get('output_path'),
-                                    _4dmsg.get('ip_class'),
-                                    _4dmsg.get('cam_front'),
-                                    _4dmsg.get('start_time'),
-                                    _4dmsg.get('end_time'),
-                                    _4dmsg.get('fps'),
-                                    _4dmsg.get('zoom_scale'),
-                                    _4dmsg.get('select_time'),
-                                    _4dmsg.get('select_frame')
-                                )
-                                if result:
-                                    match _4dmsg.get('type'):
-                                        case conf._type_baseball_pitcher:
-                                            conf._baseball_db.insert_data(
-                                                conf._recv_pitch_msg, conf._tracking_video_path, conf._tracking_data_path
-                                            )
-                                        case conf._type_baseball_hit | conf._type_baseball_hit_manual:
-                                            conf._baseball_db.insert_data(
-                                                conf._recv_hit_msg, conf._tracking_video_path, conf._tracking_data_path
-                                            )
-                                    duration = self.get_duration(output_file)
-                                    _4dmsg.update(output=os.path.basename(output_file))
-                                    _4dmsg.update(duration=duration)
-
-                            case conf._type_live_nascar_1 | conf._type_live_nascar_2 | conf._type_live_nascar_3 | conf._type_live_nascar_4:
-                                self.ai_live_buffering(
-                                    _4dmsg.get('type'),
-                                    _4dmsg.get('rtsp_url'),
-                                    _4dmsg.get('output_path')
-                                )
-
-                            case _:
-                                self.ai_live_detecting(
-                                    _4dmsg.get('type'),
-                                    _4dmsg.get('rtsp_url')
-                                )
-                        conf._processing = False
-
+                        
                     case 'AI', 'Process', 'UserStart':
                         fd_log.info("[Creating Clip] Set start time")
-                        conf._create_file_time_start = time.time()
+                        with self._lock:
+                            conf._create_file_time_start = time.time()
                         conf._team_info = _4dmsg.get('info')
-
+                    
                     case 'AI', 'Process', 'UserEnd':
                         fd_log.info("[Creating Clip] Set end time and creating clip")
-                        conf._create_file_time_end = time.time()
-                        play_and_create_multi_clips()
-
-                    case 'AI', 'Process', 'LiveEnd':
-                        fd_log.info("[Streaming][All] Streaming End")
-                        fd_rtsp_server_stop()
-
-                    case 'AI', 'Process', 'Merge':
-                        conf._processing = True
-                        conf._team_info = _4dmsg.get('info')
-                        conf._make_time = _4dmsg.get('make_time')
-                        fd_log.info("🚀 AI:Process:Merge")
-
-                        result = True
-                        if conf._live_creating_output_file:
-                            conf._live_creating_output_file.join()
-
-                        output_file = conf._final_output_file
-                        if "TEMP_TIME" in output_file:
-                            new_output_file = output_file.replace("TEMP_TIME", conf._make_time)
-                            if os.path.exists(output_file):
-                                shutil.move(output_file, new_output_file)
-                                output_file = new_output_file
-                                fd_log.info(f"✅ Renamed file: {output_file}")
-                            else:
-                                fd_log.error(f"❌ Original file not found: {output_file}")
-                        else:
-                            fd_log.error("⚠️ The filename does not contain the keyword 'TIME'. No replacement made.")
-
-                        fd_log.info(f"🎯 AI:Process:Merge:{output_file}")
-                        if result:
-                            duration = self.get_duration(output_file)
-                            _4dmsg.update(output=os.path.basename(output_file))
-                            _4dmsg.update(duration=duration)
-                        conf._processing = False
-
-                    case 'AI', 'Process', 'Detect':
-                        conf._processing = True
-
-                        conf._pitcher_team = conf._live_pitcher_team if _4dmsg.get('pitcher_team') == -1 else _4dmsg.get('pitcher_team')
-                        conf._pitcher_no   = conf._live_pitcher_no   if _4dmsg.get('pitcher_no')   == -1 else _4dmsg.get('pitcher_no')
-                        conf._batter_team  = conf._live_batter_team  if _4dmsg.get('batter_team')  == -1 else _4dmsg.get('batter_team')
-                        conf._batter_no    = conf._live_batter_no    if _4dmsg.get('batter_no')    == -1 else _4dmsg.get('batter_no')
-
-                        conf._option         = _4dmsg.get('option')
-                        conf._interval_delay = _4dmsg.get('interval_delay')
-                        conf._multi_line_cnt = _4dmsg.get('multi_line_cnt')
-
-                        match _4dmsg.get('type'):
-                            case conf._type_baseball_batter_RH | conf._type_baseball_batter_LH:
-                                conf._team_code = conf._batter_team
-                                conf._player_no = conf._batter_no
-                                target_attr = f"_team_box1_img{conf._pitcher_team}"
-                                setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                                target_attr = f"_team_box1_img{conf._batter_team}"
-                                setattr(conf, "_team_box_sub_img", getattr(conf, target_attr))
-                                conf._pitcher_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._pitcher_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._pitcher_no
-                                )
-                                conf._batter_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._batter_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._batter_no
-                                )
-
-                            case conf._type_baseball_pitcher:
-                                conf._team_code = conf._pitcher_team
-                                conf._player_no = conf._pitcher_no
-                                target_attr = f"_team_box2_img{conf._pitcher_team}"
-                                setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                                conf._pitcher_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._pitcher_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._pitcher_no
-                                )
-
-                            case conf._type_baseball_pitcher_multi:
-                                conf._team_code = conf._pitcher_team
-                                conf._player_no = conf._pitcher_no
-                                target_attr = f"_team_box2_img{conf._pitcher_team}"
-                                setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                                conf._pitcher_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._pitcher_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._pitcher_no
-                                )
-
-                            case conf._type_baseball_hit | conf._type_baseball_hit_manual:
-                                if conf._extra_homerun_derby:
-                                    conf._live_player = False
-                                conf._team_code = conf._batter_team
-                                conf._player_no = conf._batter_no
-                                target_attr = f"_team_box2_img{conf._pitcher_team}"
-                                setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                                target_attr = f"_team_box2_img{conf._batter_team}"
-                                setattr(conf, "_team_box_sub_img", getattr(conf, target_attr))
-                                conf._pitcher_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._pitcher_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._pitcher_no
-                                )
-                                conf._batter_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._batter_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._batter_no
-                                )
-
-                            case conf._type_baseball_hit_multi:
-                                if conf._extra_homerun_derby:
-                                    conf._live_player = True
-                                conf._team_code = conf._batter_team
-                                conf._player_no = conf._batter_no
-                                target_attr = f"_team_box2_img{conf._batter_team}"
-                                setattr(conf, "_team_box_main_img", getattr(conf, target_attr))
-                                conf._batter_player = conf._api_client.get_player_info_by_backnum(
-                                    team_id=get_team_code_by_index(conf._batter_team),
-                                    season=datetime.now().year,
-                                    backnum=conf._batter_no
-                                )
-
-                            case _:
-                                conf._team_code = 0
-                                conf._player_no = 0
-
-                        result, output_file = self.create_ai_file(
-                            _4dmsg.get('type'),
-                            _4dmsg.get('input_path'),
-                            _4dmsg.get('output_path'),
-                            _4dmsg.get('ip_class'),
-                            _4dmsg.get('cam_front'),
-                            _4dmsg.get('start_time'),
-                            _4dmsg.get('end_time'),
-                            _4dmsg.get('fps'),
-                            _4dmsg.get('zoom_scale'),
-                            _4dmsg.get('select_time'),
-                            _4dmsg.get('select_frame')
-                        )
-
-                        if result:
-                            match _4dmsg.get('type'):
-                                case conf._type_baseball_pitcher:
-                                    conf._baseball_db.insert_data(
-                                        conf._recv_pitch_msg, conf._tracking_video_path, conf._tracking_data_path
-                                    )
-                                case conf._type_baseball_hit | conf._type_baseball_hit_manual:
-                                    conf._baseball_db.insert_data(
-                                        conf._recv_hit_msg, conf._tracking_video_path, conf._tracking_data_path
-                                    )
-                            duration = self.get_duration(output_file)
-                            _4dmsg.update(output=os.path.basename(output_file))
-                            _4dmsg.update(duration=duration)
-
-                        conf._processing = False
-
+                        with self._lock:
+                            conf._create_file_time_end = time.time()
+                            play_and_create_multi_clips()
+                    
+                    
                 # 공통 응답 정리
                 _4dmsg.update(ResultCode=result_code)
                 _4dmsg.update(ErrorMsg=err_msg)
@@ -786,86 +589,37 @@ class AId:
                     fd_log.warning("[AId] classify_msg(error path): app_server is None; skipping send.")
                 else:
                     self.app_server.send_msg(_4dmsg.get_json()[1])
-
+    
     # ─────────────────────────────────────────────────────────────────────────
-    # 기능들
+    # 🧩 Functions for Events (V5)
     # ─────────────────────────────────────────────────────────────────────────
-    def on_web_socket_event(self, pitch_data):
-        msg = {
-            "From": "AId",
-            "To": "4DPD",
-            "SendState": "Request",
-            "Section1": "WebSocket",
-            "Section2": "Realtime",
-            "Section3": "Pitch",
-            "Data": pitch_data
-        }
-        if not self.app_server:
-            fd_log.warning("[AId] on_web_socket_event: app_server is None; skipping send.")
-            return
-        self.app_server.send_msg(json.dumps(msg))
-
-    def on_stabil_done_event(self, output_file):
-        msg = {
-            "From": "AId",
-            "To": "4DPD",
-            "SendState": "Request",
-            "Section1": "StabilizeDone",
-            "Section2": "",
-            "Section3": "",
-            "Complete": "OK",
-            "Output": output_file
-        }
-        if not self.app_server:
-            fd_log.warning("[AId] on_stabil_done_event: app_server is None; skipping send.")
-            return
-        self.app_server.send_msg(json.dumps(msg))
-
-    def create_ai_poststabil(self, input_file, output_file, logo, logopath, swipeperiod):
-        fd_log.info("acreate_ai_poststabil begin")
-        stabil = PostStabil()
-        stabil.fd_poststabil(input_file, output_file, logo, logopath, swipeperiod)
-        return output_file
-
-    def start_video(self, file_path, file_name):
-        path = f"{file_path}{file_name}"
-        fd_log.info(f"Start Video {path}")
-        if conf._live_player:
-            conf._live_player_widget.load_video_to_buffer(path)
-
-    def handle_version_request(self, pkt: dict) -> None:
+    # Get Version Request
+    def mtd_version_request(self, pkt: dict) -> None:
         """
-        4DOMS(MTd) → AId : Version 요청 처리
-        - AId 자신의 버전(conf._version, conf._release_date)
-        - AIc 들의 버전 (AIcList / Expect.AIc 기준)
-        을 모아 최종 응답을 4DOMS 로 전송한다.
+        4DOMS(MTd) → AId : Handles Version request.
+        - Collects AId's own version (conf._version, conf._release_date)
+        - Collects versions of all AIc daemons (based on AIcList / Expect.AIc)
+        - Sends the aggregated response back to 4DOMS.
         """
         token = pkt.get("Token")
         dmpdip = pkt.get("DMPDIP")
-
-        # AId 자체 버전/날짜는 main 에서 conf._version,_release_date 로 세팅되어 있음
+        # AId version/date are set in main via conf._version and conf._release_date
         aid_info = {
             "version": self.version,
             "date": self.release_date,
-        }
-        
+        }        
         expect = pkt.get("Expect", {}) or {}
         expect_ips = expect.get("AIc", []) or []
-
         # --------------------------------------------------------
-        # Expect.AIc 가 비어 있으면 (MTd가 안 준 경우) → fallback
-        # 현재 AId가 알고 있는 AIc 리스트에서 가져오기
+        # If Expect.AIc is empty (not provided by MTd), fallback to current AIc list known by AId
         # --------------------------------------------------------
         if not expect_ips:
             expect_ips = list(self.aic_ip_name_map.keys())
             fd_log.warning("[AId] Using fallback AIc list from mapping")
-
         wait_sec = int(expect.get("wait_sec", 5) or 5)
-
         # AIc Version 수집
         aic_versions = self.request_aic_versions(expect_ips, dmpdip, token, wait_sec)
-
-        # 최종 응답 패킷
+        # send response
         resp = {
             "Section1": "Daemon",
             "Section2": "Information",
@@ -882,76 +636,271 @@ class AId:
                 "AIc": aic_versions,
             },
         }
-
         if self.app_server:
             self.app_server.send_msg(json.dumps(resp))
         else:
             fd_log.error("[AId] app_server is None, cannot send Version response")
+    # Request AIc versions
+    def request_aic_versions(self, expect_ips, dmpdip, token, wait_sec=5):
+        expect_ips = [str(ip) for ip in expect_ips]
 
-    def ai_live_player(self, type_target, folder_output, rtsp_url):
-        fd_log.info(f"ai_live_player Thread begin.. rtsp url:{rtsp_url}")
-        viewer = StreamViewer(buffer_size=600)
-        conf._rtsp_viewers[rtsp_url] = viewer
-        thread = threading.Thread(
-            target=viewer.preview_rtsp_stream_pyav,
-            kwargs={"rtsp_url": rtsp_url, "width": 640, "height": 360, "preview": True},
-            daemon=True
-        )
-        thread.start()
+        # 초기화
+        for ip in expect_ips:
+            self.aic_version_cache.pop(ip, None)
 
-    def get_frames_by_range(self, rtsp_url, target_start: int, target_end: int):
-        viewer = conf._rtsp_viewers.get(rtsp_url)
-        if not viewer:
-            fd_log.error(f"해당 스트림을 찾을 수 없습니다: {rtsp_url}")
-            return []
-        frames_in_range = [frame for idx, frame in viewer.frame_buffer
-                           if target_start <= idx <= target_end]
-        if not frames_in_range:
-            fd_log.warning(f"버퍼 내에 인덱스 범위 {target_start}~{target_end}에 해당하는 프레임이 없습니다.")
-        return frames_in_range
+        # 세션 확보
+        for ip in expect_ips:
+            self._ensure_aic_session(ip)
 
-    def create_ai_file(self, type_target, folder_input, folder_output,
-                       camera_ip_class, camera_ip_list, start_time, end_time,
-                       fps, zoom_ratio, select_time, select_frame=-1,
-                       zoom_center_x=0, zoom_center_y=0):
+        # 요청 패킷
+        def build_packet():
+            return {
+                "Section1": "AIc",
+                "Section2": "Information",
+                "Section3": "Version",
+                "SendState": "request",
+                "From": "AId",
+                "To": "AIc",
+                "Token": token,
+                "Action": "get",
+                "DMPDIP": dmpdip,
+            }
 
-        output_file = None
+        # 요청 전송
+        for ip in expect_ips:
+            sess = self.aic_sessions.get(ip)
+            if not sess:
+                continue
+            sess.send_msg(json.dumps(build_packet()))
+
+        # 응답 수집
+        pending = {ip: None for ip in expect_ips}
+        deadline = time.time() + wait_sec
+
+        while time.time() < deadline:
+            for ip in expect_ips:
+                if ip in self.aic_version_cache and pending[ip] is None:
+                    pending[ip] = self.aic_version_cache[ip]
+            if all(pending[ip] is not None for ip in expect_ips):
+                break
+            time.sleep(0.05)
+
+        # 결과 구성
+        results = []
+        for ip in expect_ips:
+            info = pending[ip]
+            if not info:
+                fd_log.warning(f"[AId] No Version response from AIc({ip})")
+                continue
+            results.append({
+                "name": self.aic_ip_name_map.get(ip, ip),
+                "ip": ip,
+                "version": info.get("version"),
+                "date": info.get("date"),
+            })
+
+        return results
+    # Production Prepare
+    def production_preparing(self, pkt: dict) -> None:
+        fd_log.info("🚀 AI:Daemon:Operation:Prepare")        
+        
+        # 입력받은 파라미터 정리
+        camera_env = pkt.get("camera_env")
+        adjust_info = pkt.get("adjust_info") or pkt.get("adjust-info")  # 둘 다 지원
+
+        # 처리 실행
+        fd_log.info("⏸️ [AId] Production Environment Setup begin..")
+        self.prod_camera_env    = camera_env
+        self.prod_adjust_info   = adjust_info           
+
+        # 🔥 Prepare 응답 패킷 생성
+        resp = {
+            "Section1": "Daemon",
+            "Section2": "Operation",
+            "Section3": "Prepare",
+            "SendState": "response",
+            "From": "AId",
+            "To": pkt.get("From", "4DOMS"),
+            "Action": "set",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
+
+        fd_log.info(f"📨 AId → OMS Prepare Response: {resp}")
+        # send response
+        if self.app_server:
+            self.app_server.send_msg(json.dumps(resp))
+        else:
+            fd_log.error("[AId] app_server is None, cannot send Prepare response")
+
+        # --------------------------------------------------------------
+        #  🔥 Version 처리 방식과 완전히 동일하게 Prepare broadcast
+        # --------------------------------------------------------------
         try:
-            fd_log.info("⏸️ [AId] Pausing live detector for making")
-            fd_pause_live_detect()
+            target_ips = self._get_target_aic_list()
+            fd_log.info(f"[AId] Broadcasting Prepare to AIc (individual payload): {target_ips}")
+            # convert pread info
+            camera_list = camera_env["cameras"]
+            camera_fps = camera_env["camera-fps"]
+            camera_resolution = camera_env["camera-resolution"]
+            folder = camera_env["record-folder"]
 
-            result = False
-            if ((type_target & conf._type_mask_analysis) == conf._type_mask_analysis):
-                fd_log.info(f"[AId] fd_create_analysis_file begin.. folder:{folder_input}, camera:{camera_ip_list}")
-                result, output_file = fd_create_analysis_file(
-                    type_target, folder_input, folder_output,
-                    camera_ip_class, camera_ip_list,
-                    start_time, end_time, select_time, select_frame,
-                    fps, zoom_ratio
-                )
+            camera_info = fd_convert_AIc_info({
+                "cameras": camera_list,
+                "camera-fps": camera_fps,
+                "camera-resolution": camera_resolution,
+                "record-folder": folder
+            })
+            for ip in target_ips:
+                try:                    
+                    # 🔥 IP별 payload 생성
+                    per_ip_payload = fd_create_payload_for_preparing_to_AIc(
+                        ip, camera_info, adjust_info
+                    )
+                    # 기본 공통 헤더 추가
+                    pkt_to_aic = {
+                        "Section1": "AIc",
+                        "Section2": "Operation",
+                        "Section3": "Prepare",
+                        "SendState": "request",
+                        "From": "AId",
+                        "To": "AIc",
+                        "Action": "set",
+                        "Token": pkt.get("Token", ""),
+                        "DMPDIP": pkt.get("DMPDIP"),
+                        # IP별로 변경된 payload 삽입
+                        "CamInfo": per_ip_payload
+                    }
 
-            elif ((type_target & conf._type_mask_multi_ch) == conf._type_mask_multi_ch):
-                fd_log.info(f"[AId] fd_multi_split_video begin.. folder:{folder_input}, camera list:{camera_ip_list}")
-                result, output_file = fd_multi_channel_video(
-                    type_target, folder_input, folder_output,
-                    camera_ip_class, camera_ip_list,
-                    start_time, end_time, select_time, select_frame,
-                    fps, zoom_ratio, zoom_center_x, zoom_center_y
-                )
-            else:
-                fd_log.info("❌ [AId] error.. unknown type:%s", type_target)
-                result = False
+                    # 🔥 IP별 세션 가져오기
+                    sess = self.aic_sessions.get(ip)
+                    if not sess:
+                        fd_log.warning(f"[AId] No active session for AIC {ip}")
+                        continue
+                    # 전송
+                    text = json.dumps(pkt_to_aic)
+                    sess.send_msg(text)
+                    fd_log.info(f"[AId] Sent Prepare to AIC {ip}")
+                except Exception as e:
+                    fd_log.error(f"[AId] Send Prepare to {ip} failed: {e}")
 
-            if result is True:
-                fd_log.info(f"✅ [AId] create_ai_file End.. path:{output_file}")
-            else:
-                fd_log.info("❌ [AId] create_ai_file End.. ")
+        except Exception as e:
+            fd_log.error(f"[AId] Prepare broadcast error: {e}")
+    # Production Start
+    def production_start(self, pkt: dict) -> None:
+        fd_log.info("🚀 AI:Daemon:Operation:Production")             
+        fd_log.info(f"{pkt}")
+        # 입력받은 파라미터 정리
+        product_info = pkt.get("product_info")
+        
+        # 🔥 Prepare 응답 패킷 생성
+        resp = {
+            "Section1": "Daemon",
+            "Section2": "Operation",
+            "Section3": "Production",
+            "SendState": "response",
+            "From": "AId",
+            "To": pkt.get("From", "4DOMS"),
+            "Action": "start",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
 
-            return result, output_file
-        finally:
-            fd_log.info("⏯️ [AId] Resuming live detector after making")
-            fd_resume_live_detect()
+        fd_log.info(f"📨 AId → OMS Prepare Response: {resp}")
+        # send response
+        if self.app_server:
+            self.app_server.send_msg(json.dumps(resp))
+        else:
+            fd_log.error("[AId] app_server is None, cannot send Prepare response")
 
+
+        # --------------------------------------------------------------
+        #  🔥 Product Broadcast
+        # --------------------------------------------------------------
+        try:
+            # get payload for AIc
+            aic_payload = fd_create_payload_for_product_to_AIc(product_info, self.camera_fps)
+
+            # create output folder
+            output_folder = product_info["product-save-path"]
+            os.makedirs(output_folder, exist_ok=True)
+
+            # broadcast to AIc
+            target_ips = self._get_target_aic_list()
+            fd_log.info(f"Production to AIc: {target_ips}:{aic_payload}")            
+
+            pkt_to_aic = {
+                "Section1": "AIc",
+                "Section2": "Operation",
+                "Section3": "Production",
+                "SendState": "request",
+                "From": "AId",
+                "To": "AIc",
+                "Action": "start",
+                "Token": pkt.get("Token", ""),
+                "DMPDIP": pkt.get("DMPDIP"),
+                # Prepare Data (MTd → AId 그대로)
+                "product_info": aic_payload
+            }
+            # Version broadcast 방식과 동일
+            self._broadcast_to_aic(pkt_to_aic, target_ips)
+        except Exception as e:
+            fd_log.error(f"[AId] AIc Prepare broadcast failed: {e}")
+    # Production Stop
+    def production_stop(self, pkt: dict) -> None:
+        fd_log.info("🛑 AI:Daemon:Operation:Production:Stop")
+        fd_log.info(f"{pkt}")
+        
+        # 🔥 Prepare 응답 패킷 생성
+        resp = {
+            "Section1": "Daemon",
+            "Section2": "Operation",
+            "Section3": "Production",
+            "SendState": "response",
+            "From": "AId",
+            "To": pkt.get("From", "4DOMS"),
+            "Action": "stop",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
+
+        fd_log.info(f"📨 AId → OMS Prepare Response: {resp}")
+        # send response
+        if self.app_server:
+            self.app_server.send_msg(json.dumps(resp))
+        else:
+            fd_log.error("[AId] app_server is None, cannot send Prepare response")
+
+        # --------------------------------------------------------------
+        #  🔥 Production Stop Broadcast
+        # --------------------------------------------------------------
+        try:
+            target_ips = self._get_target_aic_list()
+            fd_log.info(f"[AId] Product Stop to AIc: {target_ips}")
+
+            pkt_to_aic = {
+                "Section1": "AIc",
+                "Section2": "Operation",
+                "Section3": "Production",
+                "SendState": "request",
+                "From": "AId",
+                "To": "AIc",
+                "Action": "stop",
+                "Token": pkt.get("Token", ""),
+                "DMPDIP": pkt.get("DMPDIP"),        
+            }
+            # Version broadcast 방식과 동일
+            self._broadcast_to_aic(pkt_to_aic, target_ips)
+        except Exception as e:
+            fd_log.error(f"[AId] AIc Product Stop failed: {e}")
+
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # Functions for Events (V4)
+    # ─────────────────────────────────────────────────────────────────────────
     def create_ai_calibration_multi(self, Cameras, Markers, AdjustData, prefix,
                                     output_path, logo_path, resolution, codec,
                                     fps, bitrate, gop, output_mode):
@@ -969,25 +918,8 @@ class AId:
             return result
         finally:
             fd_log.info("⏯️ [AId] Finish Calibration Multi channel clips")
-
-    def ai_live_buffering(self, type_target, rtsp_url, output_folder):
-        fd_log.info(f"ai_live_buffering Thread begin.. rtsp url:{rtsp_url}")
-        fd_live_buffering_thread(type_target, rtsp_url, output_folder)
-
-    def ai_live_detecting(self, type_target, rtsp_url):
-        fd_log.info(f"ai_live_detecting Thread begin.. rtsp url:{rtsp_url}")
-        fd_live_detecting_thread(type_target, rtsp_url)
-
-    # 필요시 구현되어 있던 헬퍼
-    def get_duration(self, path: str) -> float:
-        try:
-            # 실제 구현은 프로젝트 공용 유틸을 쓰는 것이 맞습니다.
-            # 여기선 방어적 기본값
-            return 0.0
-        except Exception:
-            return 0.0
-
-
+    
+    
 if __name__ == '__main__':
     # 작업 디렉터리: 프로젝트 루트
     base_path = os.path.dirname(os.path.abspath(__file__))

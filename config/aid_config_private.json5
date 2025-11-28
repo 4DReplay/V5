@@ -583,7 +583,6 @@
       "_multi_line_cnt"   : 1,
       "_tracking_data_path"   : "" ,
       "_tracking_video_path"  : ""  ,  
-      "_processing"       : false,
       "_magnifier_pos"    : [0, 0],
     },
   },

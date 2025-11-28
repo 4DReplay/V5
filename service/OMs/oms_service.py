@@ -53,12 +53,12 @@ class OMsService(win32serviceutil.ServiceFramework):
 
     def SvcDoRun(self):
         try:
-            cfg = agent.load_config(agent.CFG)
+            cfg = agent.load_config(agent.PATH_CFG)
         except Exception as e:
-            LOG_DIR = LOG_ROOT / "log"
-            LOG_DIR.mkdir(exist_ok=True)
+            PATH_LOG = LOG_ROOT / "log"
+            PATH_LOG.mkdir(exist_ok=True)
             filename = time.strftime("%Y-%m-%d") + ".log"
-            logfile = LOG_DIR / filename
+            logfile = PATH_LOG / filename
             logfile.open("a", encoding="utf-8").write(
                 time.strftime("%F %T ") + f"[WARN] fallback cfg: {e}\n"
             )            

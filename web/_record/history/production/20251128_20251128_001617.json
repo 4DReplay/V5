@@ -1,0 +1,19 @@
+{
+  "record-base-name": "2025_11_28_00_16_09",
+  "product-date": "20251128",
+  "product-time": "001617",
+  "product-name": "001617_23XI Racing - Team_23",
+  "product-target": "23XI Racing - Team_23",
+  "product-save-path": "\\\\10.82.104.210\\Output/001617_23XI Racing - Team_23",
+  "use-audio": false,
+  "product-start-time": "2025-11-28 00:16:17",
+  "output": {
+    "resolution": "FHD",
+    "codec": "H.264",
+    "fps": "30",
+    "bitrate": "15",
+    "gop": "30",
+    "output_path": "\\\\10.82.104.210\\Output"
+  },
+  "record-info": "/record/history/recorded/2025_11_28_00_16_09.json"
+}

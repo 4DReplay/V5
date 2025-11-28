@@ -1,0 +1,71 @@
+{
+  "updated_at": 1764327686.5586011,
+  "camera_env": [
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.210",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 1,
+      "id": 1,
+      "ip": "10.82.104.11",
+      "model": "BGH1",
+      "rotate": 1
+    },
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.210",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 2,
+      "id": 2,
+      "ip": "10.82.104.12",
+      "model": "BGH1",
+      "rotate": 1
+    },
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.211",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 3,
+      "id": 3,
+      "ip": "10.82.104.13",
+      "model": "BGH1",
+      "rotate": 1
+    },
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.211",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 4,
+      "id": 4,
+      "ip": "10.82.104.14",
+      "model": "BGH1",
+      "rotate": 1
+    },
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.212",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 5,
+      "id": 5,
+      "ip": "10.82.104.15",
+      "model": "BGH1",
+      "rotate": 1
+    },
+    {
+      "PostSd_path": "|",
+      "PreSd_id": "10.82.104.212",
+      "PreSd_path": "C_Movie|C:\\",
+      "SCd_id": "10.82.104.232",
+      "cam_idx": 6,
+      "id": 6,
+      "ip": "10.82.104.16",
+      "model": "BGH1",
+      "rotate": 1
+    }
+  ]
+}

@@ -46,6 +46,8 @@ daemon/VPd/
 # build / deps / IDE
 build/
 dist/
+web/record/
+daemon/OMS/trace/
 target/
 node_modules/
 .idea/

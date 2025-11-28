@@ -1,0 +1,1052 @@
+{
+  "cameras": [
+    "10.82.104.11",
+    "10.82.104.12",
+    "10.82.104.13",
+    "10.82.104.14",
+    "10.82.104.15",
+    "10.82.104.16"
+  ],
+  "record-set": {
+    "production-target": "23XI Racing - Team_45",
+    "record-start-time-ms": 1764148218026.3547,
+    "record-response-time-ms": 1764148219054.0925,
+    "record-sync-diff-ms": 1027.73779296875,
+    "record-end-time-ms": 1764148285405.5625,
+    "recording-time-ms": 66351.46997070312,
+    "record-start-time": "2025-11-26 18:10:19",
+    "record-end-time": "2025-11-26 18:11:25",
+    "recording-time": "00:01:06.351"
+  },
+  "adjust-info": {
+    "calibration": {
+      "summary": {
+        "CalID": 1,
+        "Name": "20251124-181511",
+        "Comment": "{\"UsePositionTracking\":false}",
+        "Pts_type": "2D,2",
+        "width": 3840,
+        "height": 2160,
+        "Stadium": "BaseballHome",
+        "world_coords": [
+          {
+            "group": "Group1",
+            "stadium": "BaseballHome",
+            "world_coords": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0
+            }
+          }
+        ]
+      },
+      "PtsList": [
+        {
+          "DscID": "104011",
+          "pts": {
+            "dsc_id": "104011",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 1,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 1599.67041015625,
+              "UpperPosY": 656.284423828125,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 1592.5311279296875,
+              "LowerPosY": 1296.80810546875,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 1599.6704,
+                "Y": 656.2844
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 1592.5311,
+                "Y": 1296.8081
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        },
+        {
+          "DscID": "104012",
+          "pts": {
+            "dsc_id": "104012",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 2159.370849609375,
+              "UpperPosY": 636.819580078125,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 2159.909912109375,
+              "LowerPosY": 1341.8670654296875,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 2159.3708,
+                "Y": 636.8196
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 2159.91,
+                "Y": 1341.8671
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        },
+        {
+          "DscID": "104013",
+          "pts": {
+            "dsc_id": "104013",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 2014.6300048828125,
+              "UpperPosY": 603.6820678710938,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 2026.821044921875,
+              "LowerPosY": 1342.6080322265625,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 2014.63,
+                "Y": 603.68207
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 2026.821,
+                "Y": 1342.608
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        },
+        {
+          "DscID": "104014",
+          "pts": {
+            "dsc_id": "104014",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 2009.71337890625,
+              "UpperPosY": 592.9055786132812,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 2030.390625,
+              "LowerPosY": 1349.5452880859375,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 2009.7134,
+                "Y": 592.9056
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 2030.3906,
+                "Y": 1349.5453
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        },
+        {
+          "DscID": "104015",
+          "pts": {
+            "dsc_id": "104015",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 0,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 2176.81494140625,
+              "UpperPosY": 589.1337890625,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 2202.947998046875,
+              "LowerPosY": 1328.6658935546875,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 2176.815,
+                "Y": 589.1338
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 2202.948,
+                "Y": 1328.6659
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        },
+        {
+          "DscID": "104016",
+          "pts": {
+            "dsc_id": "104016",
+            "flip": 0,
+            "Group": "Group1",
+            "Width": 3840,
+            "Height": 2160,
+            "infection_point": 0,
+            "IsStandard": 1,
+            "swipe_base_length": 0.0,
+            "ManualOffsetY": 0,
+            "FocalLength": 14.0,
+            "pts_2d": {
+              "UpperPosX": 1859.6517333984375,
+              "UpperPosY": 578.0206298828125,
+              "MiddlePosX": -1.0,
+              "MiddlePosY": -1.0,
+              "LowerPosX": 1846.9893798828125,
+              "LowerPosY": 1294.248779296875,
+              "Upper": {
+                "IsEmpty": false,
+                "X": 1859.6517,
+                "Y": 578.0206
+              },
+              "Middle": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Lower": {
+                "IsEmpty": false,
+                "X": 1846.9894,
+                "Y": 1294.2488
+              }
+            },
+            "pts_3d": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0,
+              "X3": -1.0,
+              "Y3": -1.0,
+              "X4": -1.0,
+              "Y4": -1.0,
+              "CenterX": -1.0,
+              "CenterY": -1.0,
+              "Point1": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point2": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point3": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Point4": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              },
+              "Center": {
+                "IsEmpty": false,
+                "X": -1.0,
+                "Y": -1.0
+              }
+            },
+            "pts_swipe": {
+              "X1": -1.0,
+              "Y1": -1.0,
+              "X2": -1.0,
+              "Y2": -1.0
+            }
+          }
+        }
+      ]
+    },
+    "points": {
+      "RecordName": "CAL-2025_11_24_18_14_13",
+      "PreSetNumber": 0,
+      "worlds": [
+        {
+          "group": "Group1",
+          "stadium": "BaseballHome",
+          "world_coords": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0
+          }
+        }
+      ],
+      "points": [
+        {
+          "dsc_id": "104011",
+          "ModelName": "BGH1",
+          "point_index": 1,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 1,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 1599.67041015625,
+            "UpperPosY": 656.284423828125,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 1592.5311279296875,
+            "LowerPosY": 1296.80810546875,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 1599.6704,
+              "Y": 656.2844
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 1592.5311,
+              "Y": 1296.8081
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        },
+        {
+          "dsc_id": "104012",
+          "ModelName": "BGH1",
+          "point_index": 2,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 0,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 2159.370849609375,
+            "UpperPosY": 636.819580078125,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 2159.909912109375,
+            "LowerPosY": 1341.8670654296875,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 2159.3708,
+              "Y": 636.8196
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 2159.91,
+              "Y": 1341.8671
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        },
+        {
+          "dsc_id": "104013",
+          "ModelName": "BGH1",
+          "point_index": 3,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 0,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 2014.6300048828125,
+            "UpperPosY": 603.6820678710938,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 2026.821044921875,
+            "LowerPosY": 1342.6080322265625,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 2014.63,
+              "Y": 603.68207
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 2026.821,
+              "Y": 1342.608
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        },
+        {
+          "dsc_id": "104014",
+          "ModelName": "BGH1",
+          "point_index": 4,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 0,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 2009.71337890625,
+            "UpperPosY": 592.9055786132812,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 2030.390625,
+            "LowerPosY": 1349.5452880859375,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 2009.7134,
+              "Y": 592.9056
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 2030.3906,
+              "Y": 1349.5453
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        },
+        {
+          "dsc_id": "104015",
+          "ModelName": "BGH1",
+          "point_index": 5,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 0,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 2176.81494140625,
+            "UpperPosY": 589.1337890625,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 2202.947998046875,
+            "LowerPosY": 1328.6658935546875,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 2176.815,
+              "Y": 589.1338
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 2202.948,
+              "Y": 1328.6659
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        },
+        {
+          "dsc_id": "104016",
+          "ModelName": "BGH1",
+          "point_index": 6,
+          "framenum": 61,
+          "camfps": 60,
+          "flip": 0,
+          "Group": "Group1",
+          "Width": 3840,
+          "Height": 2160,
+          "infection_point": 0,
+          "IsStandard": 1,
+          "swipe_base_length": 0.0,
+          "ManualOffsetY": 0,
+          "FocalLength": 14.0,
+          "pts_2d": {
+            "UpperPosX": 1859.6517333984375,
+            "UpperPosY": 578.0206298828125,
+            "MiddlePosX": -1.0,
+            "MiddlePosY": -1.0,
+            "LowerPosX": 1846.9893798828125,
+            "LowerPosY": 1294.248779296875,
+            "Upper": {
+              "IsEmpty": false,
+              "X": 1859.6517,
+              "Y": 578.0206
+            },
+            "Middle": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Lower": {
+              "IsEmpty": false,
+              "X": 1846.9894,
+              "Y": 1294.2488
+            }
+          },
+          "pts_3d": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0,
+            "X3": -1.0,
+            "Y3": -1.0,
+            "X4": -1.0,
+            "Y4": -1.0,
+            "CenterX": -1.0,
+            "CenterY": -1.0,
+            "Point1": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point2": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point3": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Point4": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            },
+            "Center": {
+              "IsEmpty": false,
+              "X": -1.0,
+              "Y": -1.0
+            }
+          },
+          "pts_swipe": {
+            "X1": -1.0,
+            "Y1": -1.0,
+            "X2": -1.0,
+            "Y2": -1.0
+          }
+        }
+      ]
+    }
+  }
+}

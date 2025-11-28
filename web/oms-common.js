@@ -9,27 +9,57 @@
   OMS.config = null;
 
   window.UI_STATE_TITLE = {
-    0 : "Unknown",
-    1 : "Check System",
-    2 : "Needs Restart",
-    3 : "Restarting...",
-    4 : "Needs Connect",
-    5 : "Connecting...",
-    6 : "Ready",
-    7 : "Recording...",
-    8 : "Recording Error"
+    0 : "Unknown",          // unknown                       | 🟠"chip-orange",
+    // SYSTEM
+    10: "Check System",     // system/check                  | 🟠"chip-orange",
+    11: "Need Restart",     // not on everything             | 🔵"chip-blue",
+    12: "Restarting...",       // on restarting system       | 🔵"chip-blue", Text Aninmation
+    13: "Need Connect",     // on everything + not connect   | 🟡"chip-yellow",
+    14: "Connecting...",    // on connecting system          | 🟡"chip-yellow", Text Aninmation
+    15: "Ready",            // ready (on+connected)          | 🟢"chip-green",
+    // CAMERA
+    20: "Check Camera",     // camera/check                  | 🟠"chip-orange",
+    21: "Need Restart",     // not on everything             | 🔵"chip-blue",
+    22: "Restarting...",       // on restarting camera       | 🔵"chip-blue", Text Aninmation
+    23: "Need Connect",     // on everything + not connect   | 🟡"chip-yellow",   
+    24: "Connecting...",    // on connecting camera          | 🟡"chip-yellow",   Text Aninmation 
+    25: "Ready",            // ready (on+connected)          | 🟢"chip-green",  = 31
+    26: "Recording",        // on recording                  | 🟢"chip-green", Text Aninmation
+    27: "Recording Error",  // on recording                  | 🟠"chip-orange",Text Aninmation  
+    // PRODUCTION
+    30: "Check Camera",     // recording/check               | 🟠"chip-orange",
+    31: "Need Recording",   // not on everything             | 🟡"chip-yellow",   = 25
+    32: "Preparing...",     // on recording camera           | 🟡"chip-yellow",     
+    33: "Product Ready",    // on everything + not connect   | 🟢"chip-green",  = 26
+    34: "Producing...",     // on connecting camera          | 🔴"chip-red", Text Aninmation
+    35: "Creating...",      // waiting until finish jon      | 🔴"chip-red",
   };
 
   window.UI_STATE_COLOR = {
-    0: "chip-orange",
-    1: "chip-orange",
-    2: "chip-yellow",
-    3: "chip-yellow",
-    4: "chip-blue",
-    5: "chip-blue",
-    6: "chip-green",
-    7: "chip-red",
-    8: "chip-red"
+    0 :"chip-orange",
+    // SYSTEM
+    10:"chip-orange",
+    11:"chip-blue",
+    12:"chip-blue",
+    13:"chip-yellow",
+    14:"chip-yellow",
+    15:"chip-green",
+    // CAMERA
+    20:"chip-orange",
+    21:"chip-blue",
+    22:"chip-blue",
+    23:"chip-yellow",   
+    24:"chip-yellow",   
+    25:"chip-green",  //= 31
+    26:"chip-green",  //= 33
+    27:"chip-orange",  
+    // PRODUCTION
+    30:"chip-orange",
+    31:"chip-yellow",   //= 25
+    32:"chip-yellow",    
+    33:"chip-green",  //= 26
+    34:"chip-red",
+    35:"chip-red",
   };
 
   // === inside OMS.initAssets() === 
@@ -88,8 +118,17 @@
       if (colorClass === "chip-red")      el.classList.add("status-work");
       
 
-      // --- 상태 텍스트 애니메이션 ---
-      if (state === 3 || state === 5) {
+      // --- Text Aninmation
+      if (
+        state === 12 ||  // system restarting          | "chip-blue",    // blink
+        state === 14 ||  // system connecting          | "chip-yellow",  // blink
+        state === 22 ||  // camera restarting          | "chip-blue",    // blink
+        state === 24 ||  // camera connecting          | "chip-yellow",  // blink
+        state === 26 ||  // camera recording           | "chip-green",   // blink
+        state === 27 ||  // camera recording error     | "chip-orange",  // blink
+        state === 34     // "Producing...",            | "chip-red",     // blink
+      )
+      {
           el.classList.add("state-anim");
       }
 

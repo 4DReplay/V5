@@ -1,9 +1,7 @@
 {
   "http_host": "0.0.0.0",
   "http_port": 19777,
-  "mtd_host": "10.82.104.210",
-  "mtd_port": 19765,
-  "heartbeat_interval_sec": 3,
+  "heartbeat_interval_sec": 2,
   "restart_ready_timeout_sec": 45,
   "restart_poll_interval_sec": 0.25,
   "restart_post_timeout_sec": 10,

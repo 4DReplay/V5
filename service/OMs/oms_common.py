@@ -21,87 +21,43 @@ from oms_env import *
 # json file save/load
 # ─────────────────────────────────────────────────────────────────────────────
 def fd_load_json_file(filename: str):
-    """
-    Load a JSON file using a relative path under the 'web' directory.
-    Parameters
-    ----------
-    filename : str
-        Virtual path starting with "/", for example:
-            "/config/user-config.json"
-            "/record/record-history.json"
-    Mapping Rule
-    ------------
-    Given V5 project structure:
-        V5/
-          ├─ web/
-          │    ├─ config/
-          │    ├─ record/
-          │    └─ ...
-          └─ src/
-               └─ common/
-                    └─ oms_common.py
-
-    The function maps:
-        "/config/user-config.json"
-            →  V5/web/config/user-config.json
-    Returns
-    -------
-    dict
-        Parsed JSON data, or {} if file does not exist or parsing fails.
-    """
     try:
-        # Base directory of this file (e.g., V5/src/common/)
+        filename = str(filename)      # ★ Path 객체 자동 문자열 변환 ★
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
-        # Root directory of V5 project (two levels up)
         v5_root = os.path.abspath(os.path.join(base_dir, "..", ".."))
-        # Clean leading slash: "/config/user.json" → "config/user.json"
+
         clean = filename.lstrip("/")
-        # Construct absolute path under V5/web/
-        cfg_path = os.path.join(v5_root, "web", clean)
-        cfg_path = os.path.abspath(cfg_path)
+        cfg_path = os.path.abspath(os.path.join(v5_root, "web", clean))
+
+        os.makedirs(os.path.dirname(cfg_path), exist_ok=True)
+
         if not os.path.exists(cfg_path):
-            fd_log.warning(f"JSON file not found: {cfg_path}")
+            fd_log.warning(f"JSON file not found, creating new: {cfg_path}")
+            with open(cfg_path, "w", encoding="utf-8") as f:
+                json.dump({}, f, indent=2, ensure_ascii=False)
             return {}
+
         with open(cfg_path, "r", encoding="utf-8") as f:
             return json.load(f)
+
     except Exception as e:
         fd_log.error(f"load_json_file({filename}) failed: {e}")
         return {}
-def fd_save_json_file(filename: str, data: dict):
-    """
-    Save a JSON file into the 'web' directory using the same relative path rules
-    as fd_load_json_file().
-    Parameters
-    ----------
-    filename : str
-        Virtual path starting with '/', e.g.
-            "/config/user-config.json"
-            "/record/record-history.json"
 
-    data : dict
-        JSON serializable dictionary to write.
-    Returns
-    -------
-    bool
-        True on success, False on failure.
-    """
+
+def fd_save_json_file(filename: str, data: dict):
     try:
-        # Base directory: e.g. V5/src/common/
+        filename = str(filename)      # ★ Path 객체 자동 문자열 변환 ★
+
         base_dir = os.path.dirname(os.path.abspath(__file__))
         v5_root = os.path.abspath(os.path.join(base_dir, "..", ".."))
 
-        # Clean leading slash
         clean = filename.lstrip("/")
+        save_path = os.path.abspath(os.path.join(v5_root, "web", clean))
 
-        # Full path = V5/web/<clean>
-        save_path = os.path.join(v5_root, "web", clean)
-        save_path = os.path.abspath(save_path)
+        os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-        # Ensure directory exists
-        save_dir = os.path.dirname(save_path)
-        os.makedirs(save_dir, exist_ok=True)
-
-        # Write JSON
         with open(save_path, "w", encoding="utf-8") as f:
             json.dump(data, f, indent=2, ensure_ascii=False)
 
@@ -135,8 +91,32 @@ def fd_format_hms_ms(ms_value: float):
     return f"{h:02d}:{m:02d}:{s:02d}.{ms:03d}"
 
 # ─────────────────────────────────────────────────────────────────────────────
-# adjust files
+# files control
 # ─────────────────────────────────────────────────────────────────────────────
+def fd_http_write(handler, code=200, body=b"", ct="application/json; charset=utf-8"):
+    handler.send_response(code)
+    handler.send_header("Content-Type", ct)
+    handler.send_header("Cache-Control", "no-cache, no-transform")
+    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+    handler.send_header("Content-Length", str(len(body)))
+    handler.end_headers()
+    try:
+        handler.wfile.write(body)
+    except:
+        pass
+def fd_http_send_json(handler, obj, status=200):
+    body = json.dumps(obj).encode("utf-8")
+    handler.send_response(status)
+    handler.send_header("Content-Type", "application/json; charset=utf-8")
+    handler.send_header("Content-Length", str(len(body)))
+    handler.send_header("Cache-Control", "no-cache, no-transform")
+    handler.send_header("Access-Control-Allow-Origin", "*")
+    handler.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+    handler.send_header("Access-Control-Allow-Headers", "Content-Type")
+    handler.end_headers()
+    handler.wfile.write(body)
 def fd_find_adjustinfo_file():
     """
     Search for AdjustInfo file inside:
@@ -238,20 +218,136 @@ def fd_load_adjust_info(adj_root="C:/4DReplay/V5/daemon/EMd/AdjustInfo/0"):
 
     return result
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# USER Config
+# ─────────────────────────────────────────────────────────────────────────────
+def fd_load_config(p:Path)->dict:
+    txt=p.read_text(encoding="utf-8")
+    return json.loads(fd_strip_json5(txt))
+def fd_apply_runtime(handler, cfg: dict):
+        ch = []
+
+        hb = float(cfg.get("heartbeat_interval_sec", handler.heartbeat))
+        if hb > 0 and hb != handler.heartbeat:
+            handler.heartbeat = hb
+            ch.append("heartbeat_interval_sec")
+
+        if isinstance(cfg.get("nodes"), list):
+            handler.nodes = list(cfg["nodes"])
+            ch.append("nodes")
+
+        if isinstance(cfg.get("process_alias"), dict):
+            handler.process_alias = {**PROCESS_ALIAS_DEFAULT, **cfg["process_alias"]}
+            ch.append("process_alias")
+
+        return ch
+def fd_oms_config(handler, body):
+    """
+    Save config file (raw text).
+    Request body is already the full config text.
+    """
+    try:
+        PATH_CFG.write_bytes(body)
+        return fd_http_write(
+            handler,
+            200,
+            json.dumps({"ok": True}).encode(),
+            "application/json"
+        )
+    except Exception as e:
+        return fd_http_write(
+            handler,
+            500,
+            json.dumps({"ok": False, "error": f"save failed: {e}"}).encode(),
+            "application/json"
+        )
+def fd_oms_config_update(handler, body):
+    """
+    Update config fields (JSON object).
+    """
+    try:
+        data = json.loads(body.decode("utf-8", "ignore"))
+
+        ok, resp, err = fd_handle_config_update(data)
+        if not ok:
+            return fd_http_write(
+                handler,
+                400,
+                json.dumps({"ok": False, "error": err}).encode(),
+                "application/json"
+            )
+
+        return fd_http_write(
+            handler,
+            200,
+            json.dumps(resp).encode(),
+            "application/json"
+        )
+
+    except Exception as e:
+        return fd_http_write(
+            handler,
+            500,
+            json.dumps({"ok": False, "error": f"update failed: {e}"}).encode(),
+            "application/json"
+        )
+def fd_oms_config_apply(handler, orch):
+    try:
+        cfg = fd_load_config(PATH_CFG)
+    except Exception as e:
+        return fd_http_write(
+            handler,
+            400,
+            json.dumps({"ok": False, "error": f"load_config failed: {e}"}).encode(),
+            "application/json"
+        )
+    try:
+        changed = fd_apply_runtime(orch, cfg)
+        return fd_http_write(
+            handler,
+            200,
+            json.dumps({"ok": True, "applied": changed}).encode(),
+            "application/json"
+        )
+    except Exception as e:
+        return fd_http_write(
+            handler,
+            500,
+            json.dumps({"ok": False, "error": f"apply failed: {e}"}).encode(),
+            "application/json"
+        )
+def fd_serve_static(handler, rel):
+    fp=(PATH_WEB/rel.lstrip("/")).resolve()
+    base=PATH_WEB.resolve()
+    if not fp.is_file() or not str(fp).startswith(str(base)):
+        handler.send_response(404)
+        handler.send_header("Content-Type","application/json; charset=utf-8")
+        handler.send_header("Cache-Control","no-store")
+        b=b'{"ok":false,"error":"not found"}'
+        handler.send_header("Content-Length",str(len(b))); handler.end_headers(); handler.wfile.write(b); return
+    data=fp.read_bytes()
+    handler.send_response(200)
+    handler.send_header("Content-Type", fd_mime(fp))
+    handler.send_header("Cache-Control","no-store")
+    handler.send_header("Content-Length",str(len(data))); handler.end_headers();
+    try: handler.wfile.write(data)
+    except: pass
+
 # ─────────────────────────────────────────────────────────────────────────────
 # USER Config
 # ─────────────────────────────────────────────────────────────────────────────
 def fd_load_user_config():
     try:
-        if CFG_USER.exists():
-            return json.loads(CFG_USER.read_text(encoding="utf-8"))
+        if FILE_USER_CFG.exists():
+            return json.loads(FILE_USER_CFG.read_text(encoding="utf-8"))
         return {}
     except Exception as e:
         fd_log.error(f"[config] load_user_config fail: {e}")
         return {}
 def fd_save_user_config(cfg: dict):
     try:
-        CFG_USER.write_text(
+        FILE_USER_CFG.write_text(
             json.dumps(cfg, indent=2, ensure_ascii=False),
             encoding="utf-8"
         )
@@ -346,7 +442,7 @@ def fd_append_mtd_debug(direction, host, port, message=None, response=None, erro
     각 /oms/mtd-query 호출마다 JSONL 한 줄씩 기록.
     """
     try:
-        fn = TRACE_DIR / f"mtd_debug_{time.strftime('%Y%m%d%H%M')}.json"
+        fn = PATH_TRACE / f"mtd_debug_{time.strftime('%Y%m%d%H%M')}.json"
         rec = {
             "ts": time.time(),
             "dir": direction,
@@ -568,7 +664,9 @@ def fd_http_fetch(host:str, port:int, method:str, path:str, body:bytes|None, hea
 # EXPORTS
 # ────────────────────────────────────────────────────────────
 __all__ = [
-    "fd_load_json_file","fd_save_json_file","fd_update_prefix_item","fd_handle_config_update","fd_update_production_target",    # config
+    "fd_load_config","fd_load_json_file","fd_save_json_file","fd_update_prefix_item","fd_handle_config_update","fd_update_production_target",    # config
+    "fd_oms_config","fd_oms_config_update","fd_oms_config_apply",
+    "fd_serve_static","fd_http_write","fd_http_send_json",
     "fd_format_hms_verbose","fd_format_datetime", "fd_format_hms_ms",
     "fd_load_adjust_info","fd_find_adjustinfo_file",
     "fd_append_mtd_debug","fd_daemon_name_for_inside",

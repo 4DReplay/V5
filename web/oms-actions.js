@@ -118,25 +118,6 @@
   // ========================================================================
   // System connect [oms/system/connect]
   // ========================================================================
-  async function getSwitchIpList() {
-    try {
-      const res = await fetch(API_BASE + "/oms/camera/state", { cache: "no-store" });
-      const data = await res.json();
-
-      if (!data.cameras || !Array.isArray(data.cameras)) return [];
-
-      const unique = new Set();
-      data.cameras.forEach(cam => {
-        if (cam.SCdIP) unique.add(cam.SCdIP);
-      });
-
-      return [...unique].map(ip => ({ ip }));
-    } catch (e) {
-      console.error("Failed to load /oms/camera/state", e);
-      return [];
-    }
-  }
-
   NS.sysConnect = async function (extra = {}) {
     if (extra && typeof extra.mtdMessage === 'object') {
       const host = extra.mtd_host || location.hostname;

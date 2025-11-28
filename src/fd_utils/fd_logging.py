@@ -68,7 +68,7 @@ elif FD_DAEMON_NAME == "AIc":
     DEFAULT_LOG_DIR = str(PROJECT_ROOT / "daemon" / "AIc" / "log")
 else:
     DEFAULT_LOG_DIR = str(PROJECT_ROOT / "daemon" / FD_DAEMON_NAME / "log")
-LOG_DIR = _ensure_writable_dir(_env_dir if _env_dir else DEFAULT_LOG_DIR)
+PATH_LOG = _ensure_writable_dir(_env_dir if _env_dir else DEFAULT_LOG_DIR)
 
 # =========================
 # File Paths (Daily append)
@@ -76,11 +76,11 @@ LOG_DIR = _ensure_writable_dir(_env_dir if _env_dir else DEFAULT_LOG_DIR)
 _cutoff = time.time() - RETENTION_DAYS * 24 * 3600
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
-RUN_LOG_FILE   = os.path.join(LOG_DIR, f"{TODAY}.log")
+RUN_LOG_FILE   = os.path.join(PATH_LOG, f"{TODAY}.log")
 FIXED_LOG_FILE = RUN_LOG_FILE
 
 # 오래된 로그 삭제
-for p in glob.glob(os.path.join(LOG_DIR, "????-??-??.log")):
+for p in glob.glob(os.path.join(PATH_LOG, "????-??-??.log")):
     try:
         if os.path.getmtime(p) < _cutoff:
             os.remove(p)
@@ -212,6 +212,6 @@ fd_log = fd_logger_instance.get_logger()
 fd_log.print = fd_logger_instance.print
 fd_log.close = fd_logger_instance.close
 
-fd_log.info(f"[fd_logging] LOG_DIR={LOG_DIR}")
+fd_log.info(f"[fd_logging] PATH_LOG={PATH_LOG}")
 fd_log.info(f"[fd_logging] FIXED_LOG_FILE={FIXED_LOG_FILE}")
 fd_log.info(f"[fd_logging] RUN_LOG_FILE={RUN_LOG_FILE}")

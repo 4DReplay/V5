@@ -61,11 +61,17 @@ class FDMsg:
     # 문자열(메시지)을 할당
     def assign(self, msg: str) -> bool:
         try:
-            self.data.update(json.loads(msg))
-        except json.JSONDecodeError as e:
-            print("JSON 파싱 오류:", e)
-        except TypeError as e:
-            print("타입 에러:", e)
+            if isinstance(msg, dict):
+                self.data.update(msg)
+            elif isinstance(msg, str):
+                self.data.update(json.loads(msg))
+            else:
+                self.format_err = "Unsupported message type"
+                return False
+        except Exception as e:
+            print("FDMsg.assign error:", e)
+            return False
+
         return self.is_valid()
     
     

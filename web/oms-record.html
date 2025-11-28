@@ -1,4 +1,35 @@
-﻿<!doctype html>
+﻿<!--
+  record state
+  window.UI_STATE_TITLE = {
+    0 : "Unknown",          # unknown                       | 🟠"chip-orange",
+    // SYSTEM
+    10: "Check System",     # system/check                  | 🟠"chip-orange",
+    11: "Need Restart",     # not on everything             | 🔵"chip-blue",
+    12: "Restarting",       # on restarting system          | 🔵"chip-blue",
+    13: "Need Connect",     # on everything + not connect   | 🟡"chip-yellow",
+    14: "Connecting...",    # on connecting system          | 🟡"chip-yellow",
+    15: "Ready",            # ready (on+connected)          | 🟢"chip-green",
+    // CAMERA
+    20: "Check Camera",     # camera/check                  | 🟠"chip-orange",
+    21: "Need Restart",     # not on everything             | 🔵"chip-blue",
+    22: "Restarting",       # on restarting camera          | 🔵"chip-blue",
+    23: "Need Connect",     # on everything + not connect   | 🟡"chip-yellow",   
+    24: "Connecting...",    # on connecting camera          | 🟡"chip-yellow",   
+    25: "Ready",            # ready (on+connected)          | 🟢"chip-green",  = 31
+    26: "Recording",        # on recording                  | 🟢"chip-green",  = 33
+    27: "Recording Error",  # on recording                  | 🟠"chip-orange",  
+    // PRODUCTION
+    30: "Check Camera",     # recording/check               | 🟠"chip-orange",
+    31: "Need Recording",   # not on everything             | 🟡"chip-yellow",   = 25
+    32: "Preparing...",     # on recording camera           | 🟡"chip-yellow",    
+    33: "Product Ready",    # on everything + not connect   | 🟢"chip-green",  = 26
+    34: "Producing...",     # on connecting camera          | 🔴"chip-red",
+    35: "Creating...",      # waiting until finish jon      | 🔴"chip-red",
+  };
+-->
+
+
+<!doctype html>
 <html lang="en">
 <head>
   <meta charset="utf-8" />  
@@ -123,77 +154,56 @@
   
   <!-- Target Selector -->
   <div class="panel" style="margin-top:16px;">
-    <h3 style="margin:0 0 10px;">Production Target</h3>
+    <h3 style="margin:0 0 10px;">🎯 Production Target</h3>
     <!-- Group Selector -->
     <select id="prodGroupSelect" style="margin-bottom:6px;"></select>
     <!-- Item Selector -->
     <select id="prodItemSelect"></select>
   </div>
 
-  <!-- Making Toggle button -->
+  <!-- Production Toggle button -->
   <div class="toolbar" style="justify-content:flex-start">
-    <button id="btnMakingToggle" class="btn-secondary" style="display:none;">⏺ Making Start</button>
+    <button id="btnProductionToggle" class="btn-secondary" style="display:none;">⏺ Production Start</button>
   </div>
 
 
   <!-- Produced Videos Sources -->
-  <!--
   <div class="panel" style="margin-top:16px; position:relative;">
     <h3 style="margin:0 0 10px;">
-      Produced Video
+      🎬 Produced List
       <span style="float:right; display:flex; gap:10px; align-items:center;">
-        <select id="historyPrefixFilter"></select>
-        <input type="date" id="historyDatePicker">
+        <select id="prodTargetFilter"></select>
+        <input type="date" id="prodDatePicker">
       </span>
     </h3>
-
-    <table id="recordTable">
+    <table id="TableProduced">
       <thead>
         <tr>
           <th data-sort="idx">Index</th>
-          <th data-sort="date">Date</th>
           <th data-sort="target">Target</th>
           <th data-sort="start">Start</th>
           <th data-sort="during">During</th>
-          <th data-sort="file">File</th>
+          <th data-sort="folder">Folder</th>
         </tr>
       </thead>
       <tbody></tbody>
-    </table>
+    </table>    
   </div>
-  -->
 
   <!-- Original Video Sources -->
   <div class="panel" style="margin-top:16px; position:relative;">
     <h3 style="margin:0 0 10px;">
-      Original Footage
+      🗂️ Original Footage
       <span style="float:right; display:flex; gap:10px; align-items:center;">
-        <select id="historyTargetFilter"></select>
-        <input type="date" id="historyDatePicker">
+        <select id="recordTargetFilter"></select>
+        <input type="date" id="recordDatePicker">
       </span>
     </h3>
 
-    <!--
-    <table id="recordTable">
+    <table id="TableRecord">
       <thead>
         <tr>
           <th data-sort="idx">Index</th>
-          <th data-sort="date">Date</th>
-          <th data-sort="target">Target</th>
-          <th data-sort="start">Start</th>
-          <th data-sort="end">End</th>
-          <th data-sort="during">During</th>
-          <th data-sort="file">File</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    -->
-    <table id="recordTable">
-      <thead>
-        <tr>
-          <th data-sort="idx">Index</th>
-          <th data-sort="target">Target</th>
           <th data-sort="start">Start</th>
           <th data-sort="during">During</th>
           <th data-sort="file">File</th>
@@ -207,9 +217,9 @@
   <script>
     // button bindings
     document.addEventListener("DOMContentLoaded", () => {
-    // -------------------------------------------------------
+    // ────────────────────────────────────────────
     // 🔥 prevState MUST be here (global inside DOMContentLoaded)
-    // -------------------------------------------------------
+    // ────────────────────────────────────────────
     let prevState = null;
     let sortColumn = "date";
     let sortDir = "desc";
@@ -217,46 +227,100 @@
     const m = location.pathname.match(/^\/proxy\/([^/]+)\//);
     const PROXY_PREFIX = m ? "/proxy/" + encodeURIComponent(m[1]) : "";
 
-    // -------------------------------
-    // 2) Record 상태 UI (Camera state)
-    // -------------------------------
+    // ────────────────────────────────────────────
+    // Record 상태 UI (Camera state)
+    // ────────────────────────────────────────────
 
     const recStateChip = document.getElementById("recStateChip");
     const recMsgChip   = document.getElementById("recMessageChip");
-
     async function refreshRecordState() {
       try {
-        const r = await fetch("/oms/camera/state", { cache: "no-store" });
-        const cam = await r.json();
-
+        const cam_record_state = await fetch("oms/record/state", { cache: "no-store" });
+        const cam_record = await cam_record_state.json();        
+        console.log(cam_record.message)
+        
         applyStateAndMessage({
-          state: cam.state,
-          message: cam.message,
+          state: cam_record.state,
+          message: cam_record.message,
           stateEl: recStateChip,
           messageEl: recMsgChip
         });
 
-        updateRecordButtons(cam.state);
+        // Record / Prudution 버튼 표시
+        updateRecordButtons(cam_record.state);
 
         // -----------------------------------------------------------
         // 🔥 STATE CHANGE DETECTION — works because prevState exists
+        /*
+        30: "Check Camera",     // recording/check               | 🟠"chip-orange",
+        31: "Need Recording",   // not on everything             | 🟡"chip-yellow",   = 25
+        32: "Preparing...",     // on recording camera           | 🟡"chip-yellow",     
+        33: "Product Ready",    // on everything + not connect   | 🟢"chip-green",  = 26
+        34: "Producing...",     // on connecting camera          | 🔴"chip-red", Text Aninmation
+        35: "Creating...",      // waiting until finish jon      | 🔴"chip-red",
+        */
         // -----------------------------------------------------------
-        if (prevState !== null) {
-          // 녹화 시작: Ready(6) → Recording(7/8)
-          if (prevState === 6 && (cam.state === 7 || cam.state === 8)) {
-              console.log("Recording started → Reload table");
-              load_record_table();
-          }
-          // 녹화 종료: Recording(7/8) → Ready(6)
-          if ((prevState === 7 || prevState === 8) && cam.state === 6) {
-              console.log("Recording finished → Reload table");
-              load_record_table();
-          }
+        if (prevState === null) {
+            prevState = cam_record.state;   // 초기화
+            return;                         // 첫 루프는 비교 패스
         }
 
-        // update prevState at end
-        prevState = cam.state;
+        // RECORDING STARTED (from Ready/Record Need)
+        if (
+          (prevState === 31 || prevState === 32) &&   // from Ready/Record Need
+          cam_record.state === 33                     // to Recording...
+        )     
+        {
+          console.log("Recording started → Reload table");          
+          load_record_table();
+          // refresh delay retries
+          setTimeout(load_record_table, 500);
+          setTimeout(load_record_table, 1500);
+          setTimeout(load_record_table, 3000);
+        }
 
+        // RECORDING STOPPED (from Recording/Error)
+        if (
+          prevState === 33 &&     // from Recording/Error
+          cam_record.state === 31 // to Ready/Record Need
+        )                
+        {
+          console.log("Recording started → Reload table");
+          load_record_table();
+          // refresh delay retries
+          setTimeout(load_record_table, 500);
+          setTimeout(load_record_table, 1500);
+        }
+
+        // MAKING STARTED (from Ready/Record Need)
+        if (
+          (prevState === 33) &&   // from Ready/Record Need
+          cam_record.state === 34                     // to Recording...
+        )     
+        {
+          console.log("Recording started → Reload table");
+          load_produced_table();
+          // refresh delay retries
+          setTimeout(load_produced_table, 500);
+          setTimeout(load_produced_table, 1500);
+          setTimeout(load_produced_table, 3000);
+        }
+
+        // MAKING STOP (from Ready/Record Need)
+        if (
+          (prevState === 34 || prevState === 35) &&   // from Ready/Record Need
+          cam_record.state === 33                     // to Recording...
+        )     
+        {
+          console.log("Recording started → Reload table");
+          load_produced_table();
+          // refresh delay retries
+          setTimeout(load_produced_table, 500);
+          setTimeout(load_produced_table, 1500);
+          setTimeout(load_produced_table, 3000);
+        }
+ 
+        prevState = cam_record.state;
       } catch (err) {
         console.warn("record state load error", err);
       }
@@ -266,53 +330,78 @@
     refreshRecordState();
     setInterval(refreshRecordState, 1500);
 
-    // -----------------------------------------
-    // Record / Making 버튼 표시 규칙
-    // -----------------------------------------
+    // ────────────────────────────────────────────
+    // Record / Production Toggle Button Update
+    // ────────────────────────────────────────────
     function updateRecordButtons(state) {
       const btnRecord = document.getElementById("btnRecordToggle");
-      const btnMaking = document.getElementById("btnMakingToggle");
-
-      if (!btnRecord || !btnMaking) return;
-
-      // 기본적으로 숨김
+      const btnProduction = document.getElementById("btnProductionToggle");
+      if (!btnRecord || !btnProduction) return;
+      // basically hide both
       btnRecord.style.display = "none";
-      btnMaking.style.display = "none";
+      btnProduction.style.display = "none";
 
-      // Ready → Record Start
-      if (state === 6) {
+      // -----------------------------------------------------------
+      // 🔥 STATE CHANGE DETECTION — works because prevState exists
+      /*
+      30: "Check Camera",     // recording/check               | 🟠"chip-orange",
+      31: "Need Recording",   // not on everything             | 🟡"chip-yellow",   = 25
+      32: "Preparing...",     // on recording camera           | 🟡"chip-yellow",     
+      33: "Product Ready",    // on everything + not connect   | 🟢"chip-green",  = 26
+      34: "Producing...",     // on connecting camera          | 🔴"chip-red", Text Aninmation
+      35: "Creating...",      // waiting until finish jon      | 🔴"chip-red",
+      */
+      // -----------------------------------------------------------
+
+      // Ready → Record Start ()
+      // 7 : "Ready",            // ready to go                  | "chip-green",
+      if (state === 31 || state === 32 ) {
         btnRecord.style.display = "inline-block";
         btnRecord.textContent = "🟢 Record Start";
         return;
       }
 
-      // Full Recording → Record Stop + Making Start
-      if (state === 7) {
+      // Full Recording → Record Stop + Production Ready
+      // 8 : "Recording...",     // on recording                 | "chip-green",   
+      // 9 : "Recording Error",  // something wrong on recording | "chip-orange",
+      if (state === 33 ) {
         btnRecord.style.display = "inline-block";
         btnRecord.textContent = "🟥 Record Stop";
-
-        btnMaking.style.display = "inline-block";
-        btnMaking.textContent = "▶️ Making Start";
+        // display Production button
+        btnProduction.style.display = "inline-block";
+        btnProduction.textContent = "▶️ Production Ready";
         return;
       }
 
       // Partial Recording → Record Stop
-      if (state === 8) {
+      if (state === 34) {
         btnRecord.style.display = "inline-block";
         btnRecord.textContent = "🟥 Record Stop";
+        // display Production button
+        btnProduction.style.display = "inline-block";
+        btnProduction.textContent = "🟥 Producing Stop";
         return;
       }
 
-      // 나머지는 버튼 없음
+      // on producing → Record Stop + Producing Stop
+      if (state === 35) {
+        btnRecord.style.display = "inline-block";
+        btnRecord.textContent = "🟥 Record Stop";
+        // display Production button
+        btnProduction.style.display = "inline-block";
+        btnProduction.textContent = "🟥 Producing Stop";
+        return;
+      }
     }
+
     function parseRecordName(name) {
         const p = name.split("_");
         return new Date(`${p[0]}-${p[1]}-${p[2]} ${p[3]}:${p[4]}:${p[5]}`);
     }
 
-    // -------------------------------
-    // 3) Dashboard / Config 버튼
-    // -------------------------------
+    // ────────────────────────────────────────────
+    // Dashboard / Config 버튼
+    // ────────────────────────────────────────────
     const btnDashboard = document.getElementById("btnDashboard");
     if (btnDashboard) {
       btnDashboard.onclick = () =>
@@ -323,16 +412,15 @@
       btnCamera.onclick = () =>
         (window.location.href = PROXY_PREFIX + "/camera");
     }
-
     const btnConfig = document.getElementById("btnConfig");
     if (btnConfig) {
       btnConfig.onclick = () =>
         (window.location.href = PROXY_PREFIX + "/user");
     }
 
-    // -------------------------------
-    // 4) Procution Target Loader
-    // -------------------------------
+    // ────────────────────────────────────────────
+    // Procution Target Loader (ComboBox)
+    // ────────────────────────────────────────────
     function load_production_target() {
       fetch("/web/config/user-config.json?ts=" + Date.now(), { cache: "no-store" })
         .then(r => r.json())
@@ -387,7 +475,6 @@
         });
     }
     window.addEventListener("oms:config-ready", load_production_target);
-
     function save_production_target(groupIdx, itemIdx) {
       const payload = {
         "production-target": {
@@ -405,10 +492,9 @@
         .then(res => console.log("production-target updated:", payload, res))
         .catch(err => console.error("production-target update error:", err));
     }
-
-    function build_target_filter(items) {
-      const sel = document.getElementById("historyTargetFilter");
-      const prevValue = sel.value;   // ← 현재 선택 상태 저장
+    function build_record_target_filter(items) {
+      const sel = document.getElementById("recordTargetFilter");
+      const prevValue = sel.value;
       sel.innerHTML = "";
 
       const prefixes = [...new Set(items.map(x => x.production).filter(x => x))];
@@ -425,162 +511,220 @@
         sel.appendChild(opt);
       });
 
-      // 이전 선택 복원
+      // restore previous selection
       if (prefixes.includes(prevValue) || prevValue === "") {
         sel.value = prevValue;
       }
 
       sel.onchange = () => load_record_table();
     }
+    function build_produced_target_filter(items) {
+      const sel = document.getElementById("prodTargetFilter");
+      const prevValue = sel.value;
+      sel.innerHTML = "";
 
-    // -------------------------------
-    // 5) Record History (샘플)
-    // -------------------------------
-    function load_record_table() {
-      fetch("/web/record/record_history.json?ts=" + Date.now())
+      const prefixes = [...new Set(items.map(x => x.production).filter(x => x))];
+
+      const optAll = document.createElement("option");
+      optAll.value = "";
+      optAll.textContent = "ALL";
+      sel.appendChild(optAll);
+
+      prefixes.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p;
+        opt.textContent = p;
+        sel.appendChild(opt);
+      });
+
+      if (prefixes.includes(prevValue) || prevValue === "") {
+        sel.value = prevValue;
+      }
+
+      sel.onchange = () => load_produced_table();
+    }
+
+    // ────────────────────────────────────────────
+    // Product List
+    /*
+    "2025_11_27_15_38_42": 
+    {
+      "file-location": "/web/record/history/recorded/2025_11_28_09_45_31.json",
+      "production-target": "23XI Racing - Team_23",
+      "record-start-time": "2025-11-28 09:45:33",
+      "record-end-time": "2025-11-28 09:45:56",
+      "recording-time": "00:00:22.825"      
+    }
+    */
+    // ────────────────────────────────────────────
+    function load_produced_table() {
+      fetch("/web/record/product_history.json?ts=" + Date.now())
         .then(r => r.json())
         .then(json => {
-          const tbody = document.querySelector("#recordTable tbody");
+          const tbody = document.querySelector("#TableProduced tbody");
           tbody.innerHTML = "";
+          if (!json.history) return;
 
-          if (!json || !json.history) return;
-
-          // -----------------------------------------
-          // 1) Build array
-          // -----------------------------------------
           let items = json.history.map(h => {
             const key = Object.keys(h)[0];
             const data = h[key];
+            const isRecording = !data["product-end-time"];
 
             return {
               key,
-              // production-target 파싱
-              production: (() => {
-                const pt = data["production-target"];
-                if (!pt) return "";
-                if (typeof pt === "string") return pt;          // "23XI Racing - Team_35"
-                if (typeof pt === "object") return pt.name || ""; // {name:"23XI Racing - Team_35"}
-                return "";
-              })(),
-              start: data["record-start-time"] || "",
-              end: data["record-end-time"] || "",
-              during: data["recording-time"] || "",
-              duringMs: data["recording-time-ms"] || 0,
-              file: data["file-location"] || ""
+              isRecording,
+              production: data["product-target"] || "",
+              start: data["product-start-time"] || "",
+              end: data["product-end-time"] || "",
+              during: data["producing-time"] || (isRecording ? "Producing..." : ""),
+              file: data["product-save-path"] || ""
             };
           });
 
-          // -----------------------------------------
-          // 2-A) Build target filter selectbox
-          // -----------------------------------------
-          build_target_filter(items);
-    
-          // -----------------------------------------
-          // 2-C) Target filter
-          // -----------------------------------------
-          const pfilter = document.getElementById("historyTargetFilter").value;
+          // ① target filter
+          const pfilter = document.getElementById("prodTargetFilter").value;
           if (pfilter) {
-            items = items.filter(it => it.production  === pfilter);
+            items = items.filter(it => it.production === pfilter);
           }
 
-          // -----------------------------------------
-          // 2-B) Date filter
-          // -----------------------------------------
-          const datePick = document.getElementById("historyDatePicker").value;
+          // ② date filter
+          const datePick = document.getElementById("prodDatePicker").value;
           if (datePick) {
             items = items.filter(it => it.start.startsWith(datePick));
           }
 
-          // -----------------------------------------
-          // 3) Sorting
-          // -----------------------------------------
+          // ③ sort: producing first, then by date DESC
           items.sort((a, b) => {
-            const mul = sortDir === "asc" ? 1 : -1;
-
-            if (sortColumn === "date") {
-              return mul * (parseRecordName(a.key) - parseRecordName(b.key));
-            }
-            if (sortColumn === "start") {
-              return mul * (new Date(a.start) - new Date(b.start));
-            }
-            if (sortColumn === "end") {
-              return mul * (new Date(a.end) - new Date(b.end));
-            }
-            if (sortColumn === "during") {
-              return mul * (a.duringMs - b.duringMs);
-            }
-            return 0;
+            if (a.isRecording && !b.isRecording) return -1;
+            if (!a.isRecording && b.isRecording) return 1;
+            return new Date(b.start) - new Date(a.start);
           });
 
-          // -----------------------------------------
-          // 4) Render
-          // -----------------------------------------
-          /*
+          // ④ render
           items.forEach((r, idx) => {
-            const tr = document.createElement("tr");            
+            const tr = document.createElement("tr");
+            const duringHtml = r.isRecording
+                ? `<span class="recording-highlight">Producing...</span>`
+                : r.during;
+
+            if (r.isRecording) tr.classList.add("recording-row");
+
             tr.innerHTML = `
               <td>${idx + 1}</td>
-              <td>${r.key}</td>
               <td>${r.production}</td>
               <td>${r.start}</td>
-              <td>${r.end}</td>
-              <td>${r.during}</td>
-              <td><a class="file-link" href="${r.file}">${r.file}</a></td>
+              <td>${duringHtml}</td>
+              <td>${r.file}</td>
             `;
             tbody.appendChild(tr);
-          */
+          });
+
+          // Build Filter Box
+          build_produced_target_filter(items);
+        });
+    }
+
+
+    // ────────────────────────────────────────────
+    // Record History
+    /*
+    "2025_11_27_15_38_42": 
+    {
+      "file-location": "/web/record/history/recorded/2025_11_28_09_45_31.json",
+      "production-target": "23XI Racing - Team_23",
+      "record-start-time": "2025-11-28 09:45:33",
+      "record-end-time": "2025-11-28 09:45:56",
+      "recording-time": "00:00:22.825"    
+    }
+    */
+    // ────────────────────────────────────────────
+    function load_record_table() {
+      fetch("/web/record/record_history.json?ts=" + Date.now())
+        .then(r => r.json())
+        .then(json => {
+          const tbody = document.querySelector("#TableRecord tbody");
+          tbody.innerHTML = "";
+          if (!json.history) return;
+
+          let items = json.history.map(h => {
+            const key = Object.keys(h)[0];
+            const data = h[key];
+            const isRecording = !data["record-end-time"];
+
+            return {
+              key,
+              isRecording,
+              production: data["production-target"] || "",
+              start: data["record-start-time"] || "",
+              end: data["record-end-time"] || "",
+              during: data["recording-time"] || (isRecording ? "Recording..." : ""),
+              file: data["file-location"] || ""
+            };
+          });
+
+          // ① target filter
+          const pfilter = document.getElementById("recordTargetFilter").value;
+          if (pfilter) {
+            items = items.filter(it => it.production === pfilter);
+          }
+
+          // ② date filter
+          const datePick = document.getElementById("recordDatePicker").value;
+          if (datePick) {
+            items = items.filter(it => it.start.startsWith(datePick));
+          }
+
+          // ③ sort
+          items.sort((a, b) => {
+            if (a.isRecording && !b.isRecording) return -1;
+            if (!a.isRecording && b.isRecording) return 1;
+            return new Date(b.start) - new Date(a.start);
+          });
+
+          // ④ render
           items.forEach((r, idx) => {
-            const tr = document.createElement("tr");            
+            const tr = document.createElement("tr");
+            const duringHtml = r.isRecording
+                ? `<span class="recording-highlight">Recording...</span>`
+                : r.during;
+
+            if (r.isRecording) tr.classList.add("recording-row");
+
             tr.innerHTML = `
               <td>${idx + 1}</td>
-              <td>${r.production}</td>
               <td>${r.start}</td>
-              <td>${r.during}</td>
-              <td><a class="file-link" href="${r.file}">${r.file}</a></td>
+              <td>${duringHtml}</td>
+              <td>${r.file}</td>
             `;
-            tbody.appendChild(tr);            
+            tbody.appendChild(tr);
           });
-        })
-        .catch(err => console.error("record table load error:", err));
-    }
-   
-    // -------------------------------
-    // 6) Record/Making 버튼
-    // -------------------------------
-    const makingBtn = document.getElementById("btnMakingToggle");
 
-    document.getElementById("historyDatePicker").addEventListener("change", () => {
-      load_record_table();
-    });
-    const ps = document.getElementById("targetSelect");
-    if (ps) {
-      ps.addEventListener("change", (e) => {
-        save_selected_target(e.target.selectedIndex);
-      });
+          // build filter
+          build_record_target_filter(items);
+        });
     }
-    document.getElementById("historyTargetFilter").onchange = () => {
-      load_record_table();
-    };
-    // 🔥 버튼 클릭 동작만 유지하고 상태값은 서버 state 기반으로만 제어
+
+    // ────────────────────────────────────────────
+    // Record Button
+    // ────────────────────────────────────────────
+    document.getElementById("prodTargetFilter").onchange = load_produced_table;
+    document.getElementById("prodDatePicker").onchange = load_produced_table;
+    document.getElementById("recordTargetFilter").onchange = load_record_table;
+    document.getElementById("recordDatePicker").onchange = load_record_table;
+
+    // ────────────────────────────────────────────
+    // 🔥btnRecordToggle (RECORD) click handler
+    // ────────────────────────────────────────────
     document.getElementById("btnRecordToggle").onclick = () => {
       const text = document.getElementById("btnRecordToggle").textContent.trim();
-
-      // Record Stop
-      if (text.includes("Record Stop")) {
-        fetch("/oms/camera/action/record/stop", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" }
-        });
-        return;
-      }
-
+      // ────────────────────────────────────────────
+      // 🚀 Action Record Start
+      // ────────────────────────────────────────────
       if (text.includes("Record Start")) {
         const gSel = document.getElementById("prodGroupSelect").selectedIndex;
         const iSel = document.getElementById("prodItemSelect").selectedIndex;
-
         const pt = window.loadedProductionTarget;
         const prodName = getSelectedTarget(pt.groups, gSel, iSel);
-
         fetch("/oms/camera/action/record/start", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -590,6 +734,20 @@
             }
           })
         });
+        // 서버가 record_history.json 업데이트하는데 필요한 시간 확보
+        setTimeout(load_record_table, 2000);
+        return;
+      }
+      // ────────────────────────────────────────────
+      // 🚀 Action Record Stop
+      // ────────────────────────────────────────────
+      if (text.includes("Record Stop")) {
+        fetch("/oms/camera/action/record/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        // 서버가 record_history.json 업데이트하는데 필요한 시간 확보
+        setTimeout(load_record_table, 500);
         return;
       }
     };
@@ -600,13 +758,43 @@
       return `${group["group-name"]} - ${item.name}`;
     }
 
-    document.getElementById("btnMakingToggle").onclick = () => {
-      console.log("Making toggle clicked");
+    // ────────────────────────────────────────────
+    // btnProductionToggle (MAKE) click handler
+    // ────────────────────────────────────────────    
+    document.getElementById("btnProductionToggle").onclick = () => {
+      const text = document.getElementById("btnProductionToggle").textContent.trim();
+
+      // ────────────────────────────────────────────
+      // 🚀 Action Production Start
+      // ────────────────────────────────────────────
+      if (text.includes("Production Ready")) {
+        fetch("/oms/camera/action/production/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({})
+        });
+        // 서버가 record_history.json 업데이트하는데 필요한 시간 확보
+        setTimeout(load_produced_table, 2000);
+        return;
+      }
+      // ────────────────────────────────────────────
+      // 🚀 Action Production Stop
+      // ────────────────────────────────────────────
+      if (text.includes("Producing Stop")) {
+        fetch("/oms/camera/action/production/stop", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        });
+        // 서버가 record_history.json 업데이트하는데 필요한 시간 확보
+        setTimeout(load_produced_table, 2000);
+        return;
+      }
     };
 
     // 7) Initial load
     load_production_target();
     load_record_table();
+    load_produced_table ();
   });
   </script>
 

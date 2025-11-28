@@ -1074,3 +1074,23 @@ body {
   100% { opacity: 1.0;  transform: scale(1.00); }
 }
 
+/* Recording 강조용 */
+tr.recording-row td {
+  background: rgba(239, 68, 68, 0.10); /* var(--bad) 10% */
+}
+
+.recording-row {
+  background-color: rgba(255,0,0,0.05);
+}
+
+.recording-highlight {
+  color: red;
+  font-weight: bold;
+  animation: dashPulseSoft 1s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  50% { opacity: 1; }
+  100% { opacity: 0.4; }
+}

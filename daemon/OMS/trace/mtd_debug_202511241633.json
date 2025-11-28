@@ -1,1 +1,0 @@
-{"ts": 1763969639.8244336, "dir": "send", "host": "10.82.104.210", "port": 19765, "tag": null, "message": {"Section1": "Camera", "Section2": "Operation", "Section3": "Run", "SendState": "request", "Token": "20251124_1630_psd", "From": "4DOMS", "To": "PostSd", "Action": "set", "time": 0, "DMPDIP": "10.82.104.210"}, "response": null, "error": null}

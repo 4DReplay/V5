@@ -2,6 +2,8 @@
 # aic_main.py
 # - 2025/10/17 (revised)
 # - Hongsu Jung
+# --- how to read log >>> Powershell
+# >> Get-Content "C:\4DReplay\V5\daemon\AIc\log\2025-11-20.log" -Wait -Tail 20
 # ─────────────────────────────────────────────────────────────────────────────#
 
 import os
@@ -16,16 +18,12 @@ import socket
 from threading import Semaphore
 from datetime import datetime
 
-# ── service/env ──────────────────────────────────────────────────────────────
-def _is_service_env():
-    try:
-        return not hasattr(sys, "stdin") or (sys.stdin is None) or (not sys.stdin.isatty())
-    except Exception:
-        return True
-SERVICE_MODE = (os.getenv("FD_SERVICE", "0") == "1") or _is_service_env()
+# ─────────────────────────────────────────────────────────────
+# shared codes/functions
+# ─────────────────────────────────────────────────────────────
+from service_common import *
 
-os.environ.setdefault("PYTHONUNBUFFERED", "1")
-os.environ.setdefault("PYTHONIOENCODING", "utf-8")
+
 os.environ["AID_DAEMON_NAME"] = r"AIc"
 os.environ.setdefault("FD_LOG_DIR", r"C:\4DReplay\V5\daemon\AIc\log")
 
@@ -35,32 +33,22 @@ common_path = os.path.abspath(os.path.join(cur_path, '..'))
 sys.path.insert(0, common_path)
 
 # ── project imports ──────────────────────────────────────────────────────────
-from fd_common.msg               import FDMsg
 from fd_common.tcp_server        import TCPServer
 from fd_utils.fd_config_manager  import setup, conf, get
 from fd_utils.fd_logging         import fd_log
-from fd_utils.fd_file_edit       import fd_clean_up
 
-# 필요한 경우에만 사용하는 모듈들(여기선 동작 스텁 수준 로그만 남김)
-from fd_stream.fd_stream_rtsp    import StreamViewer
-from fd_stabil.fd_stabil         import PostStabil
-from fd_utils.fd_calibration     import Calibration
-from fd_aid                      import (
-    fd_create_analysis_file,
-    fd_multi_channel_video,
-    fd_multi_calibration_video,
-)
+from fd_product.fd_product_clip  import fd_calibrate_files
 
-fd_log.propagate = False
 conf._product = "AIc"
-
-# ── config path ──────────────────────────────────────────────────────────────
-AID_CONFIG_PRIVATE = "./config/aid_config_private.json5"
-AID_CONFIG_PUBLIC  = "./config/aid_config_public.json5"
-
-
+# ─────────────────────────────────────────────────────────────────────────
+# 🎯AIc Class (Artificial Intelligence Client)
+# ─────────────────────────────────────────────────────────────────────────
 class AIc:
     name = 'AIc'
+
+    # ─────────────────────────────────────────────────────────────────────────
+    # ✅ MAIN FUNCTIONS
+    # ─────────────────────────────────────────────────────────────────────────
 
     def __init__(self):
         self.name = "AIc"
@@ -77,9 +65,10 @@ class AIc:
         self.version = self.conf._version  # conf에서 _version 가져오기
         self.release_date = self.conf._release_date  # conf에서 release_date 가져오기
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # 시스템 초기화(로그 폴더 등). 실패시 False
-    # ─────────────────────────────────────────────────────────────────────────
+        # product info
+        self.prod_video_source  = None
+        self.prod_adjust_info   = None
+        self.prod_info = None
     def init_sys(self) -> bool:
         current_path = os.path.dirname(os.path.abspath(__file__))
         log_path = os.path.join(current_path, "log")
@@ -94,10 +83,6 @@ class AIc:
         if os.getenv("PYTHONBREAKPOINT") is None:
             os.environ["PYTHONBREAKPOINT"] = "0"
         return True
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # 설정 로딩 및 TCP 리스너 오픈
-    # ─────────────────────────────────────────────────────────────────────────
     def prepare(self,
                 config_private_path: str = AID_CONFIG_PRIVATE,
                 config_public_path: str = AID_CONFIG_PUBLIC) -> bool:
@@ -123,81 +108,10 @@ class AIc:
         except Exception as e:
             fd_log.error(f"[{self.name}] TCP server start failed: {e}")
             return False
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # def put_data (OMS/4DOMS 쪽에서 오는 메시지)
-    # ─────────────────────────────────────────────────────────────────────────
-    def put_data(self, data):
-        with self.lock:
-            self.msg_queue.put(data)
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # def on_msg
-    # ─────────────────────────────────────────────────────────────────────────
-    def on_msg(self, text: str):
-        try:
-            data = json.loads(text)
-        except Exception as e:
-            fd_log.error(f"[{self.name}] on_msg JSON parse error: {e}; text={text[:256]}")
-            return
-        self.put_data(data)  # 큐에 넣고 worker가 처리
-
-    # ----------------------------------------------------------
-    # AId -> AIc : persistent 포트(19738)로 들어오는 메시지 처리
-    # ----------------------------------------------------------
-    def on_aid_msg(self, data):
-        # 1) bytes → str
-        if isinstance(data, bytes):
-            data = data.decode(errors="ignore")
-
-        # 2) str → dict(JSON)
-        if isinstance(data, str):
-            try:
-                data = json.loads(data)
-            except Exception as e:
-                fd_log.warning(f"[AIc] on_aid_msg: JSON parse error: {e}; raw={data[:200]}")
-                return
-
-        # 3) dict가 아니면 폐기
-        if not isinstance(data, dict):
-            fd_log.warning(f"[AIc] on_aid_msg: invalid data type after parse: {type(data)}")
-            return
-
-        # 4) dispatch
-        self._dispatch_aid_command(data) 
-
-    # ─────────────────────────────────────────────────────────────────────────
-    # AID Commands
-    # ─────────────────────────────────────────────────────────────────────────
-    def _dispatch_aid_command(self, pkt: dict):
-        sec1 = pkt.get("Section1")
-        sec2 = pkt.get("Section2")
-        sec3 = pkt.get("Section3")
-        state = str(pkt.get("SendState", "")).lower()
-
-        # Version 요청
-        if (sec1, sec2, sec3) == ("AIc", "Information", "Version") and state == "request":
-            return self.handle_version_request_from_aid(pkt)
-
-        # Calibration 명령 예시
-        if (sec1, sec2, sec3) == ("AI", "Operation", "Calibration"):
-            return self.handle_calibration(pkt)
-
-        # StartVideo 명령 예시
-        if (sec1, sec2, sec3) == ("AI", "Operation", "StartVideo"):
-            return self.handle_start_video(pkt)
-
-        # 앞으로 여기에 계속 명령 추가
-        # if (sec1, sec2, sec3) == (...):
-        #     return self.handle_xxx(pkt)
-
-        fd_log.warning(f"[AIc] unhandled AId command: {sec1}/{sec2}/{sec3}/{state}")
-    # ─────────────────────────────────────────────────────────────────────────
-    # 안전 종료(멱등)
-    # ─────────────────────────────────────────────────────────────────────────
+    def run(self):
+        fd_log.info("🟢 [AIc] run() begin..")
     def stop(self):
         fd_log.info("[AIc] stop() begin..")
-
         if self._stopped:
             fd_log.info("[AIc] stop() already called; skipping.")
             return
@@ -228,11 +142,89 @@ class AIc:
             fd_log.info("[AIc] worker thread is None; nothing to join.")
 
         fd_log.info("[AIc] stop() end..")
+    
+    # ─────────────────────────────────────────────────────────────────────────
+    # 📦 Message Routing
+    # ─────────────────────────────────────────────────────────────────────────
+    def on_msg(self, text: str):
+        try:
+            data = json.loads(text)
+        except Exception as e:
+            fd_log.error(f"[{self.name}] on_msg JSON parse error: {e}; text={text[:256]}")
+            return
+        self.put_data(data)  # 큐에 넣고 worker가 처리
+    def put_data(self, data):
+        with self.lock:
+            self.msg_queue.put(data)
+    def on_aid_msg(self, data):
+        # 1) bytes → str        
+        if isinstance(data, bytes):
+            if not data:
+                fd_log.warning("[AIc] empty packet received from AId")
+                return
+            fd_log.info(f"[AIc] << AId request (bytes): {data[:500]!r}")
+            data = data.decode(errors="ignore")
 
+        # 2) str → dict(JSON)
+        if isinstance(data, str):
+            if not data.strip():
+                fd_log.warning("[AIc] empty text data received from AId")
+                return
+            try:
+                data = json.loads(data)
+            except Exception as e:
+                fd_log.warning(
+                    f"[AIc] on_aid_msg JSON parse error: {e}; raw={data!r}"
+                )
+                return
+
+        # 3) dict가 아니면 폐기
+        if not isinstance(data, dict):
+            fd_log.warning(f"[AIc] on_aid_msg: invalid data type after parse: {type(data)}")
+            return
+
+        # 4) dispatch
+        self._dispatch_aid_command(data) 
+    # 🎯 command processing
+    def _dispatch_aid_command(self, pkt: dict):
+        sec1 = pkt.get("Section1")
+        sec2 = pkt.get("Section2")
+        sec3 = pkt.get("Section3")
+        state = str(pkt.get("SendState", "")).lower()
+        action = str(pkt.get("Action", "")).lower()
+
+        # Version 요청
+        match (sec1, sec2, sec3):
+            # ──────────────────────────────────────────────────────
+            # 📦 V5 : [AIc], [Information], [Version]
+            # ──────────────────────────────────────────────────────                    
+            case ("AIc", "Information", "Version"):
+                return self.get_version_request(pkt)
+            # ──────────────────────────────────────────────────────
+            # 📦 V5 : [AIc], [Operation], [Prepare]
+            # ──────────────────────────────────────────────────────
+            case ("AIc", "Operation", "Prepare"):
+                return self.production_prepare(pkt)
+            # ──────────────────────────────────────────────────────
+            # 📦 V5 : [AIc], [Operation], [Production], [start/stop]
+            # ───────────────────────────────────────`───────────────
+            case ("AIc", "Operation", "Production"):
+                if action == "start":
+                    return self.production_start(pkt)
+                elif action == "stop":
+                    return self.production_stop(pkt)
+            # ──────────────────────────────────────────────────────
+            # 📦 V5 : not matching packet
+            # ──────────────────────────────────────────────────────
+            case _:
+                fd_log.warning(f"[AIc] unhandled AId command: {sec1}/{sec2}/{sec3}/{state}")
+                pass
+    
     # ─────────────────────────────────────────────────────────────────────────
-    # AId → AIc : Version 요청 처리(19738 포트)
+    # 🧩 Functions for Events (V5)
     # ─────────────────────────────────────────────────────────────────────────
-    def handle_version_request_from_aid(self, pkt: dict) -> None:
+    # get version request
+    def get_version_request(self, pkt: dict) -> None:
         """
         AId → AIc : Version 요청
         - conf._version, conf._release_date 를 그대로 사용
@@ -240,7 +232,6 @@ class AIc:
         """
         ver = self.version
         date = self.release_date
-
         resp = {
             "Section1": "Daemon",
             "Section2": "Information",
@@ -262,32 +253,126 @@ class AIc:
             "ResultCode": 1000,
             "ErrorMsg": ""
         }
-
         if self.aid_server:
-            self.aid_server.send_msg(json.dumps(resp))
+            try:
+                fd_log.info(f"AId response: {json.dumps(resp, ensure_ascii=False)}")
+                self.aid_server.send_msg(json.dumps(resp))
+            except Exception as e:
+                fd_log.error(f"send_msg failed: {e}")
         else:
-            fd_log.error("[AIc] aid_server is None, cannot send Version response to AId")
+            fd_log.error("aid_server is None, cannot send Version response to AId")
+    # get prepare request
+    def production_prepare(self, pkt: dict) -> None:
+        fd_log.info("🚀 [AIc] Handle Prepare from AId")
+        camera_info = pkt.get("CamInfo")        
+        '''
+        "camera-format": {
+            "fps":60,
+            "resolution":"UHD"
+        },
+        "video_source": {
+            "ip": "10.82.104.210",
+            "cam_ips": [
+                {"ip":"10.82.104.11","rotate":1},
+                {"ip":"10.82.104.12","rotate":1}
+            ],
+            "path": "C_Movie|C:\\"
+        },
+        "adjust": {
+            ... adjust_info ...
+        }
+        '''
+        self.prod_video_source  = camera_info["video-info"]
+        self.prod_adjust_info   = camera_info["adjust"]
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # 실행 시작
-    # ─────────────────────────────────────────────────────────────────────────
-    def run(self):
-        fd_log.info("🟢 [AIc] run() begin..")
+        fd_log.info(f"[AIc] ⏯️ video_source:  {self.prod_video_source}")
+        fd_log.info(f"[AIc] ⏯️ adjust_info: {self.prod_adjust_info}")
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # 메시지 라우팅(스텁)
-    # ─────────────────────────────────────────────────────────────────────────
-    def classify_msg(self, msg: dict) -> None:
-        # AIc는 더 이상 OMS/4DOMS 메시지를 처리하지 않음
-        return
+        # 응답 패킷(optional)
+        resp = {
+            "Section1": "AIc",
+            "Section2": "Operation",
+            "Section3": "Prepare",
+            "SendState": "response",
+            "From": "AIc",
+            "To": "AId",
+            "Action": "set",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
 
-    # ─────────────────────────────────────────────────────────────────────────
-    # (옵션) 외부 이벤트 송신 스텁
-    # ─────────────────────────────────────────────────────────────────────────
-    def on_web_socket_event(self, pitch_data):
-        # AIc는 OMS 송신 기능 없음
-        return
+        try:
+            fd_log.info(f"[AIc] >> AId Prepare Response: {resp}")
+            self.aid_server.send_msg(json.dumps(resp))
+        except Exception as e:
+            fd_log.error(f"[AIc] Prepare response send failed: {e}")
+    # production start
+    def production_start(self, pkt: dict) -> None:
+        fd_log.info("🚀 [AIc] Handle Production Start from AId")
 
+        product_info = pkt.get("product_info")
+        self.prod_info = product_info
+
+        fd_log.info(f"[AIc] ▶ video_source:  {self.prod_video_source}")
+        fd_log.info(f"[AIc] ▶ adjust_info: {self.prod_adjust_info}")
+        fd_log.info(f"[AIc] ▶ product_info: {self.prod_info}")
+
+        # ───────────────────────────────────
+        # 📌 create / calibration files to output folder
+        # ───────────────────────────────────
+        fd_calibrate_files(
+            self.prod_video_source,
+            self.prod_info,
+            self.prod_adjust_info,            
+        )
+
+        # ───────────────────────────────────
+        # 📩 send response to AId
+        # ───────────────────────────────────
+        fd_log.info(f"[AIc] ⏯️ product_info: {self.prod_info}")
+        # 응답 패킷(optional)
+        resp = {
+            "Section1": "AIc",
+            "Section2": "Operation",
+            "Section3": "Production",
+            "SendState": "response",
+            "From": "AIc",
+            "To": "AId",
+            "Action": "start",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
+        try:
+            fd_log.info(f"[AIc] >> AId Prepare Response: {resp}")
+            self.aid_server.send_msg(json.dumps(resp))
+        except Exception as e:
+            fd_log.error(f"[AIc] Prepare response send failed: {e}")
+    # production stop
+    def production_stop(self, pkt: dict) -> None:
+        fd_log.info("⏹️ [AIc] Handle Production Stop from AId")
+        
+        # ───────────────────────────────────
+        # 📩 send response to AId
+        # ───────────────────────────────────        
+        resp = {
+            "Section1": "AIc",
+            "Section2": "Operation",
+            "Section3": "Production",
+            "SendState": "response",
+            "From": "AIc",
+            "To": "AId",
+            "Action": "stop",
+            "Token": pkt.get("Token", ""),
+            "ResultCode": 1000,
+            "ErrorMsg": ""
+        }
+        try:
+            fd_log.info(f"[AIc] >> AId Prepare Response: {resp}")
+            self.aid_server.send_msg(json.dumps(resp))
+        except Exception as e:
+            fd_log.error(f"[AIc] Prepare response send failed: {e}")
 
 
 if __name__ == '__main__':
@@ -347,7 +432,6 @@ if __name__ == '__main__':
     if not aic.init_sys():
         fd_log.error("init_sys() failed")
         sys.exit(1)
-
     if not aic.prepare():
         fd_log.error("prepare() failed")
         sys.exit(0)  # 서비스 관리자 입장에서 '정상 종료'처럼 처리

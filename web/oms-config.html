@@ -299,15 +299,7 @@
     }
 
     async function saveConfigText(text) {
-      try {
-        return await api("/config", "POST", text);
-      } catch (e) {
-        const m = String(e.message || "").toLowerCase();
-        if (m.includes("not found") || m.includes("404")) {
-          return await api("/oms/config", "POST", text);
-        }
-        throw e;
-      }
+      return await api("/oms/config", "POST", text);
     }
 
     async function getWithFallback(primary, fallback, method = "GET", body = null) {
@@ -333,12 +325,12 @@
 
     /* ───── endpoints ───── */
     const EP = {
-      status: () => getWithFallback(`/status`, `/oms/system/state`),
-      config: () => getWithFallback(`/config`, `/oms/config`),
-      configMeta: () => getWithFallback(`/config/meta`, `/oms/config/meta`),
-      configFormat: (t) => getWithFallback(`/config/format`, `/oms/config/format`, "POST", t),
-      saveConfig: (t) => getWithFallback(`/config`, `/oms/config`, "POST", t),
-      apply: () => getWithFallback(`/config/apply`, `/oms/config/apply`, "POST", {}),
+      status: () => api(`/oms/system/state`),
+      config: () => api(`/oms/config`),
+      configMeta: () => api(`/oms/config/meta`),
+      configFormat: (t) => api(`/oms/config/format`, "POST", t),
+      saveConfig: (t) => api(`/oms/config`, "POST", t),
+      apply: () => api(`/oms/config/apply`, "POST", {}),
     }
 
     /* ───── state ───── */

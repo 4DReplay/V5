@@ -35,13 +35,13 @@ ALLOWED_SYS_KEYS = {
 def fd_sys_state_load():
     global SYS_STATE
     try:
-        if not SYS_STATE_FILE.exists():
-            fd_log.error(f"Load: no file: {SYS_STATE_FILE}")
+        if not FILE_SYS_STATE.exists():
+            fd_log.error(f"Load: no file: {FILE_SYS_STATE}")
             SYS_STATE = {}
             return
 
-        raw = json.loads(SYS_STATE_FILE.read_text("utf-8"))
-        fd_log.info(f"# Load: {SYS_STATE_FILE}")
+        raw = json.loads(FILE_SYS_STATE.read_text("utf-8"))
+        fd_log.info(f"# Load: {FILE_SYS_STATE}")
         # ① raw 전체에서 updated_at 가장 큰 항목 선택
         if isinstance(raw, dict):
             # case 1) 이미 통합 하나짜리 구조 → 그대로
@@ -69,7 +69,7 @@ def fd_sys_state_load():
 def fd_sys_state_save():
     global SYS_STATE
     try:
-        with open(SYS_STATE_FILE, "w", encoding="utf-8") as f:
+        with open(FILE_SYS_STATE, "w", encoding="utf-8") as f:
             json.dump(SYS_STATE, f, indent=2, ensure_ascii=False)        
     except Exception as e:
         fd_log.exception(f"[save][system][state] failed: {e}")
@@ -82,7 +82,7 @@ def fd_sys_state_upsert(payload: dict):
     clean["updated_at"] = time.time()
     # SYS_STATE 전체를 clean 으로 교체
     SYS_STATE = clean
-    with open(SYS_STATE_FILE, "w", encoding="utf-8") as f:
+    with open(FILE_SYS_STATE, "w", encoding="utf-8") as f:
         json.dump(SYS_STATE, f, indent=2, ensure_ascii=False) 
     fd_sys_state_save()
 def fd_sys_latest_state():
@@ -95,7 +95,7 @@ def fd_sys_clear_state() -> bool:
     try:
         SYS_STATE.clear()
         try:
-            SYS_STATE_FILE.unlink(missing_ok=True)
+            FILE_SYS_STATE.unlink(missing_ok=True)
         except Exception:
             pass
         return True
@@ -119,8 +119,8 @@ CAM_STATE = {}
 def fd_cam_state_load():
     global CAM_STATE
     try:
-        if CAM_STATE_FILE.exists():
-            CAM_STATE.update(json.loads(CAM_STATE_FILE.read_text("utf-8")))
+        if FILE_CAM_STATE.exists():
+            CAM_STATE.update(json.loads(FILE_CAM_STATE.read_text("utf-8")))
         else:
             CAM_STATE = {}
     except:
@@ -128,7 +128,7 @@ def fd_cam_state_load():
 def fd_cam_state_save():
     global CAM_STATE
     try:
-        with open(CAM_STATE_FILE, "w", encoding="utf-8") as f:
+        with open(FILE_CAM_STATE, "w", encoding="utf-8") as f:
             json.dump(CAM_STATE, f, indent=2, ensure_ascii=False)                
     except Exception as e:
         fd_log.exception(f"[save][camera][state] failed: {e}")
@@ -140,7 +140,7 @@ def fd_cam_state_upsert(payload: dict):
     # updated_at 항상 새로 기록
     CAM_STATE["updated_at"] = time.time()
     # 파일 저장
-    with open(CAM_STATE_FILE, "w", encoding="utf-8") as f:
+    with open(FILE_CAM_STATE, "w", encoding="utf-8") as f:
         json.dump(CAM_STATE, f, indent=2, ensure_ascii=False)
 def fd_cam_latest_state():
     global CAM_STATE
@@ -180,11 +180,72 @@ def fd_cam_clear_connect_state(alive_reset = False) -> bool:
     except Exception as e:
         fd_log.error(f"[CAM] Clear connect_state FAIL: {e}")
         return False
+# ─────────────────────────────────────────────────────────────
+# 🗂️ STATE / RECORD
+# ─────────────────────────────────────────────────────────────
+REC_STATE = {} 
+def fd_rec_state_load():
+    global REC_STATE
+    try:
+        if FILE_REC_STATE.exists():
+            REC_STATE.update(json.loads(FILE_REC_STATE.read_text("utf-8")))
+        else:
+            REC_STATE = {}
+    except:
+        REC_STATE = {}
+def fd_rec_state_save():
+    global REC_STATE
+    try:
+        with open(FILE_REC_STATE, "w", encoding="utf-8") as f:
+            json.dump(REC_STATE, f, indent=2, ensure_ascii=False)                
+    except Exception as e:
+        fd_log.exception(f"[save][record][state] failed: {e}")
+def fd_rec_state_upsert(payload: dict):
+    global REC_STATE    
+    # 기존 CAM_STATE 유지 + payload 반영 (merge 방식)
+    for k, v in payload.items():
+        REC_STATE[k] = v
+    # updated_at 항상 새로 기록
+    REC_STATE["updated_at"] = time.time()
+    # 파일 저장
+    with open(FILE_REC_STATE, "w", encoding="utf-8") as f:
+        json.dump(REC_STATE, f, indent=2, ensure_ascii=False)
+def fd_rec_latest_state():
+    global REC_STATE
+    return REC_STATE
 
+
+# ─────────────────────────────────────────────────────────────
+# ✅ Get Infomation
+# ─────────────────────────────────────────────────────────────
+
+# get camera fps
+def get_camera_format():
+    st = fd_cam_latest_state() or {}
+    if isinstance(st, tuple):
+        st = st[1] or {}
+
+    cams = st.get("cameras") or []
+    if not cams:
+        return None, None
+
+    info = cams[0].get("info", {})
+    vf = info.get("VideoFormatMain", "")  # 예: "UHD-60", "FHD-30"
+
+    try:
+        parts = vf.split("-")  # ["UHD", "60"]
+        resolution = parts[0] if len(parts) > 0 else None
+        fps = int(parts[1]) if len(parts) > 1 else None
+        return fps, resolution
+    except:
+        return None, None
+    
 # ────────────────────────────────────────────────────────────
 # EXPORTS
 # ────────────────────────────────────────────────────────────
 __all__ = [
     "SYS_STATE","fd_sys_state_load", "fd_sys_state_save","fd_sys_state_upsert", "fd_sys_latest_state","fd_sys_clear_state","fd_sys_clear_connect_state",
-    "CAM_STATE","fd_cam_state_load", "fd_cam_state_save", "fd_cam_state_upsert", "fd_cam_latest_state", "fd_cam_clear_connect_state"
+    "CAM_STATE","fd_cam_state_load", "fd_cam_state_save", "fd_cam_state_upsert", "fd_cam_latest_state", "fd_cam_clear_connect_state",
+    "REC_STATE","fd_rec_state_load", "fd_rec_state_save", "fd_rec_state_upsert", "fd_rec_latest_state",
+    "get_camera_format",
 ]

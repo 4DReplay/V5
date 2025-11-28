@@ -100,7 +100,7 @@
     const BUSY = document.getElementById("busyMsg");
     if (TITLE) TITLE.textContent = `(${location.hostname || "-"})`;
 
-    let CFG = null;
+    let PATH_CFG = null;
     let STATUS = null;
 
     function showErr(m) { ERR.style.display = "block"; ERR.textContent = m; }
@@ -155,7 +155,7 @@
 
     function render() {
       clearErr();
-      const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+      const cfgExecs = (PATH_CFG && Array.isArray(PATH_CFG.executables)) ? PATH_CFG.executables : [];
       const statusMap = {};
       for (const s of toList(STATUS)) statusMap[s.name] = s;
       TBody.innerHTML = "";
@@ -179,7 +179,7 @@
     function publishSummary() {
       try {
         // 선택된 프로세스 목록
-        const selectedNames = (CFG?.executables ?? [])
+        const selectedNames = (PATH_CFG?.executables ?? [])
           .filter(e => e.select === true)
           .map(e => e.name);
 
@@ -259,7 +259,7 @@
       const startedAt = Date.now();
       const fmt = (ms) => `${Math.round(ms / 1000)}s`;
       const allNames = () => {
-        const cfgExecs = (CFG && Array.isArray(CFG.executables)) ? CFG.executables : [];
+        const cfgExecs = (PATH_CFG && Array.isArray(PATH_CFG.executables)) ? PATH_CFG.executables : [];
         return cfgExecs.filter(e => e.select === true).map(e => e.name);
       };
       const progressLine = () => {
@@ -376,10 +376,10 @@
         const hb = Number(STATUS.heartbeat_interval_sec || 2);
         BEAT.textContent = `ON (${hb}s)`;
 
-        if (!CFG) {
+        if (!PATH_CFG) {
           const raw = await api("/config");
           const fm = await api("/config-format", { method: "POST", body: raw });
-          CFG = JSON.parse(fm.text);
+          PATH_CFG = JSON.parse(fm.text);
         }
         render();
         publishSummary();   // ✅ 여기서 요약 갱신
